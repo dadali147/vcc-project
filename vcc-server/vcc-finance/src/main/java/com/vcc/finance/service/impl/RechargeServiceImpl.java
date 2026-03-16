@@ -9,9 +9,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.vcc.common.utils.StringUtils;
 import com.vcc.finance.domain.Recharge;
 import com.vcc.finance.mapper.RechargeMapper;
 import com.vcc.finance.service.IRechargeService;
+import com.vcc.system.service.ISystemConfigService;
 import com.vcc.upstream.YeeVccClient;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
@@ -35,6 +37,9 @@ public class RechargeServiceImpl implements IRechargeService
     @Autowired
     private IUserAccountService userAccountService;
 
+    @Autowired
+    private ISystemConfigService systemConfigService;
+
     @Override
     public Recharge selectRechargeById(Long id)
     {
@@ -57,6 +62,44 @@ public class RechargeServiceImpl implements IRechargeService
     @Transactional
     public Recharge submitRecharge(Long userId, Long cardId, BigDecimal amount, String currency, BigDecimal fee)
     {
+        // 风控：充值功能开关
+        String rechargeEnabled = systemConfigService.get("risk.recharge.enabled");
+        if ("false".equalsIgnoreCase(rechargeEnabled))
+        {
+            throw new RuntimeException("充值功能已关闭，请联系管理员");
+        }
+
+        // 风控：单笔充值上限
+        String singleLimitStr = systemConfigService.get("risk.single.recharge.limit");
+        if (StringUtils.isNotEmpty(singleLimitStr))
+        {
+            BigDecimal singleLimit = new BigDecimal(singleLimitStr);
+            if (amount.compareTo(singleLimit) > 0)
+            {
+                throw new RuntimeException("单笔充值金额超过上限: " + singleLimit + " USD");
+            }
+        }
+
+        // 风控：日充值上限
+        String dailyLimitStr = systemConfigService.get("risk.daily.recharge.limit");
+        if (StringUtils.isNotEmpty(dailyLimitStr))
+        {
+            BigDecimal dailyLimit = new BigDecimal(dailyLimitStr);
+            // 查询今日已成功充值总额
+            Recharge query = new Recharge();
+            query.setUserId(userId);
+            query.setStatus(Recharge.STATUS_SUCCESS);
+            List<Recharge> todayList = rechargeMapper.selectRechargeList(query);
+            BigDecimal todayTotal = todayList.stream()
+                    .filter(r -> r.getCreateTime() != null && isToday(r.getCreateTime()))
+                    .map(Recharge::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (todayTotal.add(amount).compareTo(dailyLimit) > 0)
+            {
+                throw new RuntimeException("今日充值总额将超过上限: " + dailyLimit + " USD，今日已充值: " + todayTotal + " USD");
+            }
+        }
+
         String orderNo = generateOrderNo();
         BigDecimal actualAmount = amount.subtract(fee != null ? fee : BigDecimal.ZERO);
 
@@ -174,5 +217,14 @@ public class RechargeServiceImpl implements IRechargeService
     private String generateOrderNo()
     {
         return "RCH" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+    }
+
+    private boolean isToday(java.util.Date date)
+    {
+        java.util.Calendar cal1 = java.util.Calendar.getInstance();
+        java.util.Calendar cal2 = java.util.Calendar.getInstance();
+        cal2.setTime(date);
+        return cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR)
+                && cal1.get(java.util.Calendar.DAY_OF_YEAR) == cal2.get(java.util.Calendar.DAY_OF_YEAR);
     }
 }

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.system.mapper.SystemConfigMapper">
+
+    <resultMap type="com.vcc.system.domain.SystemConfig" id="SystemConfigResult">
+        <result property="id"              column="id"               />
+        <result property="configKey"       column="config_key"       />
+        <result property="configValue"     column="config_value"     />
+        <result property="configType"      column="config_type"      />
+        <result property="description"     column="description"      />
+        <result property="isEncrypted"     column="is_encrypted"     />
+        <result property="createTime"      column="created_at"       />
+        <result property="updateTime"      column="updated_at"       />
+    </resultMap>
+
+    <sql id="selectSystemConfigVo">
+        select id, config_key, config_value, config_type, description,
+               is_encrypted, created_at, updated_at
+        from system_configs
+    </sql>
+
+    <select id="selectSystemConfigById" parameterType="Long" resultMap="SystemConfigResult">
+        <include refid="selectSystemConfigVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectSystemConfigByKey" parameterType="String" resultMap="SystemConfigResult">
+        <include refid="selectSystemConfigVo"/>
+        where config_key = #{configKey}
+    </select>
+
+    <select id="selectSystemConfigList" parameterType="com.vcc.system.domain.SystemConfig" resultMap="SystemConfigResult">
+        <include refid="selectSystemConfigVo"/>
+        <where>
+            <if test="configKey != null and configKey != ''">AND config_key like concat('%', #{configKey}, '%')</if>
+            <if test="configType != null and configType != ''">AND config_type = #{configType}</if>
+            <if test="isEncrypted != null">AND is_encrypted = #{isEncrypted}</if>
+        </where>
+        order by id asc
+    </select>
+
+    <insert id="insertSystemConfig" parameterType="com.vcc.system.domain.SystemConfig" useGeneratedKeys="true" keyProperty="id">
+        insert into system_configs (
+            <if test="configKey != null and configKey != ''">config_key,</if>
+            <if test="configValue != null and configValue != ''">config_value,</if>
+            <if test="configType != null and configType != ''">config_type,</if>
+            <if test="description != null and description != ''">description,</if>
+            <if test="isEncrypted != null">is_encrypted,</if>
+            created_at
+        ) values (
+            <if test="configKey != null and configKey != ''">#{configKey},</if>
+            <if test="configValue != null and configValue != ''">#{configValue},</if>
+            <if test="configType != null and configType != ''">#{configType},</if>
+            <if test="description != null and description != ''">#{description},</if>
+            <if test="isEncrypted != null">#{isEncrypted},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateSystemConfig" parameterType="com.vcc.system.domain.SystemConfig">
+        update system_configs
+        <set>
+            <if test="configKey != null and configKey != ''">config_key = #{configKey},</if>
+            <if test="configValue != null">config_value = #{configValue},</if>
+            <if test="configType != null and configType != ''">config_type = #{configType},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="isEncrypted != null">is_encrypted = #{isEncrypted},</if>
+            updated_at = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <update id="updateSystemConfigByKey" parameterType="com.vcc.system.domain.SystemConfig">
+        update system_configs
+        <set>
+            <if test="configValue != null">config_value = #{configValue},</if>
+            updated_at = sysdate()
+        </set>
+        where config_key = #{configKey}
+    </update>
+
+    <delete id="deleteSystemConfigById" parameterType="Long">
+        delete from system_configs where id = #{id}
+    </delete>
+
+</mapper>

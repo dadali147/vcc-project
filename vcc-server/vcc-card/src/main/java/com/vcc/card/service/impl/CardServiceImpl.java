@@ -15,6 +15,7 @@ import com.vcc.card.domain.CardHolder;
 import com.vcc.card.mapper.CardMapper;
 import com.vcc.card.mapper.CardHolderMapper;
 import com.vcc.card.service.ICardService;
+import com.vcc.system.service.ISystemConfigService;
 import com.vcc.upstream.YeeVccClient;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
@@ -46,6 +47,9 @@ public class CardServiceImpl implements ICardService
     @Autowired
     private YeeVccClient yeeVccClient;
 
+    @Autowired
+    private ISystemConfigService systemConfigService;
+
     @Override
     public Card selectCardById(Long id)
     {
@@ -63,6 +67,13 @@ public class CardServiceImpl implements ICardService
     public Card openCard(Long holderId, String cardBinId, String currency, Integer cardType,
                          BigDecimal amount, Long userId)
     {
+        // 风控：开卡功能开关
+        String openEnabled = systemConfigService.get("risk.card.open.enabled");
+        if ("false".equalsIgnoreCase(openEnabled))
+        {
+            throw new RuntimeException("开卡功能已关闭，请联系管理员");
+        }
+
         // 校验持卡人
         CardHolder holder = cardHolderMapper.selectCardHolderById(holderId);
         if (holder == null)
