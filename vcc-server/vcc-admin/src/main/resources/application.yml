@@ -145,3 +145,30 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+yeevcc:
+  enabled: ${YEEVCC_ENABLED:false}
+  baseUrl: ${YEEVCC_BASE_URL:https://apiqa.kun.global/yop-center}
+  appKey: ${YEEVCC_APP_KEY:}
+  customerId: ${YEEVCC_CUSTOMER_ID:}
+  privateKey: ${YEEVCC_PRIVATE_KEY:}
+  platformPublicKey: ${YEEVCC_PLATFORM_PUBLIC_KEY:}
+  aesKey: ${YEEVCC_AES_KEY:}
+  connectTimeoutMillis: ${YEEVCC_CONNECT_TIMEOUT_MS:5000}
+  readTimeoutMillis: ${YEEVCC_READ_TIMEOUT_MS:15000}
+  maxRetries: ${YEEVCC_MAX_RETRIES:2}
+  retryIntervalMillis: ${YEEVCC_RETRY_INTERVAL_MS:500}
+  verifyResponseSignature: ${YEEVCC_VERIFY_RESPONSE_SIGNATURE:false}
+  failOnMissingSignature: ${YEEVCC_FAIL_ON_MISSING_SIGNATURE:false}
+  autoDecryptKeyInfo: ${YEEVCC_AUTO_DECRYPT_KEY_INFO:true}
+  successCode: ${YEEVCC_SUCCESS_CODE:200}
+  securityReq: ${YEEVCC_SECURITY_REQ:YOP-RSA2048-SHA256}
+  headers:
+    appKey: ${YEEVCC_HEADER_APP_KEY:x-yop-appkey}
+    requestId: ${YEEVCC_HEADER_REQUEST_ID:x-yop-request-id}
+    timestamp: ${YEEVCC_HEADER_TIMESTAMP:x-yop-date}
+    nonce: ${YEEVCC_HEADER_NONCE:x-yop-nonce}
+    contentSha256: ${YEEVCC_HEADER_CONTENT_SHA256:x-yop-content-sha256}
+    signature: ${YEEVCC_HEADER_SIGNATURE:x-yop-signature}
+    signatureAlg: ${YEEVCC_HEADER_SIGNATURE_ALG:x-yop-sign-alg}
+    authorization: ${YEEVCC_HEADER_AUTHORIZATION:Authorization}

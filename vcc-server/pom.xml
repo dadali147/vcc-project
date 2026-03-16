@@ -188,6 +188,12 @@
                 <version>${vcc.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.vcc</groupId>
+                <artifactId>vcc-upstream</artifactId>
+                <version>${vcc.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -201,6 +207,7 @@
         <module>vcc-card</module>
         <module>vcc-user</module>
         <module>vcc-finance</module>
+        <module>vcc-upstream</module>
     </modules>
     <packaging>pom</packaging>
 

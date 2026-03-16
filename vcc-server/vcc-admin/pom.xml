@@ -70,6 +70,11 @@
             <artifactId>vcc-finance</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.vcc</groupId>
+            <artifactId>vcc-upstream</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

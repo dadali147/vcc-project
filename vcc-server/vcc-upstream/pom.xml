@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>vcc</artifactId>
+        <groupId>com.vcc</groupId>
+        <version>3.9.1</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>vcc-upstream</artifactId>
+
+    <description>
+        upstream上游接口封装
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.vcc</groupId>
+            <artifactId>vcc-common</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
