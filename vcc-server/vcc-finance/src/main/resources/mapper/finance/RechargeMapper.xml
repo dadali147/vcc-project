@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.finance.mapper.RechargeMapper">
+
+    <resultMap type="com.vcc.finance.domain.Recharge" id="RechargeResult">
+        <result property="id"                column="id"                  />
+        <result property="orderNo"           column="order_no"            />
+        <result property="userId"            column="user_id"             />
+        <result property="cardId"            column="card_id"             />
+        <result property="amount"            column="amount"              />
+        <result property="currency"          column="currency"            />
+        <result property="fee"               column="fee"                 />
+        <result property="actualAmount"      column="actual_amount"       />
+        <result property="status"            column="status"              />
+        <result property="rechargeType"      column="recharge_type"       />
+        <result property="upstreamOrderNo"   column="upstream_order_no"   />
+        <result property="txHash"            column="tx_hash"             />
+        <result property="failReason"        column="fail_reason"         />
+        <result property="completedAt"       column="completed_at"        />
+        <result property="createTime"        column="created_at"          />
+        <result property="updateTime"        column="updated_at"          />
+    </resultMap>
+
+    <sql id="selectRechargeVo">
+        select id, order_no, user_id, card_id, amount, currency, fee, actual_amount,
+               status, recharge_type, upstream_order_no, tx_hash, fail_reason,
+               completed_at, created_at, updated_at
+        from vcc_recharge
+    </sql>
+
+    <select id="selectRechargeById" parameterType="Long" resultMap="RechargeResult">
+        <include refid="selectRechargeVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectRechargeByOrderNo" parameterType="String" resultMap="RechargeResult">
+        <include refid="selectRechargeVo"/>
+        where order_no = #{orderNo}
+    </select>
+
+    <select id="selectRechargeList" parameterType="com.vcc.finance.domain.Recharge" resultMap="RechargeResult">
+        <include refid="selectRechargeVo"/>
+        <where>
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="cardId != null">AND card_id = #{cardId}</if>
+            <if test="orderNo != null and orderNo != ''">AND order_no = #{orderNo}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="rechargeType != null">AND recharge_type = #{rechargeType}</if>
+            <if test="currency != null and currency != ''">AND currency = #{currency}</if>
+        </where>
+        order by id desc
+    </select>
+
+    <insert id="insertRecharge" parameterType="com.vcc.finance.domain.Recharge" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_recharge (
+            <if test="orderNo != null and orderNo != ''">order_no,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="cardId != null">card_id,</if>
+            <if test="amount != null">amount,</if>
+            <if test="currency != null and currency != ''">currency,</if>
+            <if test="fee != null">fee,</if>
+            <if test="actualAmount != null">actual_amount,</if>
+            <if test="status != null">status,</if>
+            <if test="rechargeType != null">recharge_type,</if>
+            <if test="upstreamOrderNo != null and upstreamOrderNo != ''">upstream_order_no,</if>
+            <if test="txHash != null and txHash != ''">tx_hash,</if>
+            created_at
+        ) values (
+            <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="cardId != null">#{cardId},</if>
+            <if test="amount != null">#{amount},</if>
+            <if test="currency != null and currency != ''">#{currency},</if>
+            <if test="fee != null">#{fee},</if>
+            <if test="actualAmount != null">#{actualAmount},</if>
+            <if test="status != null">#{status},</if>
+            <if test="rechargeType != null">#{rechargeType},</if>
+            <if test="upstreamOrderNo != null and upstreamOrderNo != ''">#{upstreamOrderNo},</if>
+            <if test="txHash != null and txHash != ''">#{txHash},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateRecharge" parameterType="com.vcc.finance.domain.Recharge">
+        update vcc_recharge
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="upstreamOrderNo != null and upstreamOrderNo != ''">upstream_order_no = #{upstreamOrderNo},</if>
+            <if test="txHash != null and txHash != ''">tx_hash = #{txHash},</if>
+            <if test="failReason != null and failReason != ''">fail_reason = #{failReason},</if>
+            <if test="completedAt != null">completed_at = #{completedAt},</if>
+            updated_at = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteRechargeById" parameterType="Long">
+        delete from vcc_recharge where id = #{id}
+    </delete>
+
+</mapper>

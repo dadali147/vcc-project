@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.card.mapper.CardHolderMapper">
+
+    <resultMap type="com.vcc.card.domain.CardHolder" id="CardHolderResult">
+        <result property="id"                 column="id"                   />
+        <result property="userId"             column="user_id"              />
+        <result property="holderName"         column="holder_name"          />
+        <result property="firstName"          column="first_name"           />
+        <result property="lastName"           column="last_name"            />
+        <result property="mobile"             column="mobile"               />
+        <result property="email"              column="email"                />
+        <result property="idCard"             column="id_card"              />
+        <result property="address"            column="address"              />
+        <result property="postCode"           column="post_code"            />
+        <result property="country"            column="country"              />
+        <result property="status"             column="status"               />
+        <result property="upstreamHolderId"   column="upstream_holder_id"   />
+        <result property="createTime"         column="created_at"           />
+        <result property="updateTime"         column="updated_at"           />
+    </resultMap>
+
+    <sql id="selectCardHolderVo">
+        select id, user_id, holder_name, first_name, last_name, mobile, email, id_card,
+               address, post_code, country, status, upstream_holder_id, created_at, updated_at
+        from vcc_card_holder
+    </sql>
+
+    <select id="selectCardHolderById" parameterType="Long" resultMap="CardHolderResult">
+        <include refid="selectCardHolderVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectCardHolderList" parameterType="com.vcc.card.domain.CardHolder" resultMap="CardHolderResult">
+        <include refid="selectCardHolderVo"/>
+        <where>
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="holderName != null and holderName != ''">AND holder_name like concat('%', #{holderName}, '%')</if>
+            <if test="firstName != null and firstName != ''">AND first_name like concat('%', #{firstName}, '%')</if>
+            <if test="lastName != null and lastName != ''">AND last_name like concat('%', #{lastName}, '%')</if>
+            <if test="mobile != null and mobile != ''">AND mobile = #{mobile}</if>
+            <if test="email != null and email != ''">AND email = #{email}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="upstreamHolderId != null and upstreamHolderId != ''">AND upstream_holder_id = #{upstreamHolderId}</if>
+        </where>
+        order by id desc
+    </select>
+
+    <insert id="insertCardHolder" parameterType="com.vcc.card.domain.CardHolder" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_card_holder (
+            <if test="userId != null">user_id,</if>
+            <if test="holderName != null and holderName != ''">holder_name,</if>
+            <if test="firstName != null and firstName != ''">first_name,</if>
+            <if test="lastName != null and lastName != ''">last_name,</if>
+            <if test="mobile != null and mobile != ''">mobile,</if>
+            <if test="email != null and email != ''">email,</if>
+            <if test="idCard != null and idCard != ''">id_card,</if>
+            <if test="address != null and address != ''">address,</if>
+            <if test="postCode != null and postCode != ''">post_code,</if>
+            <if test="country != null and country != ''">country,</if>
+            <if test="status != null">status,</if>
+            <if test="upstreamHolderId != null and upstreamHolderId != ''">upstream_holder_id,</if>
+            created_at
+        ) values (
+            <if test="userId != null">#{userId},</if>
+            <if test="holderName != null and holderName != ''">#{holderName},</if>
+            <if test="firstName != null and firstName != ''">#{firstName},</if>
+            <if test="lastName != null and lastName != ''">#{lastName},</if>
+            <if test="mobile != null and mobile != ''">#{mobile},</if>
+            <if test="email != null and email != ''">#{email},</if>
+            <if test="idCard != null and idCard != ''">#{idCard},</if>
+            <if test="address != null and address != ''">#{address},</if>
+            <if test="postCode != null and postCode != ''">#{postCode},</if>
+            <if test="country != null and country != ''">#{country},</if>
+            <if test="status != null">#{status},</if>
+            <if test="upstreamHolderId != null and upstreamHolderId != ''">#{upstreamHolderId},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateCardHolder" parameterType="com.vcc.card.domain.CardHolder">
+        update vcc_card_holder
+        <set>
+            <if test="holderName != null and holderName != ''">holder_name = #{holderName},</if>
+            <if test="firstName != null and firstName != ''">first_name = #{firstName},</if>
+            <if test="lastName != null and lastName != ''">last_name = #{lastName},</if>
+            <if test="mobile != null and mobile != ''">mobile = #{mobile},</if>
+            <if test="email != null and email != ''">email = #{email},</if>
+            <if test="idCard != null and idCard != ''">id_card = #{idCard},</if>
+            <if test="address != null and address != ''">address = #{address},</if>
+            <if test="postCode != null">post_code = #{postCode},</if>
+            <if test="country != null and country != ''">country = #{country},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="upstreamHolderId != null and upstreamHolderId != ''">upstream_holder_id = #{upstreamHolderId},</if>
+            updated_at = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteCardHolderById" parameterType="Long">
+        delete from vcc_card_holder where id = #{id}
+    </delete>
+
+    <delete id="deleteCardHolderByIds" parameterType="Long">
+        delete from vcc_card_holder where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

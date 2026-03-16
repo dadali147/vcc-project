@@ -20,6 +20,11 @@
             <groupId>com.vcc</groupId>
             <artifactId>vcc-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.vcc</groupId>
+            <artifactId>vcc-upstream</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 </project>
