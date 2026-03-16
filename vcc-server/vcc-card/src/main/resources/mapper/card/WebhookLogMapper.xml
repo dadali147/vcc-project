@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.card.mapper.WebhookLogMapper">
+
+    <resultMap type="com.vcc.card.domain.WebhookLog" id="WebhookLogResult">
+        <result property="id"               column="id"                 />
+        <result property="webhookType"      column="webhook_type"       />
+        <result property="upstreamTxnId"    column="upstream_txn_id"    />
+        <result property="payload"          column="payload"            />
+        <result property="signature"        column="signature"          />
+        <result property="processed"        column="processed"          />
+        <result property="processResult"    column="process_result"     />
+        <result property="errorMsg"         column="error_msg"          />
+        <result property="retryCount"       column="retry_count"        />
+        <result property="createdAt"        column="created_at"         />
+        <result property="processedAt"      column="processed_at"       />
+    </resultMap>
+
+    <sql id="selectWebhookLogVo">
+        select id, webhook_type, upstream_txn_id, payload, signature,
+               processed, process_result, error_msg, retry_count,
+               created_at, processed_at
+        from vcc_webhook_log
+    </sql>
+
+    <select id="selectWebhookLogById" parameterType="Long" resultMap="WebhookLogResult">
+        <include refid="selectWebhookLogVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectWebhookLogByUpstreamTxnId" parameterType="String" resultMap="WebhookLogResult">
+        <include refid="selectWebhookLogVo"/>
+        where upstream_txn_id = #{upstreamTxnId}
+        limit 1
+    </select>
+
+    <select id="selectWebhookLogList" parameterType="com.vcc.card.domain.WebhookLog" resultMap="WebhookLogResult">
+        <include refid="selectWebhookLogVo"/>
+        <where>
+            <if test="webhookType != null and webhookType != ''">AND webhook_type = #{webhookType}</if>
+            <if test="upstreamTxnId != null and upstreamTxnId != ''">AND upstream_txn_id = #{upstreamTxnId}</if>
+            <if test="processed != null">AND processed = #{processed}</if>
+        </where>
+        order by id desc
+    </select>
+
+    <insert id="insertWebhookLog" parameterType="com.vcc.card.domain.WebhookLog" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_webhook_log (
+            <if test="webhookType != null and webhookType != ''">webhook_type,</if>
+            <if test="upstreamTxnId != null and upstreamTxnId != ''">upstream_txn_id,</if>
+            <if test="payload != null">payload,</if>
+            <if test="signature != null and signature != ''">signature,</if>
+            <if test="processed != null">processed,</if>
+            created_at
+        ) values (
+            <if test="webhookType != null and webhookType != ''">#{webhookType},</if>
+            <if test="upstreamTxnId != null and upstreamTxnId != ''">#{upstreamTxnId},</if>
+            <if test="payload != null">#{payload},</if>
+            <if test="signature != null and signature != ''">#{signature},</if>
+            <if test="processed != null">#{processed},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateWebhookLog" parameterType="com.vcc.card.domain.WebhookLog">
+        update vcc_webhook_log
+        <set>
+            <if test="processed != null">processed = #{processed},</if>
+            <if test="processResult != null">process_result = #{processResult},</if>
+            <if test="errorMsg != null">error_msg = #{errorMsg},</if>
+            <if test="retryCount != null">retry_count = #{retryCount},</if>
+            <if test="processedAt != null">processed_at = #{processedAt},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+</mapper>

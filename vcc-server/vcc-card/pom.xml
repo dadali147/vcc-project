@@ -25,6 +25,11 @@
             <artifactId>vcc-upstream</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.vcc</groupId>
+            <artifactId>vcc-finance</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

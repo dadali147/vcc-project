@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.card.mapper.TransactionMapper">
+
+    <resultMap type="com.vcc.card.domain.Transaction" id="TransactionResult">
+        <result property="id"               column="id"                 />
+        <result property="txnId"            column="txn_id"             />
+        <result property="cardId"           column="card_id"            />
+        <result property="userId"           column="user_id"            />
+        <result property="txnType"          column="txn_type"           />
+        <result property="amount"           column="amount"             />
+        <result property="currency"         column="currency"           />
+        <result property="merchantName"     column="merchant_name"      />
+        <result property="merchantMcc"      column="merchant_mcc"       />
+        <result property="merchantCountry"  column="merchant_country"   />
+        <result property="status"           column="status"             />
+        <result property="authCode"         column="auth_code"          />
+        <result property="failReason"       column="fail_reason"        />
+        <result property="txnTime"          column="txn_time"           />
+        <result property="createTime"       column="created_at"         />
+        <result property="updateTime"       column="updated_at"         />
+    </resultMap>
+
+    <sql id="selectTransactionVo">
+        select id, txn_id, card_id, user_id, txn_type, amount, currency,
+               merchant_name, merchant_mcc, merchant_country, status,
+               auth_code, fail_reason, txn_time, created_at, updated_at
+        from vcc_transaction
+    </sql>
+
+    <select id="selectTransactionById" parameterType="Long" resultMap="TransactionResult">
+        <include refid="selectTransactionVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectTransactionByTxnId" parameterType="String" resultMap="TransactionResult">
+        <include refid="selectTransactionVo"/>
+        where txn_id = #{txnId}
+    </select>
+
+    <select id="selectTransactionList" parameterType="com.vcc.card.domain.Transaction" resultMap="TransactionResult">
+        <include refid="selectTransactionVo"/>
+        <where>
+            <if test="txnId != null and txnId != ''">AND txn_id = #{txnId}</if>
+            <if test="cardId != null">AND card_id = #{cardId}</if>
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="txnType != null and txnType != ''">AND txn_type = #{txnType}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="currency != null and currency != ''">AND currency = #{currency}</if>
+            <if test="params.beginTxnTime != null and params.beginTxnTime != ''">
+                AND txn_time &gt;= #{params.beginTxnTime}
+            </if>
+            <if test="params.endTxnTime != null and params.endTxnTime != ''">
+                AND txn_time &lt;= #{params.endTxnTime}
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <insert id="insertTransaction" parameterType="com.vcc.card.domain.Transaction" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_transaction (
+            <if test="txnId != null and txnId != ''">txn_id,</if>
+            <if test="cardId != null">card_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="txnType != null and txnType != ''">txn_type,</if>
+            <if test="amount != null">amount,</if>
+            <if test="currency != null and currency != ''">currency,</if>
+            <if test="merchantName != null and merchantName != ''">merchant_name,</if>
+            <if test="merchantMcc != null and merchantMcc != ''">merchant_mcc,</if>
+            <if test="merchantCountry != null and merchantCountry != ''">merchant_country,</if>
+            <if test="status != null">status,</if>
+            <if test="authCode != null and authCode != ''">auth_code,</if>
+            <if test="failReason != null and failReason != ''">fail_reason,</if>
+            <if test="txnTime != null">txn_time,</if>
+            created_at
+        ) values (
+            <if test="txnId != null and txnId != ''">#{txnId},</if>
+            <if test="cardId != null">#{cardId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="txnType != null and txnType != ''">#{txnType},</if>
+            <if test="amount != null">#{amount},</if>
+            <if test="currency != null and currency != ''">#{currency},</if>
+            <if test="merchantName != null and merchantName != ''">#{merchantName},</if>
+            <if test="merchantMcc != null and merchantMcc != ''">#{merchantMcc},</if>
+            <if test="merchantCountry != null and merchantCountry != ''">#{merchantCountry},</if>
+            <if test="status != null">#{status},</if>
+            <if test="authCode != null and authCode != ''">#{authCode},</if>
+            <if test="failReason != null and failReason != ''">#{failReason},</if>
+            <if test="txnTime != null">#{txnTime},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateTransaction" parameterType="com.vcc.card.domain.Transaction">
+        update vcc_transaction
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="authCode != null and authCode != ''">auth_code = #{authCode},</if>
+            <if test="failReason != null and failReason != ''">fail_reason = #{failReason},</if>
+            updated_at = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteTransactionById" parameterType="Long">
+        delete from vcc_transaction where id = #{id}
+    </delete>
+
+</mapper>
