@@ -1,0 +1,7 @@
+*.DS_Store
+
+vcc-server/**/target/
+vcc-server/logs/
+
+vcc-web/node_modules/
+vcc-web/dist/
