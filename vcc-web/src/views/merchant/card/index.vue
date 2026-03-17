@@ -30,7 +30,11 @@
     </el-row>
 
     <el-table :data="cardList" v-loading="loading">
-      <el-table-column label="卡号" prop="cardNo" width="200" />
+      <el-table-column label="卡号" prop="cardNo" width="200">
+        <template #default="scope">
+          {{ scope.row.cardNo ? scope.row.cardNo.replace(/^(\d{4})\d{8}(\d{4})$/, '$1 **** **** $2') : '' }}
+        </template>
+      </el-table-column>
       <el-table-column label="卡BIN" prop="cardBinName" width="120" />
       <el-table-column label="持卡人" prop="holderName" width="120" />
       <el-table-column label="卡类型" prop="cardType" width="100">
@@ -170,6 +174,7 @@ function getList() {
   listCard(queryParams.value).then(response => {
     cardList.value = response.rows
     total.value = response.total
+  }).finally(() => {
     loading.value = false
   })
 }
@@ -226,8 +231,11 @@ function submitForm() {
   })
 }
 
+let secretTimer = null
+
 function handleDetail(row) {
   showSecret.value = false
+  clearTimeout(secretTimer)
   getCard(row.cardId).then(response => {
     detail.value = response.data
     openDetail.value = true
@@ -235,12 +243,21 @@ function handleDetail(row) {
 }
 
 function loadSecret() {
-  getCardSecret(detail.value.cardId).then(response => {
-    detail.value.cvv = response.data.cvv
-    detail.value.expMonth = response.data.expMonth
-    detail.value.expYear = response.data.expYear
-    showSecret.value = true
-  })
+  proxy.$modal.confirm('查看卡密信息需要二次确认，是否继续？').then(() => {
+    getCardSecret(detail.value.cardId).then(response => {
+      detail.value.cvv = response.data.cvv
+      detail.value.expMonth = response.data.expMonth
+      detail.value.expYear = response.data.expYear
+      showSecret.value = true
+      clearTimeout(secretTimer)
+      secretTimer = setTimeout(() => {
+        detail.value.cvv = ''
+        detail.value.expMonth = ''
+        detail.value.expYear = ''
+        showSecret.value = false
+      }, 60000)
+    })
+  }).catch(() => {})
 }
 
 function handleFreeze(row) {

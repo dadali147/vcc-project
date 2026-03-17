@@ -22,7 +22,7 @@ export function updateUserPwd(oldPassword, newPassword) {
   return request({
     url: '/merchant/user/profile/updatePwd',
     method: 'put',
-    params: { oldPassword, newPassword }
+    data: { oldPassword, newPassword }
   })
 }
 

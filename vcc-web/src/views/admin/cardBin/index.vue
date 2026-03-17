@@ -187,6 +187,7 @@ function getList() {
   listCardBin(queryParams.value).then(response => {
     binList.value = response.rows
     total.value = response.total
+  }).finally(() => {
     loading.value = false
   })
 }

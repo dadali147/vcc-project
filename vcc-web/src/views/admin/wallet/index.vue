@@ -150,6 +150,7 @@ function getList() {
   listWallet(queryParams.value).then(response => {
     walletList.value = response.rows
     total.value = response.total
+  }).finally(() => {
     loading.value = false
   })
 }

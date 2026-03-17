@@ -90,7 +90,7 @@
 </template>
 
 <script setup name="MerchantTransaction">
-import { listTransaction, getTransaction, exportTransaction } from "@/api/transaction"
+import { listTransaction, getTransaction } from "@/api/transaction"
 
 const { proxy } = getCurrentInstance()
 
@@ -117,6 +117,7 @@ function getList() {
   listTransaction(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
     transList.value = response.rows
     total.value = response.total
+  }).finally(() => {
     loading.value = false
   })
 }
@@ -140,7 +141,7 @@ function handleDetail(row) {
 }
 
 function handleExport() {
-  proxy.download('/merchant/transaction/export', { ...queryParams.value }, '交易记录_' + new Date().getTime() + '.xlsx')
+  proxy.download('/merchant/transaction/export', { ...proxy.addDateRange(queryParams.value, dateRange.value) }, '交易记录_' + new Date().getTime() + '.xlsx')
 }
 
 onMounted(() => {

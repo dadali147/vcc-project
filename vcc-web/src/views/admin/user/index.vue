@@ -69,16 +69,16 @@
         <el-descriptions-item label="用户名">{{ auditUser.userName }}</el-descriptions-item>
         <el-descriptions-item label="真实姓名">{{ auditUser.realName }}</el-descriptions-item>
         <el-descriptions-item label="证件类型">{{ auditUser.idType === '1' ? '身份证' : '护照' }}</el-descriptions-item>
-        <el-descriptions-item label="证件号码">{{ auditUser.idNumber }}</el-descriptions-item>
+        <el-descriptions-item label="证件号码">{{ auditUser.idNumber ? auditUser.idNumber.replace(/^(.{4})(.*)(.{4})$/, (m, p1, p2, p3) => p1 + '*'.repeat(p2.length) + p3) : '' }}</el-descriptions-item>
       </el-descriptions>
-      <el-form :model="auditForm" ref="auditRef" label-width="80px">
+      <el-form :model="auditForm" :rules="auditRules" ref="auditRef" label-width="80px">
         <el-form-item label="审核结果" prop="result">
           <el-radio-group v-model="auditForm.result">
             <el-radio value="1">通过</el-radio>
             <el-radio value="3">拒绝</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="审核备注" prop="remark">
+        <el-form-item label="审核备注" prop="remark" :rules="auditForm.result === '3' ? [{ required: true, message: '拒绝时备注不能为空', trigger: 'blur' }] : []">
           <el-input v-model="auditForm.remark" type="textarea" placeholder="请输入审核备注" />
         </el-form-item>
       </el-form>
@@ -90,14 +90,14 @@
 
     <!-- 费率配置对话框 -->
     <el-dialog title="费率配置" v-model="openRate" width="500px" append-to-body>
-      <el-form :model="rateForm" ref="rateRef" label-width="120px">
-        <el-form-item label="开卡费折扣 %">
+      <el-form :model="rateForm" :rules="rateRules" ref="rateRef" label-width="120px">
+        <el-form-item label="开卡费折扣 %" prop="openFeeDiscount">
           <el-input-number v-model="rateForm.openFeeDiscount" :min="0" :max="100" :precision="2" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="交易手续费 %">
+        <el-form-item label="交易手续费 %" prop="transRate">
           <el-input-number v-model="rateForm.transRate" :min="0" :max="100" :precision="2" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="充值手续费 %">
+        <el-form-item label="充值手续费 %" prop="rechargeRate">
           <el-input-number v-model="rateForm.rechargeRate" :min="0" :max="100" :precision="2" style="width: 100%" />
         </el-form-item>
       </el-form>
@@ -135,6 +135,24 @@ const rateForm = reactive({
   rechargeRate: 0
 })
 
+const auditRules = {
+  result: [{ required: true, message: "请选择审核结果", trigger: "change" }]
+}
+
+const rateValidator = (rule, value, callback) => {
+  if (value < 0 || value > 100) {
+    callback(new Error("数值范围应在 0~100 之间"))
+  } else {
+    callback()
+  }
+}
+
+const rateRules = {
+  openFeeDiscount: [{ required: true, message: "请输入开卡费折扣", trigger: "blur" }, { validator: rateValidator, trigger: "blur" }],
+  transRate: [{ required: true, message: "请输入交易手续费", trigger: "blur" }, { validator: rateValidator, trigger: "blur" }],
+  rechargeRate: [{ required: true, message: "请输入充值手续费", trigger: "blur" }, { validator: rateValidator, trigger: "blur" }]
+}
+
 const data = reactive({
   queryParams: {
     pageNum: 1,
@@ -151,6 +169,7 @@ function getList() {
   listUser(queryParams.value).then(response => {
     userList.value = response.rows
     total.value = response.total
+  }).finally(() => {
     loading.value = false
   })
 }
@@ -176,10 +195,13 @@ function handleAudit(row) {
 }
 
 function submitAudit() {
-  auditKyc(auditForm).then(() => {
-    proxy.$modal.msgSuccess("审核成功")
-    openAudit.value = false
-    getList()
+  proxy.$refs["auditRef"].validate(valid => {
+    if (!valid) return
+    auditKyc(auditForm).then(() => {
+      proxy.$modal.msgSuccess("审核成功")
+      openAudit.value = false
+      getList()
+    })
   })
 }
 
@@ -195,9 +217,12 @@ function handleRate(row) {
 }
 
 function submitRate() {
-  updateUserRate(rateForm).then(() => {
-    proxy.$modal.msgSuccess("配置成功")
-    openRate.value = false
+  proxy.$refs["rateRef"].validate(valid => {
+    if (!valid) return
+    updateUserRate(rateForm).then(() => {
+      proxy.$modal.msgSuccess("配置成功")
+      openRate.value = false
+    })
   })
 }
 

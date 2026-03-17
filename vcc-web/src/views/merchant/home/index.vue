@@ -152,15 +152,18 @@ const loading = ref(true)
 
 function loadData() {
   loading.value = true
-  getHomeStats().then(response => {
-    stats.value = response.data || {}
-  })
-  getRecentTransactions().then(response => {
-    recentTransactions.value = response.data || []
+  Promise.all([
+    getHomeStats().then(response => {
+      stats.value = response.data || {}
+    }),
+    getRecentTransactions().then(response => {
+      recentTransactions.value = response.data || []
+    }),
+    getNotices().then(response => {
+      notices.value = response.data || []
+    })
+  ]).finally(() => {
     loading.value = false
-  })
-  getNotices().then(response => {
-    notices.value = response.data || []
   })
 }
 

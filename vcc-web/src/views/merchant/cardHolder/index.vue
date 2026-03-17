@@ -132,7 +132,7 @@ const data = reactive({
     holderName: [{ required: true, message: "姓名不能为空", trigger: "blur" }],
     idType: [{ required: true, message: "请选择证件类型", trigger: "change" }],
     idNumber: [{ required: true, message: "证件号不能为空", trigger: "blur" }],
-    phone: [{ required: true, message: "手机号不能为空", trigger: "blur" }]
+    phone: [{ required: true, message: "手机号不能为空", trigger: "blur" }, { pattern: /^\+?[1-9]\d{1,14}$/, message: "请输入正确的手机号（E.164格式，如 +8613800138000）", trigger: "blur" }]
   }
 })
 const { queryParams, form, rules } = toRefs(data)
@@ -142,6 +142,7 @@ function getList() {
   listCardHolder(queryParams.value).then(response => {
     holderList.value = response.rows
     total.value = response.total
+  }).finally(() => {
     loading.value = false
   })
 }

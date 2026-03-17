@@ -90,7 +90,6 @@
 
 <script setup name="MerchantRecharge">
 import { listRecharge, getRechargeAddress } from "@/api/recharge"
-import useClipboard from 'vue-clipboard3'
 
 const { proxy } = getCurrentInstance()
 
@@ -129,6 +128,7 @@ function getList() {
   listRecharge(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
     rechargeList.value = response.rows
     total.value = response.total
+  }).finally(() => {
     loading.value = false
   })
 }

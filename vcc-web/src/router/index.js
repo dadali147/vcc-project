@@ -90,7 +90,7 @@ export const constantRoutes = [
     component: Layout,
     redirect: '/merchant/home',
     name: 'Merchant',
-    meta: { title: '商户中心', icon: 'shopping' },
+    meta: { title: '商户中心', icon: 'shopping', roles: ['merchant', 'admin'] },
     children: [
       {
         path: 'home',
@@ -135,81 +135,82 @@ export const constantRoutes = [
         meta: { title: '用户中心', icon: 'user' }
       }
     ]
-  },
-  // ========== 管理端路由 ==========
-  {
-    path: '/admin',
-    component: Layout,
-    redirect: '/admin/stats',
-    name: 'Admin',
-    meta: { title: '运营管理', icon: 'monitor' },
-    children: [
-      {
-        path: 'cardBin',
-        component: () => import('@/views/admin/cardBin/index'),
-        name: 'AdminCardBin',
-        meta: { title: '卡BIN管理', icon: 'card' }
-      },
-      {
-        path: 'card',
-        component: () => import('@/views/admin/card/index'),
-        name: 'AdminCard',
-        meta: { title: '卡片管理', icon: 'card' }
-      },
-      {
-        path: 'user',
-        component: () => import('@/views/admin/user/index'),
-        name: 'AdminUser',
-        meta: { title: '用户审核', icon: 'user' }
-      },
-      {
-        path: 'wallet',
-        component: () => import('@/views/admin/wallet/index'),
-        name: 'AdminWallet',
-        meta: { title: '钱包管理', icon: 'money' }
-      },
-      {
-        path: 'stats',
-        component: () => import('@/views/admin/stats/index'),
-        name: 'AdminStats',
-        meta: { title: '卡产品统计', icon: 'chart' }
-      },
-      {
-        path: 'recharge',
-        component: () => import('@/views/admin/recharge/index'),
-        name: 'AdminRecharge',
-        meta: { title: '充值管理', icon: 'upload' }
-      },
-      {
-        path: 'transaction',
-        component: () => import('@/views/admin/transaction/index'),
-        name: 'AdminTransaction',
-        meta: { title: '交易监控', icon: 'eye-open' }
-      },
-      {
-        path: 'feeConfig',
-        component: () => import('@/views/admin/feeConfig/index'),
-        name: 'AdminFeeConfig',
-        meta: { title: '费率配置', icon: 'money' }
-      },
-      {
-        path: 'config',
-        component: () => import('@/views/admin/config/index'),
-        name: 'AdminConfig',
-        meta: { title: '系统配置', icon: 'system' }
-      },
-      {
-        path: 'userAuth',
-        component: () => import('@/views/admin/userAuth/index'),
-        name: 'AdminUserAuth',
-        meta: { title: '用户验证管理', icon: 'validCode' }
-      }
-    ]
   }
 ]
 
 // 动态路由，基于用户权限动态去加载
 export const dynamicRoutes = [
+  // ========== 管理端路由（需 admin 角色） ==========
+  {
+    path: '/admin',
+    component: Layout,
+    redirect: '/admin/stats',
+    name: 'Admin',
+    roles: ['admin'],
+    meta: { title: '运营管理', icon: 'monitor', roles: ['admin'], permissions: ['admin:*'] },
+    children: [
+      {
+        path: 'cardBin',
+        component: () => import('@/views/admin/cardBin/index'),
+        name: 'AdminCardBin',
+        meta: { title: '卡BIN管理', icon: 'card', roles: ['admin'], permissions: ['admin:*'] }
+      },
+      {
+        path: 'card',
+        component: () => import('@/views/admin/card/index'),
+        name: 'AdminCard',
+        meta: { title: '卡片管理', icon: 'card', roles: ['admin'], permissions: ['admin:*'] }
+      },
+      {
+        path: 'user',
+        component: () => import('@/views/admin/user/index'),
+        name: 'AdminUser',
+        meta: { title: '用户审核', icon: 'user', roles: ['admin'], permissions: ['admin:*'] }
+      },
+      {
+        path: 'wallet',
+        component: () => import('@/views/admin/wallet/index'),
+        name: 'AdminWallet',
+        meta: { title: '钱包管理', icon: 'money', roles: ['admin'], permissions: ['admin:*'] }
+      },
+      {
+        path: 'stats',
+        component: () => import('@/views/admin/stats/index'),
+        name: 'AdminStats',
+        meta: { title: '卡产品统计', icon: 'chart', roles: ['admin'], permissions: ['admin:*'] }
+      },
+      {
+        path: 'recharge',
+        component: () => import('@/views/admin/recharge/index'),
+        name: 'AdminRecharge',
+        meta: { title: '充值管理', icon: 'upload', roles: ['admin'], permissions: ['admin:*'] }
+      },
+      {
+        path: 'transaction',
+        component: () => import('@/views/admin/transaction/index'),
+        name: 'AdminTransaction',
+        meta: { title: '交易监控', icon: 'eye-open', roles: ['admin'], permissions: ['admin:*'] }
+      },
+      {
+        path: 'feeConfig',
+        component: () => import('@/views/admin/feeConfig/index'),
+        name: 'AdminFeeConfig',
+        meta: { title: '费率配置', icon: 'money', roles: ['admin'], permissions: ['admin:*'] }
+      },
+      {
+        path: 'config',
+        component: () => import('@/views/admin/config/index'),
+        name: 'AdminConfig',
+        meta: { title: '系统配置', icon: 'system', roles: ['admin'], permissions: ['admin:*'] }
+      },
+      {
+        path: 'userAuth',
+        component: () => import('@/views/admin/userAuth/index'),
+        name: 'AdminUserAuth',
+        meta: { title: '用户验证管理', icon: 'validCode', roles: ['admin'], permissions: ['admin:*'] }
+      }
+    ]
+  },
   {
     path: '/system/user-auth',
     component: Layout,

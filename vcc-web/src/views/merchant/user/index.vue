@@ -160,7 +160,7 @@ const equalToPassword = (rule, value, callback) => {
 
 const pwdRules = {
   oldPassword: [{ required: true, message: "旧密码不能为空", trigger: "blur" }],
-  newPassword: [{ required: true, message: "新密码不能为空", trigger: "blur" }, { min: 6, max: 20, message: "长度在 6 到 20 个字符", trigger: "blur" }],
+  newPassword: [{ required: true, message: "新密码不能为空", trigger: "blur" }, { min: 8, max: 20, message: "密码长度不少于 8 个字符", trigger: "blur" }],
   confirmPassword: [{ required: true, message: "确认密码不能为空", trigger: "blur" }, { validator: equalToPassword, trigger: "blur" }]
 }
 
@@ -232,6 +232,10 @@ function generateSecret() {
 function bindTfa() {
   if (!tfaForm.code) {
     proxy.$modal.msgError("请输入验证码")
+    return
+  }
+  if (!/^\d{6}$/.test(tfaForm.code)) {
+    proxy.$modal.msgError("验证码必须为6位数字")
     return
   }
   bind2fa({ code: tfaForm.code, secret: tfaSecret.value }).then(() => {

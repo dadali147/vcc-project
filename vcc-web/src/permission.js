@@ -49,7 +49,13 @@ router.beforeEach((to, from, next) => {
           })
         })
       } else {
-        next()
+        // 访问 /admin/* 时校验用户角色，非 admin 跳转 401
+        if (to.path.startsWith('/admin') && !useUserStore().roles.includes('admin')) {
+          next({ path: '/401' })
+          NProgress.done()
+        } else {
+          next()
+        }
       }
     }
   } else {

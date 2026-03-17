@@ -73,17 +73,17 @@
         <el-descriptions-item label="充值金额">{{ auditRow.amount }} USDT</el-descriptions-item>
         <el-descriptions-item label="交易哈希">{{ auditRow.txHash }}</el-descriptions-item>
       </el-descriptions>
-      <el-form :model="auditForm" ref="auditRef" label-width="80px">
-        <el-form-item label="审核结果">
+      <el-form :model="auditForm" :rules="auditRules" ref="auditRef" label-width="80px">
+        <el-form-item label="审核结果" prop="result">
           <el-radio-group v-model="auditForm.result">
             <el-radio value="1">通过</el-radio>
             <el-radio value="2">拒绝</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="到账金额" v-if="auditForm.result === '1'">
+        <el-form-item label="到账金额" v-if="auditForm.result === '1'" prop="receivedAmount">
           <el-input-number v-model="auditForm.receivedAmount" :min="0" :precision="2" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="备注">
+        <el-form-item label="备注" prop="remark" :rules="auditForm.result === '2' ? [{ required: true, message: '拒绝时备注不能为空', trigger: 'blur' }] : []">
           <el-input v-model="auditForm.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
@@ -169,6 +169,7 @@ function getList() {
   listRecharge(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
     rechargeList.value = response.rows
     total.value = response.total
+  }).finally(() => {
     loading.value = false
   })
 }
@@ -193,11 +194,18 @@ function handleAudit(row) {
   openAudit.value = true
 }
 
+const auditRules = {
+  result: [{ required: true, message: "请选择审核结果", trigger: "change" }]
+}
+
 function submitAudit() {
-  auditRecharge(auditForm).then(() => {
-    proxy.$modal.msgSuccess("审核成功")
-    openAudit.value = false
-    getList()
+  proxy.$refs["auditRef"].validate(valid => {
+    if (!valid) return
+    auditRecharge(auditForm).then(() => {
+      proxy.$modal.msgSuccess("审核成功")
+      openAudit.value = false
+      getList()
+    })
   })
 }
 
@@ -222,7 +230,7 @@ function submitManual() {
 }
 
 function handleExport() {
-  proxy.download('/admin/recharge/export', { ...queryParams.value }, '充值记录_' + new Date().getTime() + '.xlsx')
+  proxy.download('/admin/recharge/export', { ...proxy.addDateRange(queryParams.value, dateRange.value) }, '充值记录_' + new Date().getTime() + '.xlsx')
 }
 
 onMounted(() => {

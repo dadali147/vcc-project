@@ -96,7 +96,7 @@
 </template>
 
 <script setup name="AdminCard">
-import { listCard, getCard, freezeCard, unfreezeCard, cancelCard, exportCard } from "@/api/admin/card"
+import { listCard, getCard, freezeCard, unfreezeCard, cancelCard } from "@/api/admin/card"
 import { listCardBin } from "@/api/admin/cardBin"
 
 const { proxy } = getCurrentInstance()
@@ -126,6 +126,7 @@ function getList() {
   listCard(queryParams.value).then(response => {
     cardList.value = response.rows
     total.value = response.total
+  }).finally(() => {
     loading.value = false
   })
 }
