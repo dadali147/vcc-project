@@ -85,20 +85,14 @@ public class RechargeServiceImpl implements IRechargeService
             }
         }
 
-        // 风控：日充值上限
+        // VCC-016: 风控：日充值上限（数据库层面查询，减少并发窗口）
         String dailyLimitStr = systemConfigService.get("risk.daily.recharge.limit");
         if (StringUtils.isNotEmpty(dailyLimitStr))
         {
             BigDecimal dailyLimit = new BigDecimal(dailyLimitStr);
-            // 查询今日已成功充值总额
-            Recharge query = new Recharge();
-            query.setUserId(userId);
-            query.setStatus(Recharge.STATUS_SUCCESS);
-            List<Recharge> todayList = rechargeMapper.selectRechargeList(query);
-            BigDecimal todayTotal = todayList.stream()
-                    .filter(r -> r.getCreateTime() != null && isToday(r.getCreateTime()))
-                    .map(Recharge::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            // 使用数据库查询今日充值总额（更精确，减少并发窗口）
+            String[] todayRange = getTodayTimeRange();
+            BigDecimal todayTotal = rechargeMapper.selectTodayRechargeTotal(userId, todayRange[0], todayRange[1]);
             if (todayTotal.add(amount).compareTo(dailyLimit) > 0)
             {
                 throw new RuntimeException("今日充值总额将超过上限: " + dailyLimit + " USD，今日已充值: " + todayTotal + " USD");
@@ -290,5 +284,18 @@ public class RechargeServiceImpl implements IRechargeService
         cal2.setTime(date);
         return cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR)
                 && cal1.get(java.util.Calendar.DAY_OF_YEAR) == cal2.get(java.util.Calendar.DAY_OF_YEAR);
+    }
+
+    /**
+     * VCC-016: 获取今日时间范围（用于数据库查询）
+     * @return [startTime, endTime] 格式：yyyy-MM-dd HH:mm:ss
+     */
+    private String[] getTodayTimeRange()
+    {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
+        java.time.LocalDateTime endOfDay = startOfDay.plusDays(1);
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return new String[]{startOfDay.format(formatter), endOfDay.format(formatter)};
     }
 }

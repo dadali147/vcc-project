@@ -14,6 +14,11 @@ public interface RechargeMapper
 
     public List<Recharge> selectRechargeList(Recharge recharge);
 
+    /**
+     * VCC-016: 查询用户今日充值总额（数据库层面，带日期条件）
+     */
+    public java.math.BigDecimal selectTodayRechargeTotal(Long userId, String startTime, String endTime);
+
     public int insertRecharge(Recharge recharge);
 
     public int updateRecharge(Recharge recharge);

@@ -55,6 +55,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by id desc
     </select>
 
+    <!-- VCC-016: 查询用户今日充值总额（数据库层面） -->
+    <select id="selectTodayRechargeTotal" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0) 
+        FROM vcc_recharge 
+        WHERE user_id = #{userId} 
+          AND status = 1
+          AND created_at &gt;= #{startTime}
+          AND created_at &lt; #{endTime}
+    </select>
+
     <insert id="insertRecharge" parameterType="com.vcc.finance.domain.Recharge" useGeneratedKeys="true" keyProperty="id">
         insert into vcc_recharge (
             <if test="orderNo != null and orderNo != ''">order_no,</if>
