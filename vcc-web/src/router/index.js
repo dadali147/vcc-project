@@ -83,6 +83,110 @@ export const constantRoutes = [
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
+  },
+  // ========== 商户端路由 ==========
+  {
+    path: '/merchant',
+    component: Layout,
+    redirect: '/merchant/home',
+    name: 'Merchant',
+    meta: { title: '商户中心', icon: 'shopping' },
+    children: [
+      {
+        path: 'home',
+        component: () => import('@/views/merchant/home/index'),
+        name: 'MerchantHome',
+        meta: { title: '首页', icon: 'dashboard' }
+      },
+      {
+        path: 'wallet',
+        component: () => import('@/views/merchant/wallet/index'),
+        name: 'MerchantWallet',
+        meta: { title: '我的钱包', icon: 'money' }
+      },
+      {
+        path: 'card',
+        component: () => import('@/views/merchant/card/index'),
+        name: 'MerchantCard',
+        meta: { title: '卡片管理', icon: 'card' }
+      },
+      {
+        path: 'cardHolder',
+        component: () => import('@/views/merchant/cardHolder/index'),
+        name: 'MerchantCardHolder',
+        meta: { title: '持卡人管理', icon: 'peoples' }
+      },
+      {
+        path: 'recharge',
+        component: () => import('@/views/merchant/recharge/index'),
+        name: 'MerchantRecharge',
+        meta: { title: '账户充值', icon: 'upload' }
+      },
+      {
+        path: 'transaction',
+        component: () => import('@/views/merchant/transaction/index'),
+        name: 'MerchantTransaction',
+        meta: { title: '交易记录', icon: 'list' }
+      },
+      {
+        path: 'user',
+        component: () => import('@/views/merchant/user/index'),
+        name: 'MerchantUser',
+        meta: { title: '用户中心', icon: 'user' }
+      }
+    ]
+  },
+  // ========== 管理端路由 ==========
+  {
+    path: '/admin',
+    component: Layout,
+    redirect: '/admin/stats',
+    name: 'Admin',
+    meta: { title: '运营管理', icon: 'monitor' },
+    children: [
+      {
+        path: 'cardBin',
+        component: () => import('@/views/admin/cardBin/index'),
+        name: 'AdminCardBin',
+        meta: { title: '卡BIN管理', icon: 'card' }
+      },
+      {
+        path: 'card',
+        component: () => import('@/views/admin/card/index'),
+        name: 'AdminCard',
+        meta: { title: '卡片管理', icon: 'card' }
+      },
+      {
+        path: 'user',
+        component: () => import('@/views/admin/user/index'),
+        name: 'AdminUser',
+        meta: { title: '用户审核', icon: 'user' }
+      },
+      {
+        path: 'wallet',
+        component: () => import('@/views/admin/wallet/index'),
+        name: 'AdminWallet',
+        meta: { title: '钱包管理', icon: 'money' }
+      },
+      {
+        path: 'stats',
+        component: () => import('@/views/admin/stats/index'),
+        name: 'AdminStats',
+        meta: { title: '卡产品统计', icon: 'chart' }
+      },
+      {
+        path: 'recharge',
+        component: () => import('@/views/admin/recharge/index'),
+        name: 'AdminRecharge',
+        meta: { title: '充值管理', icon: 'upload' }
+      },
+      {
+        path: 'transaction',
+        component: () => import('@/views/admin/transaction/index'),
+        name: 'AdminTransaction',
+        meta: { title: '交易监控', icon: 'eye-open' }
+      }
+    ]
   }
 ]
 
