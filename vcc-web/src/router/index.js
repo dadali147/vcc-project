@@ -149,10 +149,28 @@ export const constantRoutes = [
         meta: { title: '卡BIN管理', icon: 'card' }
       },
       {
+        path: 'card',
+        component: () => import('@/views/admin/card/index'),
+        name: 'AdminCard',
+        meta: { title: '卡片管理', icon: 'credit-card' }
+      },
+      {
         path: 'user',
         component: () => import('@/views/admin/user/index'),
         name: 'AdminUser',
         meta: { title: '用户审核', icon: 'user' }
+      },
+      {
+        path: 'wallet',
+        component: () => import('@/views/admin/wallet/index'),
+        name: 'AdminWallet',
+        meta: { title: '钱包管理', icon: 'wallet' }
+      },
+      {
+        path: 'stats',
+        component: () => import('@/views/admin/stats/index'),
+        name: 'AdminStats',
+        meta: { title: '卡产品统计', icon: 'chart' }
       },
       {
         path: 'recharge',
