@@ -83,6 +83,45 @@ export const constantRoutes = [
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
+  },
+  // VCC 商户端路由
+  {
+    path: '/merchant',
+    component: Layout,
+    redirect: '/merchant/card',
+    meta: { title: '虚拟卡管理', icon: 'card' },
+    children: [
+      {
+        path: 'card',
+        component: () => import('@/views/merchant/card/index'),
+        name: 'MerchantCard',
+        meta: { title: '卡片管理', icon: 'card' }
+      },
+      {
+        path: 'cardHolder',
+        component: () => import('@/views/merchant/cardHolder/index'),
+        name: 'MerchantCardHolder',
+        meta: { title: '持卡人管理', icon: 'user' }
+      },
+      {
+        path: 'recharge',
+        component: () => import('@/views/merchant/recharge/index'),
+        name: 'MerchantRecharge',
+        meta: { title: '账户充值', icon: 'money' }
+      },
+      {
+        path: 'transaction',
+        component: () => import('@/views/merchant/transaction/index'),
+        name: 'MerchantTransaction',
+        meta: { title: '交易记录', icon: 'transaction' }
+      },
+      {
+        path: 'user',
+        component: () => import('@/views/merchant/user/index'),
+        name: 'MerchantUser',
+        meta: { title: '用户中心', icon: 'user' }
+      }
+    ]
   }
 ]
 
