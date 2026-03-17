@@ -315,7 +315,7 @@ public class YeeVccClient
 
     private URI buildUri(String path, HttpMethod method, Map<String, Object> payload)
     {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(config.getBaseUrl() + path);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(config.getBaseUrl() + path);
         if (method == HttpMethod.GET)
         {
             for (Map.Entry<String, Object> entry : payload.entrySet())
@@ -544,8 +544,31 @@ public class YeeVccClient
 
     private Map<String, Object> toRequestMap(YeeVccBaseRequest request)
     {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> rawMap = objectMapper.convertValue(request, Map.class);
+        // 使用反射获取字段，保留原始大小写
+        Map<String, Object> rawMap = new LinkedHashMap<>();
+        Class<?> clazz = request.getClass();
+        
+        while (clazz != null && !clazz.equals(Object.class))
+        {
+            for (java.lang.reflect.Field field : clazz.getDeclaredFields())
+            {
+                field.setAccessible(true);
+                try
+                {
+                    Object value = field.get(request);
+                    if (value != null)
+                    {
+                        rawMap.put(field.getName(), value);
+                    }
+                }
+                catch (IllegalAccessException e)
+                {
+                    // Skip fields that can't be accessed
+                }
+            }
+            clazz = clazz.getSuperclass();
+        }
+        
         @SuppressWarnings("unchecked")
         Map<String, Object> cleanMap = (Map<String, Object>) pruneEmptyValues(sortObject(rawMap));
         return cleanMap == null ? Map.of() : cleanMap;

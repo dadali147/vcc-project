@@ -58,6 +58,96 @@ public class WebhookController
     }
 
     /**
+     * 3DS 验证码回调接口
+     * VCC-002: 收到 OTP 回调后，将验证码保存并支持在商户端页面展示
+     */
+    @PostMapping("/otp")
+    public String otp(@RequestBody Map<String, Object> data,
+                      @RequestHeader(value = "x-yop-signature", required = false) String signature,
+                      HttpServletRequest request)
+    {
+        String payload = JSON.toJSONString(data);
+        log.info("收到3DS验证码回调: data={}", payload);
+
+        // 验签
+        if (!verifyWebhookSignature(request, payload))
+        {
+            log.error("3DS OTP回调验签失败，返回 401");
+            throw new WebhookAuthenticationException("验签失败");
+        }
+
+        // 入队处理
+        boolean queued = webhookService.enqueueWebhook("3DS_OTP", payload, signature, data);
+        if (!queued)
+        {
+            log.error("3DS OTP回调入队失败，返回 500");
+            throw new WebhookProcessingException("处理失败，请重试");
+        }
+
+        return "ok";
+    }
+
+    /**
+     * 交易授权回调接口
+     * VCC-002: 交易授权结果通知
+     */
+    @PostMapping("/authTransaction")
+    public String authTransaction(@RequestBody Map<String, Object> data,
+                                  @RequestHeader(value = "x-yop-signature", required = false) String signature,
+                                  HttpServletRequest request)
+    {
+        String payload = JSON.toJSONString(data);
+        log.info("收到交易授权回调: data={}", payload);
+
+        // 验签
+        if (!verifyWebhookSignature(request, payload))
+        {
+            log.error("交易授权回调验签失败，返回 401");
+            throw new WebhookAuthenticationException("验签失败");
+        }
+
+        // 入队处理
+        boolean queued = webhookService.enqueueWebhook("AUTH_TRANSACTION", payload, signature, data);
+        if (!queued)
+        {
+            log.error("交易授权回调入队失败，返回 500");
+            throw new WebhookProcessingException("处理失败，请重试");
+        }
+
+        return "ok";
+    }
+
+    /**
+     * 卡片操作回调接口
+     * VCC-002: 卡片操作结果通知（开卡、激活、冻结、注销等）
+     */
+    @PostMapping("/cardOperate")
+    public String cardOperate(@RequestBody Map<String, Object> data,
+                              @RequestHeader(value = "x-yop-signature", required = false) String signature,
+                              HttpServletRequest request)
+    {
+        String payload = JSON.toJSONString(data);
+        log.info("收到卡片操作回调: data={}", payload);
+
+        // 验签
+        if (!verifyWebhookSignature(request, payload))
+        {
+            log.error("卡片操作回调验签失败，返回 401");
+            throw new WebhookAuthenticationException("验签失败");
+        }
+
+        // 入队处理
+        boolean queued = webhookService.enqueueWebhook("CARD_OPERATION", payload, signature, data);
+        if (!queued)
+        {
+            log.error("卡片操作回调入队失败，返回 500");
+            throw new WebhookProcessingException("处理失败，请重试");
+        }
+
+        return "ok";
+    }
+
+    /**
      * Webhook 签名验证（预留方法，后续补充完整逻辑）
      * 
      * @param request HTTP请求
