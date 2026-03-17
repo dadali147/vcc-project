@@ -26,7 +26,8 @@ public class WebhookController
     private WebhookService webhookService;
 
     /**
-     * 接收 YeeVCC 上游回调（秒回 200，异步处理业务）
+     * 接收 YeeVCC 上游回调（同步验签 + 入队后再返回 200）
+     * VCC-011: 先验签，成功后再返回 2xx，确保失败时能触发上游重试
      */
     @PostMapping("/yeevcc")
     public String yeevcc(@RequestBody Map<String, Object> data,
@@ -38,16 +39,20 @@ public class WebhookController
 
         log.info("收到YeeVCC回调: type={}, data={}", webhookType, payload);
 
-        // TODO: Webhook 验签（暂时放行，后续补充）
-        // 需要从请求头获取 X-Webhook-Timestamp 和 X-Webhook-Signature
-        // 使用 HMAC-SHA256 验签，参考 WebhookHmacV1.verifyV1Hex()
+        // VCC-011: 同步验签，失败返回 401 触发上游重试
         if (!verifyWebhookSignature(request, payload))
         {
-            log.warn("Webhook验签失败，暂时放行: type={}", webhookType);
+            log.error("Webhook验签失败，返回 401: type={}", webhookType);
+            throw new WebhookAuthenticationException("验签失败");
         }
 
-        // 异步处理，立即返回
-        webhookService.processWebhookAsync(webhookType, payload, signature, data);
+        // 验签通过后，保存到队列/数据库，再异步处理
+        boolean queued = webhookService.enqueueWebhook(webhookType, payload, signature, data);
+        if (!queued)
+        {
+            log.error("Webhook入队失败，返回 500: type={}", webhookType);
+            throw new WebhookProcessingException("处理失败，请重试");
+        }
 
         return "ok";
     }

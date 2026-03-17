@@ -12,6 +12,11 @@ public interface WebhookLogMapper
 
     public WebhookLog selectWebhookLogByUpstreamTxnId(String upstreamTxnId);
 
+    /**
+     * VCC-012: 根据幂等键查询
+     */
+    public WebhookLog selectByIdempotencyKey(String idempotencyKey);
+
     public List<WebhookLog> selectWebhookLogList(WebhookLog webhookLog);
 
     public int insertWebhookLog(WebhookLog webhookLog);

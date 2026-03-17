@@ -49,38 +49,58 @@ public class WebhookServiceImpl implements WebhookService
     @Autowired
     private YeeVccConfig yeeVccConfig;
 
-    @Async("threadPoolTaskExecutor")
+    /**
+     * VCC-011: 同步入队，保存到数据库后再返回成功
+     */
     @Override
-    public void processWebhookAsync(String webhookType, String payload, String signature, Map<String, Object> data)
+    public boolean enqueueWebhook(String webhookType, String payload, String signature, Map<String, Object> data)
     {
-        // 1. 提取上游交易ID
-        String upstreamTxnId = extractUpstreamTxnId(webhookType, data);
-
-        // 2. 保存原始日志
-        WebhookLog webhookLog = new WebhookLog();
-        webhookLog.setWebhookType(webhookType);
-        webhookLog.setUpstreamTxnId(upstreamTxnId);
-        webhookLog.setPayload(payload);
-        webhookLog.setSignature(signature);
-        webhookLog.setProcessed(WebhookLog.PROCESSED_NO);
-        webhookLog.setRetryCount(0);
-        webhookLogMapper.insertWebhookLog(webhookLog);
-
-        // 3. 验签
-        if (!verifySignature(payload, signature))
+        try
         {
-            markFailed(webhookLog, "验签失败");
+            // VCC-012: 生成唯一幂等键（webhookType + 业务唯一ID）
+            String idempotencyKey = generateIdempotencyKey(webhookType, data);
+            
+            // 检查是否已存在（快速去重）
+            if (idempotencyKey != null && webhookLogMapper.selectByIdempotencyKey(idempotencyKey) != null)
+            {
+                log.info("Webhook重复，已跳过: idempotencyKey={}", idempotencyKey);
+                return true; // 视为成功，不重复处理
+            }
+            
+            // 保存到数据库（同步执行，确保落盘后再返回 200）
+            WebhookLog webhookLog = new WebhookLog();
+            webhookLog.setWebhookType(webhookType);
+            webhookLog.setUpstreamTxnId(extractUpstreamTxnId(webhookType, data));
+            webhookLog.setIdempotencyKey(idempotencyKey);
+            webhookLog.setPayload(payload);
+            webhookLog.setSignature(signature);
+            webhookLog.setProcessed(WebhookLog.PROCESSED_NO);
+            webhookLog.setRetryCount(0);
+            webhookLogMapper.insertWebhookLog(webhookLog);
+            
+            // 异步处理业务
+            processWebhookAsync(webhookLog.getId(), webhookType, payload, signature, data);
+            
+            return true;
+        }
+        catch (Exception e)
+        {
+            log.error("Webhook入队失败", e);
+            return false;
+        }
+    }
+
+    @Async("threadPoolTaskExecutor")
+    public void processWebhookAsync(Long logId, String webhookType, String payload, String signature, Map<String, Object> data)
+    {
+        WebhookLog webhookLog = webhookLogMapper.selectWebhookLogById(logId);
+        if (webhookLog == null || webhookLog.getProcessed() == WebhookLog.PROCESSED_YES)
+        {
+            log.warn("Webhook日志不存在或已处理: logId={}", logId);
             return;
         }
-
-        // 4. 幂等检查：同一 upstream_txn_id 是否已处理
-        if (upstreamTxnId != null && isDuplicate(upstreamTxnId, webhookLog.getId()))
-        {
-            markFailed(webhookLog, "重复回调，已跳过");
-            return;
-        }
-
-        // 5. 分发处理
+        
+        // 分发处理
         try
         {
             switch (webhookType)
@@ -104,9 +124,17 @@ public class WebhookServiceImpl implements WebhookService
         }
         catch (Exception e)
         {
-            log.error("Webhook处理异常: type={}, upstreamTxnId={}", webhookType, upstreamTxnId, e);
+            log.error("Webhook处理异常: type={}, logId={}", webhookType, logId, e);
             markFailed(webhookLog, e.getMessage());
         }
+    }
+
+    @Override
+    public void processWebhookAsync(String webhookType, String payload, String signature, Map<String, Object> data)
+    {
+        // 旧接口兼容，直接调用入队
+        enqueueWebhook(webhookType, payload, signature, data);
+    }
     }
 
     /**
@@ -335,6 +363,40 @@ public class WebhookServiceImpl implements WebhookService
     }
 
     // ==================== 工具方法 ====================
+
+    /**
+     * VCC-012: 生成幂等键（webhookType + 业务唯一ID）
+     * 确保同一类型的不同事件不会被视为重复
+     */
+    private String generateIdempotencyKey(String webhookType, Map<String, Object> data)
+    {
+        String businessId = switch (webhookType)
+        {
+            case TYPE_TRANSACTION -> getString(data, "tranId");
+            case TYPE_CARD_STATUS_CHANGE -> {
+                // 卡状态变更：cardId + operateType + timestamp
+                String cardId = getString(data, "cardId");
+                String operateType = getString(data, "operateType");
+                String timestamp = getString(data, "timestamp");
+                yield cardId + ":" + operateType + ":" + timestamp;
+            }
+            case TYPE_RECHARGE_RESULT -> getString(data, "orderNo");
+            case TYPE_3DS_OTP -> {
+                // 3DS OTP: cardId + otpCode
+                String cardId = getString(data, "cardId");
+                String otpCode = getString(data, "otpCode");
+                yield cardId + ":" + otpCode;
+            }
+            default -> null;
+        };
+        
+        if (businessId == null)
+        {
+            return null;
+        }
+        
+        return webhookType + ":" + businessId;
+    }
 
     private String extractUpstreamTxnId(String webhookType, Map<String, Object> data)
     {

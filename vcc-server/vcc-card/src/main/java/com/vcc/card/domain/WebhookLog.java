@@ -27,6 +27,9 @@ public class WebhookLog extends BaseEntity
     /** 上游交易ID */
     private String upstreamTxnId;
 
+    /** VCC-012: 幂等键（webhookType + 业务唯一ID） */
+    private String idempotencyKey;
+
     /** 回调原始数据（JSON） */
     private String payload;
 
@@ -79,6 +82,16 @@ public class WebhookLog extends BaseEntity
     public void setUpstreamTxnId(String upstreamTxnId)
     {
         this.upstreamTxnId = upstreamTxnId;
+    }
+
+    public String getIdempotencyKey()
+    {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey)
+    {
+        this.idempotencyKey = idempotencyKey;
     }
 
     public String getPayload()
