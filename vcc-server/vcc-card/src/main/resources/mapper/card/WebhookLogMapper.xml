@@ -8,6 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="id"               column="id"                 />
         <result property="webhookType"      column="webhook_type"       />
         <result property="upstreamTxnId"    column="upstream_txn_id"    />
+        <result property="idempotencyKey"  column="idempotency_key"    />
         <result property="payload"          column="payload"            />
         <result property="signature"        column="signature"          />
         <result property="processed"        column="processed"          />
@@ -19,7 +20,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectWebhookLogVo">
-        select id, webhook_type, upstream_txn_id, payload, signature,
+        select id, webhook_type, upstream_txn_id, idempotency_key, payload, signature,
                processed, process_result, error_msg, retry_count,
                created_at, processed_at
         from vcc_webhook_log
@@ -33,6 +34,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectWebhookLogByUpstreamTxnId" parameterType="String" resultMap="WebhookLogResult">
         <include refid="selectWebhookLogVo"/>
         where upstream_txn_id = #{upstreamTxnId}
+        limit 1
+    </select>
+
+    <select id="selectByIdempotencyKey" parameterType="String" resultMap="WebhookLogResult">
+        <include refid="selectWebhookLogVo"/>
+        where idempotency_key = #{idempotencyKey}
         limit 1
     </select>
 
@@ -50,6 +57,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into vcc_webhook_log (
             <if test="webhookType != null and webhookType != ''">webhook_type,</if>
             <if test="upstreamTxnId != null and upstreamTxnId != ''">upstream_txn_id,</if>
+            <if test="idempotencyKey != null and idempotencyKey != ''">idempotency_key,</if>
             <if test="payload != null">payload,</if>
             <if test="signature != null and signature != ''">signature,</if>
             <if test="processed != null">processed,</if>
@@ -57,6 +65,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         ) values (
             <if test="webhookType != null and webhookType != ''">#{webhookType},</if>
             <if test="upstreamTxnId != null and upstreamTxnId != ''">#{upstreamTxnId},</if>
+            <if test="idempotencyKey != null and idempotencyKey != ''">#{idempotencyKey},</if>
             <if test="payload != null">#{payload},</if>
             <if test="signature != null and signature != ''">#{signature},</if>
             <if test="processed != null">#{processed},</if>

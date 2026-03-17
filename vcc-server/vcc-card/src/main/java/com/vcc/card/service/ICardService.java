@@ -22,25 +22,25 @@ public interface ICardService
     /**
      * 激活卡片
      */
-    public int activateCard(Long cardId);
+    public int activateCard(Long cardId, Long userId);
 
     /**
      * 冻结卡片
      */
-    public int freezeCard(Long cardId);
+    public int freezeCard(Long cardId, Long userId);
 
     /**
      * 解冻卡片
      */
-    public int unfreezeCard(Long cardId);
+    public int unfreezeCard(Long cardId, Long userId);
 
     /**
      * 销卡
      */
-    public int cancelCard(Long cardId);
+    public int cancelCard(Long cardId, Long userId);
 
     /**
      * 查询卡片三要素（不落库）
      */
-    public Map<String, String> getCardKeyInfo(Long cardId);
+    public Map<String, String> getCardKeyInfo(Long cardId, Long userId);
 }

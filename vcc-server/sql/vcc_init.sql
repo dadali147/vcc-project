@@ -268,6 +268,7 @@ CREATE TABLE `vcc_webhook_log` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `webhook_type` VARCHAR(50) NOT NULL COMMENT '回调类型：AUTH_TRANSACTION/CARD_OPERATION/OTP/THIRD_PARTY_AUTH',
     `upstream_txn_id` VARCHAR(64) DEFAULT NULL COMMENT '上游交易ID',
+    `idempotency_key` VARCHAR(200) DEFAULT NULL COMMENT '幂等键（webhookType + 业务唯一ID）',
     `payload` JSON NOT NULL COMMENT '回调原始数据',
     `signature` VARCHAR(500) DEFAULT NULL COMMENT '签名',
     `processed` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已处理：0-否，1-是',
@@ -278,6 +279,7 @@ CREATE TABLE `vcc_webhook_log` (
     `processed_at` TIMESTAMP NULL DEFAULT NULL COMMENT '处理时间',
     PRIMARY KEY (`id`),
     KEY `idx_webhook_type` (`webhook_type`),
+    UNIQUE KEY `uk_idempotency_key` (`idempotency_key`),
     KEY `idx_upstream_txn_id` (`upstream_txn_id`),
     KEY `idx_processed` (`processed`),
     KEY `idx_created_at` (`created_at`)

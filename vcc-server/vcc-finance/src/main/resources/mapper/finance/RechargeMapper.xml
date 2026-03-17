@@ -60,7 +60,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         SELECT COALESCE(SUM(amount), 0) 
         FROM vcc_recharge 
         WHERE user_id = #{userId} 
-          AND status = 1
+          AND status IN (0, 1)
           AND created_at &gt;= #{startTime}
           AND created_at &lt; #{endTime}
     </select>

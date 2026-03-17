@@ -50,6 +50,9 @@ public class CardServiceImpl implements ICardService
     @Autowired
     private ISystemConfigService systemConfigService;
 
+    @Autowired
+    private CardPersistService cardPersistService;
+
     @Override
     public Card selectCardById(Long id)
     {
@@ -116,47 +119,8 @@ public class CardServiceImpl implements ICardService
         // 取第一张卡
         YeeVccModels.CardData cardData = taskResult.getCardList().get(0);
 
-        // VCC-010: 单独事务保存卡片信息（轮询完成后才开启事务）
-        return saveCardInTransaction(holderId, userId, cardBinId, currency, cardType, amount, cardData);
-    }
-
-    /**
-     * VCC-010: 单独事务保存卡片信息，避免长时间占用事务
-     */
-    @Transactional
-    protected Card saveCardInTransaction(Long holderId, Long userId, String cardBinId, String currency, 
-                                         Integer cardType, BigDecimal amount, YeeVccModels.CardData cardData)
-    {
-        Card card = new Card();
-        card.setHolderId(holderId);
-        card.setUserId(userId);
-        card.setCardNoMask(cardData.getMaskedCardNumber());
-        card.setCardBinId(cardBinId);
-        card.setCardType(cardType);
-        card.setCurrency(currency);
-        card.setUpstreamCardId(cardData.getCardId());
-        card.setBalance(cardData.getBalance() != null ? cardData.getBalance() : BigDecimal.ZERO);
-
-        if (cardType == Card.TYPE_BUDGET && amount != null)
-        {
-            card.setBudgetAmount(amount);
-        }
-
-        // 判断状态
-        String upstreamStatus = cardData.getCardStatus() != null ? cardData.getCardStatus() : cardData.getStatus();
-        if ("ACTIVE".equalsIgnoreCase(upstreamStatus))
-        {
-            card.setStatus(Card.STATUS_ACTIVE);
-            card.setActivatedAt(new Date());
-        }
-        else
-        {
-            card.setStatus(Card.STATUS_INACTIVE);
-        }
-
-        cardMapper.insertCard(card);
-        log.info("开卡成功, cardId={}, upstreamCardId={}", card.getId(), card.getUpstreamCardId());
-        return card;
+        // 通过独立 Bean 保存卡片信息，确保 @Transactional 代理生效
+        return cardPersistService.saveCardInTransaction(holderId, userId, cardBinId, currency, cardType, amount, cardData);
     }
 
     private YeeVccModels.OpenCardTaskData pollOpenCardResult(Long taskId)
@@ -201,15 +165,28 @@ public class CardServiceImpl implements ICardService
         return null;
     }
 
-    @Override
-    @Transactional
-    public int activateCard(Long cardId)
+    /**
+     * 校验卡片归属
+     */
+    private Card checkCardOwnership(Long cardId, Long userId)
     {
         Card card = cardMapper.selectCardById(cardId);
         if (card == null)
         {
             throw new RuntimeException("卡片不存在: " + cardId);
         }
+        if (!card.getUserId().equals(userId))
+        {
+            throw new RuntimeException("无权操作该卡片: " + cardId);
+        }
+        return card;
+    }
+
+    @Override
+    @Transactional
+    public int activateCard(Long cardId, Long userId)
+    {
+        Card card = checkCardOwnership(cardId, userId);
         if (card.getStatus() != Card.STATUS_INACTIVE)
         {
             throw new RuntimeException("卡片状态不允许激活, 当前状态: " + card.getStatus());
@@ -232,13 +209,9 @@ public class CardServiceImpl implements ICardService
 
     @Override
     @Transactional
-    public int freezeCard(Long cardId)
+    public int freezeCard(Long cardId, Long userId)
     {
-        Card card = cardMapper.selectCardById(cardId);
-        if (card == null)
-        {
-            throw new RuntimeException("卡片不存在: " + cardId);
-        }
+        Card card = checkCardOwnership(cardId, userId);
         if (card.getStatus() != Card.STATUS_ACTIVE)
         {
             throw new RuntimeException("卡片状态不允许冻结, 当前状态: " + card.getStatus());
@@ -260,13 +233,9 @@ public class CardServiceImpl implements ICardService
 
     @Override
     @Transactional
-    public int unfreezeCard(Long cardId)
+    public int unfreezeCard(Long cardId, Long userId)
     {
-        Card card = cardMapper.selectCardById(cardId);
-        if (card == null)
-        {
-            throw new RuntimeException("卡片不存在: " + cardId);
-        }
+        Card card = checkCardOwnership(cardId, userId);
         if (card.getStatus() != Card.STATUS_FROZEN)
         {
             throw new RuntimeException("卡片状态不允许解冻, 当前状态: " + card.getStatus());
@@ -288,13 +257,9 @@ public class CardServiceImpl implements ICardService
 
     @Override
     @Transactional
-    public int cancelCard(Long cardId)
+    public int cancelCard(Long cardId, Long userId)
     {
-        Card card = cardMapper.selectCardById(cardId);
-        if (card == null)
-        {
-            throw new RuntimeException("卡片不存在: " + cardId);
-        }
+        Card card = checkCardOwnership(cardId, userId);
         if (card.getStatus() == Card.STATUS_CANCELLED)
         {
             throw new RuntimeException("卡片已销卡");
@@ -317,13 +282,9 @@ public class CardServiceImpl implements ICardService
     }
 
     @Override
-    public Map<String, String> getCardKeyInfo(Long cardId)
+    public Map<String, String> getCardKeyInfo(Long cardId, Long userId)
     {
-        Card card = cardMapper.selectCardById(cardId);
-        if (card == null)
-        {
-            throw new RuntimeException("卡片不存在: " + cardId);
-        }
+        Card card = checkCardOwnership(cardId, userId);
 
         YeeVccRequests.GetCardKeyInfoRequest request = new YeeVccRequests.GetCardKeyInfoRequest();
         request.setCardId(card.getUpstreamCardId());

@@ -105,6 +105,11 @@ public class RechargeServiceImpl implements IRechargeService
         {
             throw new RuntimeException("卡片不存在: " + cardId);
         }
+        // 校验卡片归属，防止给别人的卡充值
+        if (!card.getUserId().equals(userId))
+        {
+            throw new RuntimeException("无权操作该卡片: " + cardId);
+        }
         if (StringUtils.isEmpty(card.getUpstreamCardId()))
         {
             throw new RuntimeException("卡片未同步到上游: " + cardId);
@@ -238,6 +243,11 @@ public class RechargeServiceImpl implements IRechargeService
                 {
                     recharge.setStatus(Recharge.STATUS_FAILED);
                     recharge.setFailReason(response.getData().getMessage());
+                    recharge.setCompletedAt(new Date());
+                    // 充值失败，补偿用户余额
+                    userAccountService.addBalance(recharge.getUserId(), recharge.getCurrency(), recharge.getAmount());
+                    log.info("充值失败余额补偿: orderNo={}, userId={}, amount={}",
+                            recharge.getOrderNo(), recharge.getUserId(), recharge.getAmount());
                 }
                 rechargeMapper.updateRecharge(recharge);
             }

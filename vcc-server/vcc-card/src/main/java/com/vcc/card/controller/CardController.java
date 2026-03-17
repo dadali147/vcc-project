@@ -69,34 +69,34 @@ public class CardController extends BaseController
     @PostMapping("/activate/{id}")
     public AjaxResult activate(@PathVariable Long id)
     {
-        return toAjax(cardService.activateCard(id));
+        return toAjax(cardService.activateCard(id, getUserId()));
     }
 
     @PreAuthorize("@ss.hasPermi('card:card:edit')")
     @PostMapping("/freeze/{id}")
     public AjaxResult freeze(@PathVariable Long id)
     {
-        return toAjax(cardService.freezeCard(id));
+        return toAjax(cardService.freezeCard(id, getUserId()));
     }
 
     @PreAuthorize("@ss.hasPermi('card:card:edit')")
     @PostMapping("/unfreeze/{id}")
     public AjaxResult unfreeze(@PathVariable Long id)
     {
-        return toAjax(cardService.unfreezeCard(id));
+        return toAjax(cardService.unfreezeCard(id, getUserId()));
     }
 
     @PreAuthorize("@ss.hasPermi('card:card:edit')")
     @PostMapping("/cancel/{id}")
     public AjaxResult cancel(@PathVariable Long id)
     {
-        return toAjax(cardService.cancelCard(id));
+        return toAjax(cardService.cancelCard(id, getUserId()));
     }
 
     @PreAuthorize("@ss.hasPermi('card:card:query')")
     @GetMapping("/key-info/{id}")
     public AjaxResult keyInfo(@PathVariable Long id)
     {
-        return success(cardService.getCardKeyInfo(id));
+        return success(cardService.getCardKeyInfo(id, getUserId()));
     }
 }

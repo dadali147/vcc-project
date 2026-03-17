@@ -3,23 +3,19 @@ package com.vcc.card.webhook;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
-import com.alibaba.fastjson2.JSON;
 import com.vcc.card.domain.Card;
-import com.vcc.card.domain.Transaction;
 import com.vcc.card.domain.WebhookLog;
 import com.vcc.card.mapper.CardMapper;
-import com.vcc.card.mapper.TransactionMapper;
 import com.vcc.card.mapper.WebhookLogMapper;
 import com.vcc.finance.domain.Recharge;
 import com.vcc.finance.mapper.RechargeMapper;
 import com.vcc.upstream.config.YeeVccConfig;
 import com.vcc.upstream.util.Rsa2048SignatureUtils;
+import com.vcc.user.service.IUserAccountService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Webhook 回调处理 服务实现
@@ -41,10 +37,16 @@ public class WebhookServiceImpl implements WebhookService
     private WebhookTransactionService webhookTransactionService;
 
     @Autowired
+    private WebhookAsyncService webhookAsyncService;
+
+    @Autowired
     private CardMapper cardMapper;
 
     @Autowired
     private RechargeMapper rechargeMapper;
+
+    @Autowired
+    private IUserAccountService userAccountService;
 
     @Autowired
     private YeeVccConfig yeeVccConfig;
@@ -59,14 +61,14 @@ public class WebhookServiceImpl implements WebhookService
         {
             // VCC-012: 生成唯一幂等键（webhookType + 业务唯一ID）
             String idempotencyKey = generateIdempotencyKey(webhookType, data);
-            
+
             // 检查是否已存在（快速去重）
             if (idempotencyKey != null && webhookLogMapper.selectByIdempotencyKey(idempotencyKey) != null)
             {
                 log.info("Webhook重复，已跳过: idempotencyKey={}", idempotencyKey);
                 return true; // 视为成功，不重复处理
             }
-            
+
             // 保存到数据库（同步执行，确保落盘后再返回 200）
             WebhookLog webhookLog = new WebhookLog();
             webhookLog.setWebhookType(webhookType);
@@ -77,10 +79,10 @@ public class WebhookServiceImpl implements WebhookService
             webhookLog.setProcessed(WebhookLog.PROCESSED_NO);
             webhookLog.setRetryCount(0);
             webhookLogMapper.insertWebhookLog(webhookLog);
-            
-            // 异步处理业务
-            processWebhookAsync(webhookLog.getId(), webhookType, payload, signature, data);
-            
+
+            // 通过独立 Bean 异步处理，确保 @Async 代理生效
+            webhookAsyncService.processWebhookAsync(webhookLog.getId(), webhookType, payload, signature, data);
+
             return true;
         }
         catch (Exception e)
@@ -90,52 +92,36 @@ public class WebhookServiceImpl implements WebhookService
         }
     }
 
-    @Async("threadPoolTaskExecutor")
-    public void processWebhookAsync(Long logId, String webhookType, String payload, String signature, Map<String, Object> data)
-    {
-        WebhookLog webhookLog = webhookLogMapper.selectWebhookLogById(logId);
-        if (webhookLog == null || webhookLog.getProcessed() == WebhookLog.PROCESSED_YES)
-        {
-            log.warn("Webhook日志不存在或已处理: logId={}", logId);
-            return;
-        }
-        
-        // 分发处理
-        try
-        {
-            switch (webhookType)
-            {
-                case TYPE_TRANSACTION:
-                    // VCC-014: 使用独立 Service 确保事务生效
-                    webhookTransactionService.handleTransaction(data);
-                    break;
-                case TYPE_CARD_STATUS_CHANGE:
-                    handleCardStatusChange(data);
-                    break;
-                case TYPE_RECHARGE_RESULT:
-                    handleRechargeResult(data);
-                    break;
-                case TYPE_3DS_OTP:
-                    handle3dsOtp(data);
-                    break;
-                default:
-                    log.warn("未知的Webhook类型: {}", webhookType);
-            }
-            markSuccess(webhookLog);
-        }
-        catch (Exception e)
-        {
-            log.error("Webhook处理异常: type={}, logId={}", webhookType, logId, e);
-            markFailed(webhookLog, e.getMessage());
-        }
-    }
-
     @Override
     public void processWebhookAsync(String webhookType, String payload, String signature, Map<String, Object> data)
     {
         // 旧接口兼容，直接调用入队
         enqueueWebhook(webhookType, payload, signature, data);
     }
+
+    /**
+     * 分发 Webhook 到具体处理器（供 WebhookAsyncService 调用）
+     */
+    public void dispatchWebhook(String webhookType, Map<String, Object> data)
+    {
+        switch (webhookType)
+        {
+            case TYPE_TRANSACTION:
+                // VCC-014: 使用独立 Service 确保事务生效
+                webhookTransactionService.handleTransaction(data);
+                break;
+            case TYPE_CARD_STATUS_CHANGE:
+                handleCardStatusChange(data);
+                break;
+            case TYPE_RECHARGE_RESULT:
+                handleRechargeResult(data);
+                break;
+            case TYPE_3DS_OTP:
+                handle3dsOtp(data);
+                break;
+            default:
+                log.warn("未知的Webhook类型: {}", webhookType);
+        }
     }
 
     /**
@@ -168,8 +154,6 @@ public class WebhookServiceImpl implements WebhookService
         return existing != null && !existing.getId().equals(currentLogId)
                 && WebhookLog.PROCESSED_YES == existing.getProcessed();
     }
-
-    // VCC-014: handleTransaction 已移到 WebhookTransactionService 独立 Bean
 
     /**
      * CARD_STATUS_CHANGE：卡状态变更 → 更新 vcc_card 表
@@ -253,6 +237,10 @@ public class WebhookServiceImpl implements WebhookService
         {
             update.setStatus(Recharge.STATUS_FAILED);
             update.setFailReason(getString(data, "failReason"));
+            // 充值失败，补偿用户余额（幂等：仅 PENDING 状态才执行，上面已检查）
+            userAccountService.addBalance(recharge.getUserId(), recharge.getCurrency(), recharge.getAmount());
+            log.info("充值失败余额补偿: orderNo={}, userId={}, amount={}",
+                    recharge.getOrderNo(), recharge.getUserId(), recharge.getAmount());
         }
         rechargeMapper.updateRecharge(update);
 
@@ -261,12 +249,6 @@ public class WebhookServiceImpl implements WebhookService
 
     /**
      * 3DS_OTP：3DS 验证码回调 → 保存验证码，支持商户端展示
-     * 
-     * 字段说明（根据 YeeVCC 文档）：
-     * - cardId: 上游卡号
-     * - otpCode: 验证码
-     * - expireTime: 过期时间（秒级时间戳）
-     * - phone: 预留手机号（脱敏）
      */
     public void handle3dsOtp(Map<String, Object> data)
     {
@@ -275,7 +257,7 @@ public class WebhookServiceImpl implements WebhookService
         String expireTime = getString(data, "expireTime");
         String phone = getString(data, "phone");
 
-        if (StringUtils.isBlank(cardId) || StringUtils.isBlank(otpCode))
+        if (cardId == null || cardId.isEmpty() || otpCode == null || otpCode.isEmpty())
         {
             log.warn("Webhook 3DS OTP回调：缺少必要字段, cardId={}, otpCode={}", cardId, otpCode);
             return;
@@ -290,23 +272,14 @@ public class WebhookServiceImpl implements WebhookService
         }
 
         // TODO: 保存验证码到 Redis 或数据库，支持商户端查询展示
-        // 建议存储结构：
-        // Key: vcc:3ds:otp:{cardId}
-        // Value: {otpCode, expireTime, phone, receivedAt}
-        // TTL: 5 分钟（或根据 expireTime 计算）
-        
-        log.info("3DS OTP已接收: cardId={}, otpCode={}, expireTime={}, phone={}", 
+        log.info("3DS OTP已接收: cardId={}, otpCode={}, expireTime={}, phone={}",
                 cardId, otpCode, expireTime, phone);
-        
-        // TODO: 推送通知到商户端（WebSocket 或消息队列）
-        // 商户端需要展示验证码给用户
     }
 
     // ==================== 工具方法 ====================
 
     /**
      * VCC-012: 生成幂等键（webhookType + 业务唯一ID）
-     * 确保同一类型的不同事件不会被视为重复
      */
     private String generateIdempotencyKey(String webhookType, Map<String, Object> data)
     {
@@ -314,7 +287,6 @@ public class WebhookServiceImpl implements WebhookService
         {
             case TYPE_TRANSACTION -> getString(data, "tranId");
             case TYPE_CARD_STATUS_CHANGE -> {
-                // 卡状态变更：cardId + operateType + timestamp
                 String cardId = getString(data, "cardId");
                 String operateType = getString(data, "operateType");
                 String timestamp = getString(data, "timestamp");
@@ -322,19 +294,18 @@ public class WebhookServiceImpl implements WebhookService
             }
             case TYPE_RECHARGE_RESULT -> getString(data, "orderNo");
             case TYPE_3DS_OTP -> {
-                // 3DS OTP: cardId + otpCode
                 String cardId = getString(data, "cardId");
                 String otpCode = getString(data, "otpCode");
                 yield cardId + ":" + otpCode;
             }
             default -> null;
         };
-        
+
         if (businessId == null)
         {
             return null;
         }
-        
+
         return webhookType + ":" + businessId;
     }
 
@@ -350,8 +321,6 @@ public class WebhookServiceImpl implements WebhookService
         };
     }
 
-    // VCC-014: resolveTxnType 已移到 WebhookTransactionService
-
     private Integer mapCardStatus(String upstreamStatus)
     {
         if (upstreamStatus == null) return null;
@@ -363,23 +332,6 @@ public class WebhookServiceImpl implements WebhookService
             case "CANCELLED", "CLOSED" -> Card.STATUS_CANCELLED;
             default -> null;
         };
-    }
-
-    private void markSuccess(WebhookLog webhookLog)
-    {
-        webhookLog.setProcessed(WebhookLog.PROCESSED_YES);
-        webhookLog.setProcessedAt(new Date());
-        webhookLog.setProcessResult("{\"result\":\"success\"}");
-        webhookLogMapper.updateWebhookLog(webhookLog);
-    }
-
-    private void markFailed(WebhookLog webhookLog, String errorMsg)
-    {
-        webhookLog.setProcessed(WebhookLog.PROCESSED_NO);
-        webhookLog.setProcessedAt(new Date());
-        webhookLog.setErrorMsg(errorMsg);
-        webhookLogMapper.updateWebhookLog(webhookLog);
-        log.warn("Webhook处理失败: id={}, error={}", webhookLog.getId(), errorMsg);
     }
 
     private String getString(Map<String, Object> data, String key)
