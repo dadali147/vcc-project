@@ -63,7 +63,6 @@ public class CardServiceImpl implements ICardService
     }
 
     @Override
-    @Transactional
     public Card openCard(Long holderId, String cardBinId, String currency, Integer cardType,
                          BigDecimal amount, Long userId)
     {
@@ -79,6 +78,12 @@ public class CardServiceImpl implements ICardService
         if (holder == null)
         {
             throw new RuntimeException("持卡人不存在: " + holderId);
+        }
+
+        // VCC-010: 校验归属，只能使用自己的持卡人
+        if (!holder.getUserId().equals(userId))
+        {
+            throw new RuntimeException("无权使用该持卡人: " + holderId);
         }
 
         // 调用上游开卡
@@ -101,7 +106,7 @@ public class CardServiceImpl implements ICardService
         Long taskId = openResponse.getData().getTaskId();
         log.info("开卡任务已提交, taskId={}", taskId);
 
-        // 异步轮询开卡结果
+        // VCC-010: 异步轮询开卡结果（在事务外执行，避免长时间占用连接）
         YeeVccModels.OpenCardTaskData taskResult = pollOpenCardResult(taskId);
         if (taskResult == null || taskResult.getCardList() == null || taskResult.getCardList().isEmpty())
         {
@@ -111,7 +116,17 @@ public class CardServiceImpl implements ICardService
         // 取第一张卡
         YeeVccModels.CardData cardData = taskResult.getCardList().get(0);
 
-        // 保存卡片信息
+        // VCC-010: 单独事务保存卡片信息（轮询完成后才开启事务）
+        return saveCardInTransaction(holderId, userId, cardBinId, currency, cardType, amount, cardData);
+    }
+
+    /**
+     * VCC-010: 单独事务保存卡片信息，避免长时间占用事务
+     */
+    @Transactional
+    protected Card saveCardInTransaction(Long holderId, Long userId, String cardBinId, String currency, 
+                                         Integer cardType, BigDecimal amount, YeeVccModels.CardData cardData)
+    {
         Card card = new Card();
         card.setHolderId(holderId);
         card.setUserId(userId);
