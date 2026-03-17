@@ -38,7 +38,7 @@ public class WebhookServiceImpl implements WebhookService
     private WebhookLogMapper webhookLogMapper;
 
     @Autowired
-    private TransactionMapper transactionMapper;
+    private WebhookTransactionService webhookTransactionService;
 
     @Autowired
     private CardMapper cardMapper;
@@ -106,7 +106,8 @@ public class WebhookServiceImpl implements WebhookService
             switch (webhookType)
             {
                 case TYPE_TRANSACTION:
-                    handleTransaction(data);
+                    // VCC-014: 使用独立 Service 确保事务生效
+                    webhookTransactionService.handleTransaction(data);
                     break;
                 case TYPE_CARD_STATUS_CHANGE:
                     handleCardStatusChange(data);
@@ -168,68 +169,7 @@ public class WebhookServiceImpl implements WebhookService
                 && WebhookLog.PROCESSED_YES == existing.getProcessed();
     }
 
-    /**
-     * TRANSACTION：交易通知 → 写入 vcc_transaction 表，更新卡余额（储值卡）
-     */
-    @Transactional
-    public void handleTransaction(Map<String, Object> data)
-    {
-        String tranId = getString(data, "tranId");
-        String cardId = getString(data, "cardId");
-        String direction = getString(data, "transactionDirection");
-        String status = getString(data, "status");
-
-        // 幂等：检查 txn_id 是否已存在
-        if (transactionMapper.selectTransactionByTxnId(tranId) != null)
-        {
-            log.info("交易记录已存在，跳过: txnId={}", tranId);
-            return;
-        }
-
-        // 查找本地卡
-        Card card = cardMapper.selectCardByUpstreamCardId(cardId);
-        if (card == null)
-        {
-            log.warn("Webhook交易通知：本地未找到卡, upstreamCardId={}", cardId);
-            return;
-        }
-
-        // 解析交易类型
-        String txnType = resolveTxnType(direction, getString(data, "originalTranId"));
-
-        // 写入交易记录
-        Transaction txn = new Transaction();
-        txn.setTxnId(tranId);
-        txn.setCardId(card.getId());
-        txn.setUserId(card.getUserId());
-        txn.setTxnType(txnType);
-        txn.setAmount(getBigDecimal(data, "merchantAmount"));
-        txn.setCurrency(getString(data, "merchantCurrency"));
-        txn.setMerchantName(getString(data, "merchantName"));
-        txn.setMerchantMcc(getString(data, "merchantMcc"));
-        txn.setMerchantCountry(getString(data, "merchantCountry"));
-        txn.setStatus("SUCCESS".equalsIgnoreCase(status)
-                ? Transaction.STATUS_SUCCESS : Transaction.STATUS_FAILED);
-        txn.setAuthCode(getString(data, "authCode"));
-        txn.setFailReason(getString(data, "failReason"));
-        transactionMapper.insertTransaction(txn);
-
-        // 储值卡：更新余额
-        if (card.getCardType() != null && card.getCardType() == Card.TYPE_PREPAID)
-        {
-            BigDecimal closingAmount = getBigDecimal(data, "closingAmount");
-            if (closingAmount != null)
-            {
-                Card updateCard = new Card();
-                updateCard.setId(card.getId());
-                updateCard.setBalance(closingAmount);
-                cardMapper.updateCard(updateCard);
-            }
-        }
-
-        log.info("交易记录已写入: txnId={}, cardId={}, type={}, amount={}",
-                tranId, card.getId(), txnType, txn.getAmount());
-    }
+    // VCC-014: handleTransaction 已移到 WebhookTransactionService 独立 Bean
 
     /**
      * CARD_STATUS_CHANGE：卡状态变更 → 更新 vcc_card 表
@@ -410,15 +350,7 @@ public class WebhookServiceImpl implements WebhookService
         };
     }
 
-    private String resolveTxnType(String direction, String originalTranId)
-    {
-        if ("C".equalsIgnoreCase(direction))
-        {
-            return (originalTranId != null && !originalTranId.isEmpty())
-                    ? Transaction.TYPE_REVERSE : Transaction.TYPE_REFUND;
-        }
-        return Transaction.TYPE_AUTH;
-    }
+    // VCC-014: resolveTxnType 已移到 WebhookTransactionService
 
     private Integer mapCardStatus(String upstreamStatus)
     {
