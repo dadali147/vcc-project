@@ -14,6 +14,26 @@ public interface ICardService
     public List<Card> selectCardList(Card card);
 
     /**
+     * 管理端：查询所有卡片（支持按 userName 模糊搜索）
+     */
+    public List<Card> selectCardListAdmin(Card card);
+
+    /**
+     * 管理端：卡产品统计
+     */
+    public Map<String, Object> getCardStats();
+
+    /**
+     * 查询卡片交易记录（管理端）
+     */
+    public List<Map<String, Object>> selectTransactionListAdmin(Map<String, Object> params);
+
+    /**
+     * 查询今日交易统计
+     */
+    public Map<String, Object> getTodayTransactionStats();
+
+    /**
      * 开卡（调用上游 + 异步轮询结果）
      */
     public Card openCard(Long holderId, String cardBinId, String currency, Integer cardType,

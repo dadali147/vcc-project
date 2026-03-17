@@ -1,10 +1,15 @@
 package com.vcc.card.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.vcc.card.domain.Card;
 import com.vcc.card.domain.CardHolder;
+import com.vcc.card.domain.Transaction;
 import com.vcc.card.mapper.CardMapper;
 import com.vcc.card.mapper.CardHolderMapper;
+import com.vcc.card.mapper.TransactionMapper;
 import com.vcc.card.service.ICardService;
 import com.vcc.system.service.ISystemConfigService;
 import com.vcc.upstream.YeeVccClient;
@@ -49,6 +56,9 @@ public class CardServiceImpl implements ICardService
 
     @Autowired
     private ISystemConfigService systemConfigService;
+
+    @Autowired
+    private TransactionMapper transactionMapper;
 
     @Autowired
     private CardPersistService cardPersistService;
@@ -300,5 +310,149 @@ public class CardServiceImpl implements ICardService
         result.put("cvv", data.getCvv());
         result.put("expiryDate", data.getExpiryDate());
         return result;
+    }
+
+    @Override
+    public List<Card> selectCardListAdmin(Card card)
+    {
+        // 管理端不加 userId 过滤，直接查全部
+        return cardMapper.selectCardList(card);
+    }
+
+    @Override
+    public Map<String, Object> getCardStats()
+    {
+        Map<String, Object> stats = new HashMap<>();
+
+        // 查询全部卡片
+        List<Card> allCards = cardMapper.selectCardList(new Card());
+        stats.put("totalCards", allCards.size());
+
+        // 按状态统计
+        long activeCards = allCards.stream().filter(c -> c.getStatus() != null && c.getStatus() == Card.STATUS_ACTIVE).count();
+        long frozenCards = allCards.stream().filter(c -> c.getStatus() != null && c.getStatus() == Card.STATUS_FROZEN).count();
+        long cancelledCards = allCards.stream().filter(c -> c.getStatus() != null && c.getStatus() == Card.STATUS_CANCELLED).count();
+        stats.put("activeCards", activeCards);
+        stats.put("frozenCards", frozenCards);
+        stats.put("cancelledCards", cancelledCards);
+
+        // 按卡类型统计
+        long prepaidCards = allCards.stream().filter(c -> c.getCardType() != null && c.getCardType() == Card.TYPE_PREPAID).count();
+        long budgetCards = allCards.stream().filter(c -> c.getCardType() != null && c.getCardType() == Card.TYPE_BUDGET).count();
+        stats.put("prepaidCards", prepaidCards);
+        stats.put("budgetCards", budgetCards);
+
+        // 按 cardBinId 分组统计
+        Map<String, Long> cardBinStats = allCards.stream()
+                .filter(c -> c.getCardBinId() != null)
+                .collect(Collectors.groupingBy(Card::getCardBinId, Collectors.counting()));
+        stats.put("cardBinStats", cardBinStats);
+
+        // 近30天每天开卡数
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        Map<String, Long> dailyOpenCards = new LinkedHashMap<>();
+        for (int i = 29; i >= 0; i--)
+        {
+            dailyOpenCards.put(today.minusDays(i).format(fmt), 0L);
+        }
+        LocalDate thirtyDaysAgo = today.minusDays(29);
+        for (Card c : allCards)
+        {
+            if (c.getCreateTime() != null)
+            {
+                LocalDate createDate = new java.sql.Date(c.getCreateTime().getTime()).toLocalDate();
+                if (!createDate.isBefore(thirtyDaysAgo) && !createDate.isAfter(today))
+                {
+                    String dateKey = createDate.format(fmt);
+                    dailyOpenCards.merge(dateKey, 1L, Long::sum);
+                }
+            }
+        }
+        stats.put("dailyOpenCards", dailyOpenCards);
+
+        return stats;
+    }
+
+    @Override
+    public List<Map<String, Object>> selectTransactionListAdmin(Map<String, Object> params)
+    {
+        Transaction query = new Transaction();
+        if (params.get("userId") != null)
+        {
+            query.setUserId(Long.valueOf(params.get("userId").toString()));
+        }
+        if (params.get("cardId") != null)
+        {
+            query.setCardId(Long.valueOf(params.get("cardId").toString()));
+        }
+        if (params.get("txnType") != null)
+        {
+            query.setTxnType(params.get("txnType").toString());
+        }
+        if (params.get("status") != null)
+        {
+            query.setStatus(Integer.valueOf(params.get("status").toString()));
+        }
+
+        List<Transaction> txnList = transactionMapper.selectTransactionList(query);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Transaction txn : txnList)
+        {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", txn.getId());
+            map.put("txnId", txn.getTxnId());
+            map.put("cardId", txn.getCardId());
+            map.put("userId", txn.getUserId());
+            map.put("txnType", txn.getTxnType());
+            map.put("amount", txn.getAmount());
+            map.put("currency", txn.getCurrency());
+            map.put("merchantName", txn.getMerchantName());
+            map.put("merchantMcc", txn.getMerchantMcc());
+            map.put("merchantCountry", txn.getMerchantCountry());
+            map.put("status", txn.getStatus());
+            map.put("authCode", txn.getAuthCode());
+            map.put("failReason", txn.getFailReason());
+            map.put("txnTime", txn.getTxnTime());
+            map.put("createTime", txn.getCreateTime());
+            result.add(map);
+        }
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> getTodayTransactionStats()
+    {
+        Map<String, Object> stats = new HashMap<>();
+        Transaction query = new Transaction();
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        Map<String, Object> queryParams = new HashMap<>();
+        queryParams.put("beginTxnTime", today + " 00:00:00");
+        queryParams.put("endTxnTime", today + " 23:59:59");
+        query.setParams(queryParams);
+
+        List<Transaction> todayTxns = transactionMapper.selectTransactionList(query);
+
+        stats.put("totalCount", todayTxns.size());
+        BigDecimal totalAmount = todayTxns.stream()
+                .filter(t -> t.getAmount() != null)
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        stats.put("totalAmount", totalAmount);
+
+        long successCount = todayTxns.stream().filter(t -> t.getStatus() != null && t.getStatus() == Transaction.STATUS_SUCCESS).count();
+        long failedCount = todayTxns.stream().filter(t -> t.getStatus() != null && t.getStatus() == Transaction.STATUS_FAILED).count();
+        long processingCount = todayTxns.stream().filter(t -> t.getStatus() != null && t.getStatus() == Transaction.STATUS_PROCESSING).count();
+        stats.put("successCount", successCount);
+        stats.put("failedCount", failedCount);
+        stats.put("processingCount", processingCount);
+
+        // 按交易类型分组统计
+        Map<String, Long> byType = todayTxns.stream()
+                .filter(t -> t.getTxnType() != null)
+                .collect(Collectors.groupingBy(Transaction::getTxnType, Collectors.counting()));
+        stats.put("byType", byType);
+
+        return stats;
     }
 }

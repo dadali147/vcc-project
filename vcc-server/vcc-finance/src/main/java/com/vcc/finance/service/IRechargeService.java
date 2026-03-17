@@ -21,9 +21,9 @@ public interface IRechargeService
     public Recharge submitRecharge(Long userId, Long cardId, BigDecimal amount, String currency, BigDecimal fee);
 
     /**
-     * 查询充值结果
+     * 查询充值结果（需传入userId做归属校验）
      */
-    public Recharge queryRechargeResult(String orderNo);
+    public Recharge queryRechargeResult(Long userId, String orderNo);
 
     /**
      * USDT 到账处理（账户充值）

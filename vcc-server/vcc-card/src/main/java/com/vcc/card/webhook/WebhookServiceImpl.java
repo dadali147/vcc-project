@@ -92,13 +92,6 @@ public class WebhookServiceImpl implements WebhookService
         }
     }
 
-    @Override
-    public void processWebhookAsync(String webhookType, String payload, String signature, Map<String, Object> data)
-    {
-        // 旧接口兼容，直接调用入队
-        enqueueWebhook(webhookType, payload, signature, data);
-    }
-
     /**
      * 分发 Webhook 到具体处理器（供 WebhookAsyncService 调用）
      */
@@ -195,7 +188,9 @@ public class WebhookServiceImpl implements WebhookService
 
     /**
      * RECHARGE_RESULT：充值结果回调 → 更新 vcc_recharge 表状态
+     * 使用 SELECT FOR UPDATE + 乐观锁防止并发重复补偿
      */
+    @org.springframework.transaction.annotation.Transactional
     public void handleRechargeResult(Map<String, Object> data)
     {
         String upstreamOrderNo = getString(data, "orderNo");
@@ -218,33 +213,45 @@ public class WebhookServiceImpl implements WebhookService
         }
         Recharge recharge = list.get(0);
 
-        // 已终态则跳过
-        if (recharge.getStatus() != null && recharge.getStatus() != Recharge.STATUS_PENDING)
+        // SELECT FOR UPDATE 锁定记录，防止并发处理
+        Recharge locked = rechargeMapper.selectRechargeForUpdateById(recharge.getId());
+        if (locked == null || locked.getStatus() != Recharge.STATUS_PENDING)
         {
-            log.info("充值记录已处理，跳过: orderNo={}", recharge.getOrderNo());
+            log.info("充值记录已处理或不存在，跳过: orderNo={}", recharge.getOrderNo());
             return;
         }
 
-        Recharge update = new Recharge();
-        update.setId(recharge.getId());
-        update.setCompletedAt(new Date());
+        Integer newStatus;
+        String failReason = null;
 
         if ("SUCCESS".equalsIgnoreCase(status))
         {
-            update.setStatus(Recharge.STATUS_SUCCESS);
+            newStatus = Recharge.STATUS_SUCCESS;
         }
         else
         {
-            update.setStatus(Recharge.STATUS_FAILED);
-            update.setFailReason(getString(data, "failReason"));
-            // 充值失败，补偿用户余额（幂等：仅 PENDING 状态才执行，上面已检查）
-            userAccountService.addBalance(recharge.getUserId(), recharge.getCurrency(), recharge.getAmount());
-            log.info("充值失败余额补偿: orderNo={}, userId={}, amount={}",
-                    recharge.getOrderNo(), recharge.getUserId(), recharge.getAmount());
+            newStatus = Recharge.STATUS_FAILED;
+            failReason = getString(data, "failReason");
         }
-        rechargeMapper.updateRecharge(update);
 
-        log.info("充值记录已更新: orderNo={}, status={}", recharge.getOrderNo(), status);
+        // 乐观锁更新：仅当 status=PENDING 时才更新
+        int rows = rechargeMapper.updateRechargeStatus(locked.getId(), newStatus,
+                Recharge.STATUS_PENDING, failReason, new Date());
+        if (rows == 0)
+        {
+            log.info("充值记录状态已被其他线程更新，跳过: orderNo={}", locked.getOrderNo());
+            return;
+        }
+
+        // 充值失败才补偿余额（状态已成功流转，不会重复）
+        if (Recharge.STATUS_FAILED.equals(newStatus))
+        {
+            userAccountService.addBalance(locked.getUserId(), locked.getCurrency(), locked.getAmount());
+            log.info("充值失败余额补偿: orderNo={}, userId={}, amount={}",
+                    locked.getOrderNo(), locked.getUserId(), locked.getAmount());
+        }
+
+        log.info("充值记录已更新: orderNo={}, status={}", locked.getOrderNo(), status);
     }
 
     /**

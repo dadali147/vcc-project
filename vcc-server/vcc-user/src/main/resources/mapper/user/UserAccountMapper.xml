@@ -92,4 +92,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where user_id = #{userId} and currency = #{currency}
     </update>
 
+    <select id="selectUserAccountForUpdate" resultMap="UserAccountResult">
+        <include refid="selectUserAccountVo"/>
+        where user_id = #{userId} and currency = #{currency}
+        for update
+    </select>
+
 </mapper>

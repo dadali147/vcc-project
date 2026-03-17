@@ -74,6 +74,9 @@ public class RechargeServiceImpl implements IRechargeService
             throw new RuntimeException("充值功能已关闭，请联系管理员");
         }
 
+        // SELECT FOR UPDATE 锁定用户账户行，防止并发绕过日限额
+        userAccountService.lockUserAccount(userId, currency);
+
         // 风控：单笔充值上限
         String singleLimitStr = systemConfigService.get("risk.single.recharge.limit");
         if (StringUtils.isNotEmpty(singleLimitStr))
@@ -217,39 +220,71 @@ public class RechargeServiceImpl implements IRechargeService
     }
 
     @Override
-    public Recharge queryRechargeResult(String orderNo)
+    @Transactional
+    public Recharge queryRechargeResult(Long userId, String orderNo)
     {
         Recharge recharge = rechargeMapper.selectRechargeByOrderNo(orderNo);
         if (recharge == null)
         {
-            throw new RuntimeException("充值记录不存在: " + orderNo);
+            throw new com.vcc.common.exception.ServiceException("充值记录不存在: " + orderNo);
+        }
+
+        // 归属校验：只允许查看自己的订单
+        if (!recharge.getUserId().equals(userId))
+        {
+            throw new com.vcc.common.exception.ServiceException("无权查看该订单");
         }
 
         // 如果状态还是待处理，查询上游
         if (recharge.getStatus() == Recharge.STATUS_PENDING)
         {
+            // SELECT FOR UPDATE 锁定记录，防止并发重复补偿
+            Recharge locked = rechargeMapper.selectRechargeForUpdateById(recharge.getId());
+            if (locked == null || locked.getStatus() != Recharge.STATUS_PENDING)
+            {
+                // 已被其他线程处理，返回最新状态
+                return locked != null ? locked : recharge;
+            }
+
             YeeVccRequests.QueryRechargeResultRequest request = new YeeVccRequests.QueryRechargeResultRequest();
             request.setOrderId(orderNo);
             YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccClient.queryRechargeResult(request);
             if (response.isSuccess() && response.getData() != null)
             {
                 String status = response.getData().getStatus();
+                Integer newStatus = null;
+                String failReason = null;
+
                 if ("SUCCESS".equalsIgnoreCase(status))
                 {
-                    recharge.setStatus(Recharge.STATUS_SUCCESS);
-                    recharge.setCompletedAt(new Date());
+                    newStatus = Recharge.STATUS_SUCCESS;
                 }
                 else if ("FAILED".equalsIgnoreCase(status))
                 {
-                    recharge.setStatus(Recharge.STATUS_FAILED);
-                    recharge.setFailReason(response.getData().getMessage());
-                    recharge.setCompletedAt(new Date());
-                    // 充值失败，补偿用户余额
-                    userAccountService.addBalance(recharge.getUserId(), recharge.getCurrency(), recharge.getAmount());
-                    log.info("充值失败余额补偿: orderNo={}, userId={}, amount={}",
-                            recharge.getOrderNo(), recharge.getUserId(), recharge.getAmount());
+                    newStatus = Recharge.STATUS_FAILED;
+                    failReason = response.getData().getMessage();
                 }
-                rechargeMapper.updateRecharge(recharge);
+
+                if (newStatus != null)
+                {
+                    // 乐观锁更新状态
+                    int rows = rechargeMapper.updateRechargeStatus(locked.getId(), newStatus,
+                            Recharge.STATUS_PENDING, failReason, new Date());
+                    if (rows > 0)
+                    {
+                        recharge.setStatus(newStatus);
+                        recharge.setFailReason(failReason);
+                        recharge.setCompletedAt(new Date());
+
+                        // 充值失败才补偿余额
+                        if (Recharge.STATUS_FAILED.equals(newStatus))
+                        {
+                            userAccountService.addBalance(locked.getUserId(), locked.getCurrency(), locked.getAmount());
+                            log.info("充值失败余额补偿: orderNo={}, userId={}, amount={}",
+                                    locked.getOrderNo(), locked.getUserId(), locked.getAmount());
+                        }
+                    }
+                }
             }
         }
         return recharge;

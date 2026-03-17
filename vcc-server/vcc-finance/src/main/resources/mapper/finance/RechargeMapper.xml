@@ -65,6 +65,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           AND created_at &lt; #{endTime}
     </select>
 
+    <!-- 悲观锁：SELECT FOR UPDATE 锁定充值记录 -->
+    <select id="selectRechargeForUpdateById" parameterType="Long" resultMap="RechargeResult">
+        <include refid="selectRechargeVo"/>
+        where id = #{id} for update
+    </select>
+
+    <!-- 乐观锁：仅当 status = expectedStatus 时更新 -->
+    <update id="updateRechargeStatus">
+        update vcc_recharge
+        set status = #{newStatus},
+            <if test="failReason != null and failReason != ''">fail_reason = #{failReason},</if>
+            <if test="completedAt != null">completed_at = #{completedAt},</if>
+            updated_at = sysdate()
+        where id = #{id} and status = #{expectedStatus}
+    </update>
+
     <insert id="insertRecharge" parameterType="com.vcc.finance.domain.Recharge" useGeneratedKeys="true" keyProperty="id">
         insert into vcc_recharge (
             <if test="orderNo != null and orderNo != ''">order_no,</if>

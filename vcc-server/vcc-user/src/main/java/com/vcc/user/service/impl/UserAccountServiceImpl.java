@@ -1,7 +1,9 @@
 package com.vcc.user.service.impl;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,12 @@ public class UserAccountServiceImpl implements IUserAccountService
     }
 
     @Override
+    public UserAccount lockUserAccount(Long userId, String currency)
+    {
+        return userAccountMapper.selectUserAccountForUpdate(userId, currency);
+    }
+
+    @Override
     @Transactional
     public boolean deductBalance(Long userId, String currency, BigDecimal amount)
     {
@@ -95,5 +103,39 @@ public class UserAccountServiceImpl implements IUserAccountService
         }
         log.info("余额增加成功, userId={}, currency={}, amount={}", userId, currency, amount);
         return rows;
+    }
+
+    @Override
+    public List<Map<String, Object>> selectAccountTransactions(Long userId, int pageNum, int pageSize)
+    {
+        // TODO: 待 vcc_account_transaction 表创建后实现查询
+        log.info("查询用户动账明细, userId={}, pageNum={}, pageSize={}", userId, pageNum, pageSize);
+        return new ArrayList<>();
+    }
+
+    @Override
+    @Transactional
+    public boolean adjustBalance(Long userId, String currency, BigDecimal amount, String reason, Long operatorId)
+    {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) == 0)
+        {
+            throw new RuntimeException("调整金额不能为零");
+        }
+        if (amount.compareTo(BigDecimal.ZERO) > 0)
+        {
+            addBalance(userId, currency, amount);
+        }
+        else
+        {
+            boolean success = deductBalance(userId, currency, amount.abs());
+            if (!success)
+            {
+                throw new RuntimeException("余额不足，无法扣减");
+            }
+        }
+        // TODO: 记录操作日志到 sys_oper_log（operatorId, reason）
+        log.info("管理员调整余额, userId={}, currency={}, amount={}, reason={}, operatorId={}",
+                userId, currency, amount, reason, operatorId);
+        return true;
     }
 }

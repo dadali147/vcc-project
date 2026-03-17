@@ -19,6 +19,20 @@ public interface RechargeMapper
      */
     public java.math.BigDecimal selectTodayRechargeTotal(Long userId, String startTime, String endTime);
 
+    /**
+     * SELECT FOR UPDATE 锁定充值记录（防止并发重复补偿）
+     */
+    public Recharge selectRechargeForUpdateById(Long id);
+
+    /**
+     * 乐观锁更新状态：仅当当前状态=expectedStatus时才更新
+     */
+    public int updateRechargeStatus(@org.apache.ibatis.annotations.Param("id") Long id,
+                                    @org.apache.ibatis.annotations.Param("newStatus") Integer newStatus,
+                                    @org.apache.ibatis.annotations.Param("expectedStatus") Integer expectedStatus,
+                                    @org.apache.ibatis.annotations.Param("failReason") String failReason,
+                                    @org.apache.ibatis.annotations.Param("completedAt") java.util.Date completedAt);
+
     public int insertRecharge(Recharge recharge);
 
     public int updateRecharge(Recharge recharge);

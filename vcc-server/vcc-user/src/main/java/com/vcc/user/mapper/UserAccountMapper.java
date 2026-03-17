@@ -24,4 +24,6 @@ public interface UserAccountMapper
     public int deductBalance(@Param("userId") Long userId, @Param("currency") String currency, @Param("amount") BigDecimal amount);
 
     public int addBalance(@Param("userId") Long userId, @Param("currency") String currency, @Param("amount") BigDecimal amount);
+
+    public UserAccount selectUserAccountForUpdate(@Param("userId") Long userId, @Param("currency") String currency);
 }

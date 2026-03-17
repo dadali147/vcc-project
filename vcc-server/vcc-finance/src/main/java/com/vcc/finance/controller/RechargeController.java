@@ -60,7 +60,7 @@ public class RechargeController extends BaseController
     @GetMapping("/query/{orderNo}")
     public AjaxResult queryResult(@PathVariable String orderNo)
     {
-        return success(rechargeService.queryRechargeResult(orderNo));
+        return success(rechargeService.queryRechargeResult(getUserId(), orderNo));
     }
 
     @PreAuthorize("@ss.hasPermi('finance:recharge:add')")
