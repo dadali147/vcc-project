@@ -489,7 +489,8 @@ public class YeeVccClient
         }
         catch (YeeVccException ex)
         {
-            return value;
+            // VCC-005: 解密失败时显式抛错，不把密文当成功结果返回
+            throw new YeeVccException("卡三要素解密失败，请检查 AES 密钥配置", ex);
         }
     }
 

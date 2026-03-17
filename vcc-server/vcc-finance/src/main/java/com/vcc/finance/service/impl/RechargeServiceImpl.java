@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.vcc.common.utils.StringUtils;
+import com.vcc.card.domain.Card;
+import com.vcc.card.mapper.CardMapper;
 import com.vcc.finance.domain.Recharge;
 import com.vcc.finance.mapper.RechargeMapper;
 import com.vcc.finance.service.IRechargeService;
@@ -30,6 +32,9 @@ public class RechargeServiceImpl implements IRechargeService
 
     @Autowired
     private RechargeMapper rechargeMapper;
+
+    @Autowired
+    private CardMapper cardMapper;
 
     @Autowired
     private YeeVccClient yeeVccClient;
@@ -100,8 +105,35 @@ public class RechargeServiceImpl implements IRechargeService
             }
         }
 
+        // VCC-008: 获取卡片信息，使用 upstreamCardId 调用上游
+        Card card = cardMapper.selectCardById(cardId);
+        if (card == null)
+        {
+            throw new RuntimeException("卡片不存在: " + cardId);
+        }
+        if (StringUtils.isEmpty(card.getUpstreamCardId()))
+        {
+            throw new RuntimeException("卡片未同步到上游: " + cardId);
+        }
+
+        // VCC-008: 服务端计算手续费（根据卡类型和费率配置）
+        BigDecimal calculatedFee = calculateRechargeFee(amount, card.getCardType());
+        BigDecimal actualFee = (fee != null && fee.compareTo(calculatedFee) == 0) ? fee : calculatedFee;
+        BigDecimal actualAmount = amount.subtract(actualFee);
+
+        if (actualAmount.compareTo(BigDecimal.ZERO) <= 0)
+        {
+            throw new RuntimeException("充值金额不足以支付手续费");
+        }
+
+        // VCC-008: 先扣减用户账户余额（原子操作）
+        boolean deducted = userAccountService.deductBalance(userId, currency, amount);
+        if (!deducted)
+        {
+            throw new RuntimeException("账户余额不足，无法完成充值");
+        }
+
         String orderNo = generateOrderNo();
-        BigDecimal actualAmount = amount.subtract(fee != null ? fee : BigDecimal.ZERO);
 
         // 创建充值记录
         Recharge recharge = new Recharge();
@@ -110,14 +142,14 @@ public class RechargeServiceImpl implements IRechargeService
         recharge.setCardId(cardId);
         recharge.setAmount(amount);
         recharge.setCurrency(currency);
-        recharge.setFee(fee != null ? fee : BigDecimal.ZERO);
+        recharge.setFee(actualFee);
         recharge.setActualAmount(actualAmount);
         recharge.setStatus(Recharge.STATUS_PENDING);
         recharge.setRechargeType(Recharge.TYPE_PREPAID);
 
-        // 调用上游充值
+        // VCC-008: 使用 upstreamCardId 调用上游充值
         YeeVccRequests.RechargeRequest request = new YeeVccRequests.RechargeRequest();
-        request.setCardId(String.valueOf(cardId));
+        request.setCardId(card.getUpstreamCardId());
         request.setAmount(actualAmount);
         request.setCurrency(currency);
         request.setOrderId(orderNo);
@@ -127,16 +159,18 @@ public class RechargeServiceImpl implements IRechargeService
             YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccClient.recharge(request);
             if (response.isSuccess())
             {
-                recharge.setStatus(Recharge.STATUS_SUCCESS);
-                recharge.setCompletedAt(new Date());
+                // VCC-008: 保持 PENDING 状态，等待回调或查询确认
                 if (response.getData() != null)
                 {
                     recharge.setUpstreamOrderNo(response.getData().getOrderId());
                 }
-                log.info("充值成功, orderNo={}, amount={}", orderNo, actualAmount);
+                log.info("充值请求已提交, orderNo={}, amount={}, upstreamOrderNo={}", 
+                        orderNo, actualAmount, recharge.getUpstreamOrderNo());
             }
             else
             {
+                // 上游调用失败，回滚用户余额
+                userAccountService.addBalance(userId, currency, amount);
                 recharge.setStatus(Recharge.STATUS_FAILED);
                 recharge.setFailReason(response.getMessage());
                 log.warn("充值失败, orderNo={}, msg={}", orderNo, response.getMessage());
@@ -144,6 +178,8 @@ public class RechargeServiceImpl implements IRechargeService
         }
         catch (Exception e)
         {
+            // 异常时回滚用户余额
+            userAccountService.addBalance(userId, currency, amount);
             recharge.setStatus(Recharge.STATUS_FAILED);
             recharge.setFailReason(e.getMessage());
             log.error("充值异常, orderNo={}", orderNo, e);
@@ -151,6 +187,34 @@ public class RechargeServiceImpl implements IRechargeService
 
         rechargeMapper.insertRecharge(recharge);
         return recharge;
+    }
+
+    /**
+     * VCC-008: 计算充值手续费
+     * 根据卡类型和系统费率配置计算
+     */
+    private BigDecimal calculateRechargeFee(BigDecimal amount, Integer cardType)
+    {
+        // 默认费率：储值卡 1%，预算卡 0.5%
+        String feeRateKey = (cardType != null && cardType == Card.TYPE_BUDGET) 
+                ? "fee.recharge.budget.rate" 
+                : "fee.recharge.prepaid.rate";
+        String feeRateStr = systemConfigService.get(feeRateKey);
+        
+        BigDecimal feeRate;
+        if (StringUtils.isNotEmpty(feeRateStr))
+        {
+            feeRate = new BigDecimal(feeRateStr);
+        }
+        else
+        {
+            // 默认费率
+            feeRate = (cardType != null && cardType == Card.TYPE_BUDGET) 
+                    ? new BigDecimal("0.005") 
+                    : new BigDecimal("0.01");
+        }
+        
+        return amount.multiply(feeRate).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
     @Override
