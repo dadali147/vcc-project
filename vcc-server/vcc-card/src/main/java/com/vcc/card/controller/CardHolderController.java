@@ -31,6 +31,8 @@ public class CardHolderController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(CardHolder cardHolder)
     {
+        // VCC-009: 强制只能查询当前用户的持卡人
+        cardHolder.setUserId(getUserId());
         startPage();
         List<CardHolder> list = cardHolderService.selectCardHolderList(cardHolder);
         return getDataTable(list);
@@ -40,7 +42,13 @@ public class CardHolderController extends BaseController
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable Long id)
     {
-        return success(cardHolderService.selectCardHolderById(id));
+        // VCC-009: 校验归属，只能查询自己的持卡人
+        CardHolder holder = cardHolderService.selectCardHolderById(id);
+        if (holder == null || !holder.getUserId().equals(getUserId()))
+        {
+            return error("持卡人不存在或无权访问");
+        }
+        return success(holder);
     }
 
     @PreAuthorize("@ss.hasPermi('card:holder:add')")
