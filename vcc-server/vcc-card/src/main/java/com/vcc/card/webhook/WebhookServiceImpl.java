@@ -32,6 +32,7 @@ public class WebhookServiceImpl implements WebhookService
     private static final String TYPE_TRANSACTION = "TRANSACTION";
     private static final String TYPE_CARD_STATUS_CHANGE = "CARD_STATUS_CHANGE";
     private static final String TYPE_RECHARGE_RESULT = "RECHARGE_RESULT";
+    private static final String TYPE_3DS_OTP = "3DS_OTP";
 
     @Autowired
     private WebhookLogMapper webhookLogMapper;
@@ -92,6 +93,9 @@ public class WebhookServiceImpl implements WebhookService
                     break;
                 case TYPE_RECHARGE_RESULT:
                     handleRechargeResult(data);
+                    break;
+                case TYPE_3DS_OTP:
+                    handle3dsOtp(data);
                     break;
                 default:
                     log.warn("未知的Webhook类型: {}", webhookType);
@@ -287,6 +291,49 @@ public class WebhookServiceImpl implements WebhookService
         log.info("充值记录已更新: orderNo={}, status={}", recharge.getOrderNo(), status);
     }
 
+    /**
+     * 3DS_OTP：3DS 验证码回调 → 保存验证码，支持商户端展示
+     * 
+     * 字段说明（根据 YeeVCC 文档）：
+     * - cardId: 上游卡号
+     * - otpCode: 验证码
+     * - expireTime: 过期时间（秒级时间戳）
+     * - phone: 预留手机号（脱敏）
+     */
+    public void handle3dsOtp(Map<String, Object> data)
+    {
+        String cardId = getString(data, "cardId");
+        String otpCode = getString(data, "otpCode");
+        String expireTime = getString(data, "expireTime");
+        String phone = getString(data, "phone");
+
+        if (StringUtils.isBlank(cardId) || StringUtils.isBlank(otpCode))
+        {
+            log.warn("Webhook 3DS OTP回调：缺少必要字段, cardId={}, otpCode={}", cardId, otpCode);
+            return;
+        }
+
+        // 查找本地卡
+        Card card = cardMapper.selectCardByUpstreamCardId(cardId);
+        if (card == null)
+        {
+            log.warn("Webhook 3DS OTP回调：本地未找到卡, upstreamCardId={}", cardId);
+            return;
+        }
+
+        // TODO: 保存验证码到 Redis 或数据库，支持商户端查询展示
+        // 建议存储结构：
+        // Key: vcc:3ds:otp:{cardId}
+        // Value: {otpCode, expireTime, phone, receivedAt}
+        // TTL: 5 分钟（或根据 expireTime 计算）
+        
+        log.info("3DS OTP已接收: cardId={}, otpCode={}, expireTime={}, phone={}", 
+                cardId, otpCode, expireTime, phone);
+        
+        // TODO: 推送通知到商户端（WebSocket 或消息队列）
+        // 商户端需要展示验证码给用户
+    }
+
     // ==================== 工具方法 ====================
 
     private String extractUpstreamTxnId(String webhookType, Map<String, Object> data)
@@ -296,6 +343,7 @@ public class WebhookServiceImpl implements WebhookService
             case TYPE_TRANSACTION -> getString(data, "tranId");
             case TYPE_CARD_STATUS_CHANGE -> getString(data, "cardId");
             case TYPE_RECHARGE_RESULT -> getString(data, "orderNo");
+            case TYPE_3DS_OTP -> getString(data, "cardId");
             default -> null;
         };
     }

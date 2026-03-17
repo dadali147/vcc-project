@@ -269,6 +269,13 @@ public class YeeVccClient
         String timestamp = OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         String nonce = UUID.randomUUID().toString().replace("-", "");
         String canonical = buildCanonicalRequest(method, path, queryString, body, requestNo, timestamp, nonce);
+        
+        // 调试日志：打印签名原文（便于排查签名问题）
+        if (log.isDebugEnabled())
+        {
+            log.debug("YeeVCC 签名原文: method={}, path={}, canonical={}", method.name(), path, canonical);
+        }
+        
         String signature = Rsa2048SignatureUtils.sign(canonical, config.getPrivateKey());
 
         HttpHeaders headers = new HttpHeaders();

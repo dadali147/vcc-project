@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * YeeVCC Webhook 回调接收入口
  */
@@ -28,12 +30,21 @@ public class WebhookController
      */
     @PostMapping("/yeevcc")
     public String yeevcc(@RequestBody Map<String, Object> data,
-                         @RequestHeader(value = "x-yop-signature", required = false) String signature)
+                         @RequestHeader(value = "x-yop-signature", required = false) String signature,
+                         HttpServletRequest request)
     {
         String webhookType = resolveWebhookType(data);
         String payload = JSON.toJSONString(data);
 
         log.info("收到YeeVCC回调: type={}, data={}", webhookType, payload);
+
+        // TODO: Webhook 验签（暂时放行，后续补充）
+        // 需要从请求头获取 X-Webhook-Timestamp 和 X-Webhook-Signature
+        // 使用 HMAC-SHA256 验签，参考 WebhookHmacV1.verifyV1Hex()
+        if (!verifyWebhookSignature(request, payload))
+        {
+            log.warn("Webhook验签失败，暂时放行: type={}", webhookType);
+        }
 
         // 异步处理，立即返回
         webhookService.processWebhookAsync(webhookType, payload, signature, data);
@@ -42,10 +53,39 @@ public class WebhookController
     }
 
     /**
+     * Webhook 签名验证（预留方法，后续补充完整逻辑）
+     * 
+     * @param request HTTP请求
+     * @param body 请求体原始字符串
+     * @return 验签结果（暂时始终返回 true）
+     */
+    private boolean verifyWebhookSignature(HttpServletRequest request, String body)
+    {
+        // 从请求头获取签名相关参数
+        String timestamp = request.getHeader("X-Webhook-Timestamp");
+        String signature = request.getHeader("X-Webhook-Signature");
+        
+        log.debug("Webhook验签参数: timestamp={}, signature={}", timestamp, signature);
+        
+        // TODO: 补充完整验签逻辑
+        // 1. 检查 timestamp 是否在容忍窗口内（如 300 秒）
+        // 2. 使用 webhookSecret 和 HMAC-SHA256 验证签名
+        // 3. 参考: WebhookHmacV1.verifyV1Hex(webhookSecret, timestamp, body, signature, 300)
+        
+        // 暂时放行，后续补充完整验签逻辑
+        return true;
+    }
+
+    /**
      * 根据回调数据判断事件类型
      */
     private String resolveWebhookType(Map<String, Object> data)
     {
+        // 包含 otpCode 字段 → 3DS 验证码通知
+        if (data.containsKey("otpCode"))
+        {
+            return "3DS_OTP";
+        }
         // 包含 tranId 字段 → 交易通知
         if (data.containsKey("tranId"))
         {
