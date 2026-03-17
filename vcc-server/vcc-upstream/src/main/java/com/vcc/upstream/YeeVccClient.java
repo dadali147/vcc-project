@@ -52,7 +52,7 @@ public class YeeVccClient
 {
     private static final Logger log = LoggerFactory.getLogger(YeeVccClient.class);
 
-    private static final String PATH_ADD_CARD_HOLDER = "/rest/v1.0/vcc/add-card-holder";
+    private static final String PATH_ADD_CARD_HOLDER = "/rest/v1.0/vcc/user-account/create";
     private static final List<String> PATH_CARD_HOLDER_CANDIDATES = List.of(
             "/rest/v1.0/vcc/card-holders",
             "/rest/v1.0/vcc/card-holder"
@@ -627,16 +627,15 @@ public class YeeVccClient
         {
             return "";
         }
-        StringBuilder builder = new StringBuilder();
+        // 使用 UriComponentsBuilder 进行 URL 编码，确保与 buildUri 中的编码一致
+        UriComponentsBuilder builder = UriComponentsBuilder.newInstance();
         for (Map.Entry<String, Object> entry : payload.entrySet())
         {
-            if (builder.length() > 0)
-            {
-                builder.append('&');
-            }
-            builder.append(entry.getKey()).append('=').append(String.valueOf(entry.getValue()));
+            addQueryParam(builder, entry.getKey(), entry.getValue());
         }
-        return builder.toString();
+        // 返回编码后的查询字符串（去掉开头的 ?）
+        String queryString = builder.toUriString();
+        return queryString.startsWith("?") ? queryString.substring(1) : queryString;
     }
 
     private void validateClientConfig()
