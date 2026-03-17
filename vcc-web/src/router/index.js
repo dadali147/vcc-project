@@ -185,6 +185,24 @@ export const constantRoutes = [
         component: () => import('@/views/admin/transaction/index'),
         name: 'AdminTransaction',
         meta: { title: '交易监控', icon: 'eye-open' }
+      },
+      {
+        path: 'feeConfig',
+        component: () => import('@/views/admin/feeConfig/index'),
+        name: 'AdminFeeConfig',
+        meta: { title: '费率配置', icon: 'money' }
+      },
+      {
+        path: 'config',
+        component: () => import('@/views/admin/config/index'),
+        name: 'AdminConfig',
+        meta: { title: '系统配置', icon: 'system' }
+      },
+      {
+        path: 'userAuth',
+        component: () => import('@/views/admin/userAuth/index'),
+        name: 'AdminUserAuth',
+        meta: { title: '用户验证管理', icon: 'validCode' }
       }
     ]
   }
