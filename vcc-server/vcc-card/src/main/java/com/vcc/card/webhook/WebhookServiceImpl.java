@@ -2,11 +2,15 @@ package com.vcc.card.webhook;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import com.vcc.card.domain.Card;
 import com.vcc.card.domain.WebhookLog;
 import com.vcc.card.mapper.CardMapper;
 import com.vcc.card.mapper.WebhookLogMapper;
+import com.vcc.common.core.redis.RedisCache;
+import com.vcc.common.utils.StringUtils;
 import com.vcc.finance.domain.Recharge;
 import com.vcc.finance.mapper.RechargeMapper;
 import com.vcc.upstream.config.YeeVccConfig;
@@ -26,9 +30,13 @@ public class WebhookServiceImpl implements WebhookService
     private static final Logger log = LoggerFactory.getLogger(WebhookServiceImpl.class);
 
     private static final String TYPE_TRANSACTION = "TRANSACTION";
+    private static final String TYPE_AUTH_TRANSACTION = "AUTH_TRANSACTION";
     private static final String TYPE_CARD_STATUS_CHANGE = "CARD_STATUS_CHANGE";
+    private static final String TYPE_CARD_OPERATION = "CARD_OPERATION";
     private static final String TYPE_RECHARGE_RESULT = "RECHARGE_RESULT";
     private static final String TYPE_3DS_OTP = "3DS_OTP";
+    private static final String TYPE_OTP_3DS = "OTP_3DS";
+    private static final String THREE_DS_OTP_CACHE_KEY = "vcc:3ds:otp:";
 
     @Autowired
     private WebhookLogMapper webhookLogMapper;
@@ -49,6 +57,9 @@ public class WebhookServiceImpl implements WebhookService
     private IUserAccountService userAccountService;
 
     @Autowired
+    private RedisCache redisCache;
+
+    @Autowired
     private YeeVccConfig yeeVccConfig;
 
     /**
@@ -59,8 +70,15 @@ public class WebhookServiceImpl implements WebhookService
     {
         try
         {
+            Map<String, Object> safeData = data == null ? Map.of() : data;
+
+            if (!verifySignature(payload, signature))
+            {
+                return false;
+            }
+
             // VCC-012: 生成唯一幂等键（webhookType + 业务唯一ID）
-            String idempotencyKey = generateIdempotencyKey(webhookType, data);
+            String idempotencyKey = generateIdempotencyKey(webhookType, safeData);
 
             // 检查是否已存在（快速去重）
             if (idempotencyKey != null && webhookLogMapper.selectByIdempotencyKey(idempotencyKey) != null)
@@ -72,7 +90,7 @@ public class WebhookServiceImpl implements WebhookService
             // 保存到数据库（同步执行，确保落盘后再返回 200）
             WebhookLog webhookLog = new WebhookLog();
             webhookLog.setWebhookType(webhookType);
-            webhookLog.setUpstreamTxnId(extractUpstreamTxnId(webhookType, data));
+            webhookLog.setUpstreamTxnId(extractUpstreamTxnId(webhookType, safeData));
             webhookLog.setIdempotencyKey(idempotencyKey);
             webhookLog.setPayload(payload);
             webhookLog.setSignature(signature);
@@ -81,7 +99,7 @@ public class WebhookServiceImpl implements WebhookService
             webhookLogMapper.insertWebhookLog(webhookLog);
 
             // 通过独立 Bean 异步处理，确保 @Async 代理生效
-            webhookAsyncService.processWebhookAsync(webhookLog.getId(), webhookType, payload, signature, data);
+            webhookAsyncService.processWebhookAsync(webhookLog.getId(), webhookType, payload, signature, safeData);
 
             return true;
         }
@@ -100,16 +118,19 @@ public class WebhookServiceImpl implements WebhookService
         switch (webhookType)
         {
             case TYPE_TRANSACTION:
+            case TYPE_AUTH_TRANSACTION:
                 // VCC-014: 使用独立 Service 确保事务生效
                 webhookTransactionService.handleTransaction(data);
                 break;
             case TYPE_CARD_STATUS_CHANGE:
+            case TYPE_CARD_OPERATION:
                 handleCardStatusChange(data);
                 break;
             case TYPE_RECHARGE_RESULT:
                 handleRechargeResult(data);
                 break;
             case TYPE_3DS_OTP:
+            case TYPE_OTP_3DS:
                 handle3dsOtp(data);
                 break;
             default:
@@ -155,6 +176,10 @@ public class WebhookServiceImpl implements WebhookService
     {
         String upstreamCardId = getString(data, "cardId");
         String newStatus = getString(data, "cardStatus");
+        if (StringUtils.isBlank(newStatus))
+        {
+            newStatus = getString(data, "status");
+        }
 
         Card card = cardMapper.selectCardByUpstreamCardId(upstreamCardId);
         if (card == null)
@@ -278,7 +303,14 @@ public class WebhookServiceImpl implements WebhookService
             return;
         }
 
-        // TODO: 保存验证码到 Redis 或数据库，支持商户端查询展示
+        Map<String, Object> otpSnapshot = new LinkedHashMap<>();
+        otpSnapshot.put("userId", card.getUserId());
+        otpSnapshot.put("cardId", cardId);
+        otpSnapshot.put("otpCode", otpCode);
+        otpSnapshot.put("expireTime", expireTime);
+        otpSnapshot.put("phone", phone);
+        redisCache.setCacheObject(THREE_DS_OTP_CACHE_KEY + card.getUserId(), otpSnapshot, 10, TimeUnit.MINUTES);
+
         log.info("3DS OTP已接收: cardId={}, otpCode={}, expireTime={}, phone={}",
                 cardId, otpCode, expireTime, phone);
     }
@@ -292,15 +324,15 @@ public class WebhookServiceImpl implements WebhookService
     {
         String businessId = switch (webhookType)
         {
-            case TYPE_TRANSACTION -> getString(data, "tranId");
-            case TYPE_CARD_STATUS_CHANGE -> {
+            case TYPE_TRANSACTION, TYPE_AUTH_TRANSACTION -> getString(data, "tranId");
+            case TYPE_CARD_STATUS_CHANGE, TYPE_CARD_OPERATION -> {
                 String cardId = getString(data, "cardId");
                 String operateType = getString(data, "operateType");
                 String timestamp = getString(data, "timestamp");
                 yield cardId + ":" + operateType + ":" + timestamp;
             }
             case TYPE_RECHARGE_RESULT -> getString(data, "orderNo");
-            case TYPE_3DS_OTP -> {
+            case TYPE_3DS_OTP, TYPE_OTP_3DS -> {
                 String cardId = getString(data, "cardId");
                 String otpCode = getString(data, "otpCode");
                 yield cardId + ":" + otpCode;
@@ -320,10 +352,10 @@ public class WebhookServiceImpl implements WebhookService
     {
         return switch (webhookType)
         {
-            case TYPE_TRANSACTION -> getString(data, "tranId");
-            case TYPE_CARD_STATUS_CHANGE -> getString(data, "cardId");
+            case TYPE_TRANSACTION, TYPE_AUTH_TRANSACTION -> getString(data, "tranId");
+            case TYPE_CARD_STATUS_CHANGE, TYPE_CARD_OPERATION -> getString(data, "cardId");
             case TYPE_RECHARGE_RESULT -> getString(data, "orderNo");
-            case TYPE_3DS_OTP -> getString(data, "cardId");
+            case TYPE_3DS_OTP, TYPE_OTP_3DS -> getString(data, "cardId");
             default -> null;
         };
     }

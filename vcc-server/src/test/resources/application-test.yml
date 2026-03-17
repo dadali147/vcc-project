@@ -1,0 +1,50 @@
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      master:
+        url: jdbc:h2:mem:vcc_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+        username: sa
+        password:
+        driverClassName: org.h2.Driver
+      slave:
+        enabled: false
+      initialSize: 1
+      minIdle: 1
+      maxActive: 4
+      maxWait: 60000
+      connectTimeout: 30000
+      socketTimeout: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      maxEvictableIdleTimeMillis: 900000
+      validationQuery: SELECT 1
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      webStatFilter:
+        enabled: false
+      statViewServlet:
+        enabled: false
+  quartz:
+    job-store-type: memory
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 1s
+
+pagehelper:
+  helperDialect: h2
+
+logging:
+  level:
+    com.vcc: info
+    org.springframework: warn
+
+yeevcc:
+  enabled: true
+  baseUrl: https://example.test
+  appKey: test-app
+  privateKey: test-private-key
+  platformPublicKey: test-public-key

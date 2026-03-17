@@ -67,19 +67,16 @@ public class RechargeServiceImpl implements IRechargeService
     @Transactional
     public Recharge submitRecharge(Long userId, Long cardId, BigDecimal amount, String currency, BigDecimal fee)
     {
-        // 风控：充值功能开关
+        // 风控开关：关闭时跳过限额校验，但充值流程仍允许继续执行
         String rechargeEnabled = systemConfigService.get("risk.recharge.enabled");
-        if ("false".equalsIgnoreCase(rechargeEnabled))
-        {
-            throw new RuntimeException("充值功能已关闭，请联系管理员");
-        }
+        boolean riskEnabled = !"false".equalsIgnoreCase(rechargeEnabled);
 
         // SELECT FOR UPDATE 锁定用户账户行，防止并发绕过日限额
         userAccountService.lockUserAccount(userId, currency);
 
         // 风控：单笔充值上限
         String singleLimitStr = systemConfigService.get("risk.single.recharge.limit");
-        if (StringUtils.isNotEmpty(singleLimitStr))
+        if (riskEnabled && StringUtils.isNotEmpty(singleLimitStr))
         {
             BigDecimal singleLimit = new BigDecimal(singleLimitStr);
             if (amount.compareTo(singleLimit) > 0)
@@ -90,12 +87,16 @@ public class RechargeServiceImpl implements IRechargeService
 
         // VCC-016: 风控：日充值上限（数据库层面查询，减少并发窗口）
         String dailyLimitStr = systemConfigService.get("risk.daily.recharge.limit");
-        if (StringUtils.isNotEmpty(dailyLimitStr))
+        if (riskEnabled && StringUtils.isNotEmpty(dailyLimitStr))
         {
             BigDecimal dailyLimit = new BigDecimal(dailyLimitStr);
             // 使用数据库查询今日充值总额（更精确，减少并发窗口）
             String[] todayRange = getTodayTimeRange();
             BigDecimal todayTotal = rechargeMapper.selectTodayRechargeTotal(userId, todayRange[0], todayRange[1]);
+            if (todayTotal == null)
+            {
+                todayTotal = BigDecimal.ZERO;
+            }
             if (todayTotal.add(amount).compareTo(dailyLimit) > 0)
             {
                 throw new RuntimeException("今日充值总额将超过上限: " + dailyLimit + " USD，今日已充值: " + todayTotal + " USD");
