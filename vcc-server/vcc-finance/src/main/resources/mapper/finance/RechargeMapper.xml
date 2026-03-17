@@ -46,6 +46,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="userId != null">AND user_id = #{userId}</if>
             <if test="cardId != null">AND card_id = #{cardId}</if>
             <if test="orderNo != null and orderNo != ''">AND order_no = #{orderNo}</if>
+            <!-- VCC-013: 添加上游订单号查询条件 -->
+            <if test="upstreamOrderNo != null and upstreamOrderNo != ''">AND upstream_order_no = #{upstreamOrderNo}</if>
             <if test="status != null">AND status = #{status}</if>
             <if test="rechargeType != null">AND recharge_type = #{rechargeType}</if>
             <if test="currency != null and currency != ''">AND currency = #{currency}</if>
