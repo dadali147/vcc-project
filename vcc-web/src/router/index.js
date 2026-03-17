@@ -134,6 +134,39 @@ export const constantRoutes = [
         meta: { title: '用户中心', icon: 'user' }
       }
     ]
+  },
+  // VCC 管理端路由
+  {
+    path: '/admin',
+    component: Layout,
+    redirect: '/admin/cardBin',
+    meta: { title: '系统管理', icon: 'setting' },
+    children: [
+      {
+        path: 'cardBin',
+        component: () => import('@/views/admin/cardBin/index'),
+        name: 'AdminCardBin',
+        meta: { title: '卡BIN管理', icon: 'card' }
+      },
+      {
+        path: 'user',
+        component: () => import('@/views/admin/user/index'),
+        name: 'AdminUser',
+        meta: { title: '用户审核', icon: 'user' }
+      },
+      {
+        path: 'recharge',
+        component: () => import('@/views/admin/recharge/index'),
+        name: 'AdminRecharge',
+        meta: { title: '充值管理', icon: 'money' }
+      },
+      {
+        path: 'transaction',
+        component: () => import('@/views/admin/transaction/index'),
+        name: 'AdminTransaction',
+        meta: { title: '交易监控', icon: 'transaction' }
+      }
+    ]
   }
 ]
 
