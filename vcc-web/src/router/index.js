@@ -88,9 +88,21 @@ export const constantRoutes = [
   {
     path: '/merchant',
     component: Layout,
-    redirect: '/merchant/card',
+    redirect: '/merchant/home',
     meta: { title: '虚拟卡管理', icon: 'card' },
     children: [
+      {
+        path: 'home',
+        component: () => import('@/views/merchant/home/index'),
+        name: 'MerchantHome',
+        meta: { title: '首页', icon: 'dashboard' }
+      },
+      {
+        path: 'wallet',
+        component: () => import('@/views/merchant/wallet/index'),
+        name: 'MerchantWallet',
+        meta: { title: '我的钱包', icon: 'wallet' }
+      },
       {
         path: 'card',
         component: () => import('@/views/merchant/card/index'),
