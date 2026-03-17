@@ -17,4 +17,12 @@ public interface WebhookService
      * @return 是否成功入队
      */
     boolean enqueueWebhook(String webhookType, String payload, String signature, Map<String, Object> data);
+
+    /**
+     * 分派 Webhook 事件进行处理
+     *
+     * @param webhookType 回调类型
+     * @param data        解析后的数据
+     */
+    void dispatchWebhook(String webhookType, Map<String, Object> data);
 }

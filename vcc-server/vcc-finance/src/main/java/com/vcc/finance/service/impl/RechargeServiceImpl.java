@@ -278,7 +278,7 @@ public class RechargeServiceImpl implements IRechargeService
                         recharge.setCompletedAt(new Date());
 
                         // 充值失败才补偿余额
-                        if (Recharge.STATUS_FAILED.equals(newStatus))
+                        if (newStatus == Recharge.STATUS_FAILED)
                         {
                             userAccountService.addBalance(locked.getUserId(), locked.getCurrency(), locked.getAmount());
                             log.info("充值失败余额补偿: orderNo={}, userId={}, amount={}",

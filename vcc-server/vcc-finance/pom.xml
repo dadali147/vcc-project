@@ -27,7 +27,17 @@
         </dependency>
         <dependency>
             <groupId>com.vcc</groupId>
+            <artifactId>vcc-card</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vcc</groupId>
             <artifactId>vcc-user</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vcc</groupId>
+            <artifactId>vcc-system</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

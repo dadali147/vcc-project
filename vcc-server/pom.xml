@@ -204,10 +204,10 @@
         <module>vcc-quartz</module>
         <module>vcc-generator</module>
         <module>vcc-common</module>
-        <module>vcc-card</module>
-        <module>vcc-user</module>
-        <module>vcc-finance</module>
         <module>vcc-upstream</module>
+        <module>vcc-user</module>
+        <module>vcc-card</module>
+        <module>vcc-finance</module>
     </modules>
     <packaging>pom</packaging>
 

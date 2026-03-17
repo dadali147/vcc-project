@@ -22,7 +22,7 @@ public class WebhookAsyncService
     private WebhookLogMapper webhookLogMapper;
 
     @Autowired
-    private WebhookServiceImpl webhookService;
+    private WebhookService webhookService;
 
     @Async("threadPoolTaskExecutor")
     public void processWebhookAsync(Long logId, String webhookType, String payload, String signature, Map<String, Object> data)

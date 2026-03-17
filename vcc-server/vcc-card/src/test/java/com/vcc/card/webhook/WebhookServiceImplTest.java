@@ -6,10 +6,8 @@ import com.vcc.card.mapper.CardMapper;
 import com.vcc.card.mapper.WebhookLogMapper;
 import com.vcc.common.TestUtils;
 import com.vcc.common.core.redis.RedisCache;
-import com.vcc.finance.mapper.RechargeMapper;
 import com.vcc.upstream.config.YeeVccConfig;
 import com.vcc.upstream.util.Rsa2048SignatureUtils;
-import com.vcc.user.service.IUserAccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,12 +47,6 @@ class WebhookServiceImplTest
 
     @Mock
     private CardMapper cardMapper;
-
-    @Mock
-    private RechargeMapper rechargeMapper;
-
-    @Mock
-    private IUserAccountService userAccountService;
 
     @Mock
     private RedisCache redisCache;

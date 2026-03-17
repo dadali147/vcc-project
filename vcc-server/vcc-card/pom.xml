@@ -27,7 +27,7 @@
         </dependency>
         <dependency>
             <groupId>com.vcc</groupId>
-            <artifactId>vcc-finance</artifactId>
+            <artifactId>vcc-system</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
