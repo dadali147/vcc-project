@@ -1,0 +1,58 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: vcc_root_2024
+      MYSQL_DATABASE: vcc_db
+      MYSQL_USER: vcc_user
+      MYSQL_PASSWORD: vcc_pass_2024
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./vcc-server/sql/vcc_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./vcc-server/sql/migrate/V2__add_missing_fields.sql:/docker-entrypoint-initdb.d/02_migrate.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  vcc-server:
+    build:
+      context: ./vcc-server
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/vcc_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: vcc_user
+      SPRING_DATASOURCE_PASSWORD: vcc_pass_2024
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  vcc-web:
+    build:
+      context: ./vcc-web
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - vcc-server
+
+volumes:
+  mysql_data:
+  redis_data:
