@@ -3,7 +3,7 @@
     <div class="login-container">
       <div class="login-card">
         <div class="login-header">
-          <img src="@/assets/logo/kimoox-logo.png" alt="kimoox" class="logo-img" />
+          <img src="@/assets/logo/kimoox-logo-stacked.svg" alt="kimoox" class="logo-img" />
           <h1>{{ $t('common.login') }}</h1>
           <p class="subtitle">{{ $t('auth.portalSubtitle', 'Virtual Card Merchant Portal') }}</p>
         </div>

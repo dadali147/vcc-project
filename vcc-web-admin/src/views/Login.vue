@@ -3,7 +3,7 @@
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
-          <img src="@/assets/logo/kimoox-logo.png" alt="kimoox" class="login-logo" />
+          <img src="@/assets/logo/kimoox-logo-stacked.svg" alt="kimoox" class="login-logo" />
           <span>管理后台</span>
         </div>
       </template>
