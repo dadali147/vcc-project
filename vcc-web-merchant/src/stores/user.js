@@ -5,7 +5,12 @@ import i18n from '@/i18n'
 export const useUserStore = defineStore('user', () => {
   const getInitialLanguage = () => {
     const saved = localStorage.getItem('language')
-    return (saved && ['zh', 'zh_TW', 'en', 'vi'].includes(saved)) ? saved : 'zh'
+    if (saved && ['zh', 'zh_TW', 'en', 'vi'].includes(saved)) {
+      return saved
+    }
+    // 如果没有合法缓存，强制设置为简体中文并写入缓存
+    localStorage.setItem('language', 'zh')
+    return 'zh'
   }
 
   const language = ref(getInitialLanguage())

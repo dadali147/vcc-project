@@ -67,7 +67,8 @@ spring:
   devtools:
     restart:
       # 热部署开关
-      enabled: true
+      enabled: false
+      exclude: META-INF/maven/**,META-INF/resources/**,resources/**,static/**,public/**,templates/**,**/*Test.class,**/*Tests.class
   data:
     # redis 配置
     redis:

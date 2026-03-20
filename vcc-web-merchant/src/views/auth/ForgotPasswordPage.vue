@@ -9,47 +9,69 @@
       <div class="login-card">
         <div class="login-header">
           <img src="@/assets/logo/kimoox-logo-stacked.svg" alt="kimoox" class="logo-img" />
-          <h1>{{ $t('common.login', '登录') }}</h1>
-          <p class="subtitle">{{ $t('auth.portalSubtitle', '虚拟信用卡商户管理系统') }}</p>
+          <h1>{{ $t('auth.resetPassword', '重置密码') }}</h1>
+          <p class="subtitle">{{ $t('auth.resetSubtitle', '请输入您的邮箱以重置密码') }}</p>
         </div>
 
-        <form @submit.prevent="handleLogin" class="login-form">
+        <form @submit.prevent="handleReset" class="login-form">
           <div class="form-group">
             <label>{{ $t('auth.email', '邮箱地址') }}</label>
             <input 
-              v-model="credentials.email" 
+              v-model="formData.email" 
               type="email" 
-              :placeholder="$t('auth.email', '请输入邮箱地址')"
+              :placeholder="$t('auth.emailPlaceholder', '请输入邮箱地址')"
               required
             />
           </div>
 
           <div class="form-group">
-            <label>{{ $t('auth.password', '密码') }}</label>
+            <label>{{ $t('auth.verificationCode', '验证码') }}</label>
+            <div class="code-input-group">
+              <input 
+                v-model="formData.code" 
+                type="text" 
+                :placeholder="$t('auth.codePlaceholder', '请输入验证码')"
+                required
+              />
+              <button 
+                type="button" 
+                class="send-code-btn" 
+                :disabled="countdown > 0 || !formData.email" 
+                @click="sendCode"
+              >
+                {{ countdown > 0 ? `${countdown}s` : $t('auth.sendCode', '获取验证码') }}
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{ $t('auth.newPassword', '新密码') }}</label>
             <input 
-              v-model="credentials.password" 
+              v-model="formData.newPassword" 
               type="password" 
-              :placeholder="$t('auth.password', '请输入密码')"
+              :placeholder="$t('auth.newPasswordPlaceholder', '请输入新密码')"
               required
             />
           </div>
 
-          <div class="form-options">
-            <label class="checkbox">
-              <input type="checkbox" v-model="credentials.rememberMe" />
-              {{ $t('auth.rememberMe', '记住我') }}
-            </label>
-            <a href="#" class="forgot-password">{{ $t('auth.forgotPassword', '忘记密码？') }}</a>
+          <div class="form-group">
+            <label>{{ $t('auth.confirmPassword', '确认密码') }}</label>
+            <input 
+              v-model="formData.confirmPassword" 
+              type="password" 
+              :placeholder="$t('auth.confirmPasswordPlaceholder', '请再次输入新密码')"
+              required
+            />
           </div>
 
           <button type="submit" class="login-button" :disabled="loading">
             <span v-if="loading" class="loader"></span>
-            <span v-else>{{ $t('common.login', '登录') }}</span>
+            <span v-else>{{ $t('auth.submitReset', '确认重置') }}</span>
           </button>
         </form>
 
         <div class="login-footer">
-          <p>{{ $t('auth.noAccount', '还没有账号？') }} <router-link to="/register">{{ $t('common.register', '立即注册') }}</router-link></p>
+          <p>{{ $t('auth.rememberPassword', '记起密码了？') }} <router-link to="/login">{{ $t('auth.backToLogin', '返回登录') }}</router-link></p>
         </div>
 
         <div v-if="error" class="error-message">
@@ -64,24 +86,47 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
-const authStore = useAuthStore()
 
-const credentials = ref({
-  email: 'demo@example.com',
-  password: 'password123',
-  rememberMe: false
+const formData = ref({
+  email: '',
+  code: '',
+  newPassword: '',
+  confirmPassword: ''
 })
 
 const loading = ref(false)
 const error = ref('')
+const countdown = ref(0)
+let timer = null
 
-async function handleLogin() {
-  if (!credentials.value.email || !credentials.value.password) {
+const sendCode = () => {
+  if (!formData.value.email) {
+    ElMessage.warning('请先输入邮箱地址')
+    return
+  }
+  
+  // 模拟发送验证码
+  ElMessage.success('验证码已发送至您的邮箱')
+  countdown.value = 60
+  timer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(timer)
+    }
+  }, 1000)
+}
+
+async function handleReset() {
+  if (!formData.value.email || !formData.value.code || !formData.value.newPassword || !formData.value.confirmPassword) {
     error.value = '请填写所有必填项'
+    return
+  }
+
+  if (formData.value.newPassword !== formData.value.confirmPassword) {
+    error.value = '两次输入的密码不一致'
     return
   }
 
@@ -89,14 +134,13 @@ async function handleLogin() {
   error.value = ''
 
   try {
-    await authStore.login({
-      email: credentials.value.email,
-      password: credentials.value.password
-    })
-    ElMessage.success('登录成功')
-    router.push('/dashboard')
+    // 模拟 API 请求
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    ElMessage.success('密码重置成功，请使用新密码登录')
+    router.push('/login')
   } catch (err) {
-    error.value = err.response?.data?.message || '登录失败，请检查您的邮箱和密码。'
+    error.value = err.response?.data?.message || '重置失败，请检查验证码是否正确。'
     ElMessage.error(error.value)
   } finally {
     loading.value = false
@@ -249,41 +293,38 @@ async function handleLogin() {
   box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-.form-options {
+.code-input-group {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  margin-top: -8px;
+  gap: 12px;
 }
 
-.checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  color: #515154;
-  font-weight: 500;
-  user-select: none;
+.code-input-group input {
+  flex: 1;
+  min-width: 0;
 }
 
-.checkbox input {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #F97316;
-  border-radius: 4px;
-}
-
-.forgot-password {
+.send-code-btn {
+  padding: 0 16px;
+  background: rgba(249, 115, 22, 0.1);
   color: #F97316;
-  text-decoration: none;
-  transition: all 0.2s;
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  border-radius: 14px;
+  font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.forgot-password:hover {
-  color: #EA6B0E;
+.send-code-btn:hover:not(:disabled) {
+  background: rgba(249, 115, 22, 0.15);
+}
+
+.send-code-btn:disabled {
+  color: #86868B;
+  background: rgba(0, 0, 0, 0.05);
+  border-color: transparent;
+  cursor: not-allowed;
 }
 
 /* Web3 风格渐变按钮 */
@@ -303,6 +344,7 @@ async function handleLogin() {
   justify-content: center;
   align-items: center;
   min-height: 54px;
+  margin-top: 8px;
 }
 
 .login-button:hover:not(:disabled) {

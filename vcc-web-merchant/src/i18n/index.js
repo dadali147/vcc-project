@@ -13,14 +13,19 @@ const messages = {
 
 const getInitialLocale = () => {
   const saved = localStorage.getItem('language')
-  if (saved && messages[saved]) return saved
+  // 如果有合法的缓存则使用缓存
+  if (saved && messages[saved]) {
+    return saved
+  }
+  // 首次进入或无合法缓存时，强制设置为简体中文并写入缓存，确保稳定
+  localStorage.setItem('language', 'zh')
   return 'zh'
 }
 
 const i18n = createI18n({
   legacy: false,
   locale: getInitialLocale(),
-  fallbackLocale: 'en',
+  fallbackLocale: 'zh', // 将 fallback 从 en 改为 zh，确保极端情况下也是中文
   messages
 })
 

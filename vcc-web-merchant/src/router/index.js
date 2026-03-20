@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 const Layout = () => import('@/components/common/Layout.vue')
 const LoginPage = () => import('@/views/auth/LoginPage.vue')
 const RegisterPage = () => import('@/views/auth/RegisterPage.vue')
+const ForgotPasswordPage = () => import('@/views/auth/ForgotPasswordPage.vue')
 const DashboardPage = () => import('@/views/dashboard/DashboardPage.vue')
 const CardholdersPage = () => import('@/views/cardholders/CardholdersPage.vue')
 const CardsPage = () => import('@/views/cards/CardsPage.vue')
@@ -29,6 +30,12 @@ const routes = [
     name: 'Register',
     component: RegisterPage,
     meta: { requiresAuth: false, title: 'common.register' }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPasswordPage,
+    meta: { requiresAuth: false, title: 'auth.resetPassword' }
   },
   {
     path: '/',
@@ -136,7 +143,7 @@ router.beforeEach(async (to) => {
     }
   }
 
-  if ((to.path === '/login' || to.path === '/register') && authStore.isAuthenticated) {
+  if ((to.path === '/login' || to.path === '/register' || to.path === '/forgot-password') && authStore.isAuthenticated) {
     return '/dashboard'
   }
 

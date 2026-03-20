@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 import router from '@/router'
 
 const client = axios.create({
-  baseURL: '/api'
+  baseURL: ''
 })
 
 client.interceptors.request.use(config => {
