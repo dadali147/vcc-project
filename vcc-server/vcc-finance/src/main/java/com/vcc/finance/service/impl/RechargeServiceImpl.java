@@ -97,6 +97,7 @@ public class RechargeServiceImpl implements IRechargeService
         }
 
         // VCC-016: 风控：日充值上限（数据库层面查询，减少并发窗口）
+        // 日累计只统计 PENDING+SUCCESS，FAILED/CANCELLED 不计入风控额度
         String dailyLimitStr = systemConfigService.get("risk.daily.recharge.limit");
         if (riskEnabled && StringUtils.isNotEmpty(dailyLimitStr))
         {

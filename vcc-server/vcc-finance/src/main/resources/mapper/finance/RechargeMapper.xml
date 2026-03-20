@@ -68,6 +68,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <!-- VCC-016: 查询用户今日充值总额（数据库层面） -->
+    <!-- 日累计只统计 PENDING(0)+SUCCESS(1)，FAILED(2)/CANCELLED 不计入风控额度 -->
     <select id="selectTodayRechargeTotal" resultType="java.math.BigDecimal">
         SELECT COALESCE(SUM(amount), 0) 
         FROM vcc_recharge 

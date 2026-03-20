@@ -69,6 +69,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         limit 1
     </select>
 
+    <!-- 统计商户当日风控事件次数（基于已触发的风控事件记录） -->
     <select id="countDailyTransactions" resultType="int">
         select count(*)
         from vcc_risk_event
@@ -77,6 +78,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           and DATE(created_at) = CURDATE()
     </select>
 
+    <!-- 统计商户当日风控事件累计金额（基于已触发的风控事件记录） -->
+    <!-- 注意：此处统计的是风控事件表，非充值表。充值日累计风控口径见 RechargeMapper.selectTodayRechargeTotal -->
     <select id="sumDailyAmount" resultType="java.math.BigDecimal">
         select COALESCE(SUM(
             CAST(JSON_EXTRACT(trigger_detail, '$.amount') AS DECIMAL(20,2))
