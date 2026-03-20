@@ -17,8 +17,9 @@ public interface IRechargeService
 
     /**
      * 发起充值（储值卡充值/预算卡设额度）
+     * P1 修复：增加 orderNo 参数用于幂等校验，移除 fee 参数（服务端计算）
      */
-    public Recharge submitRecharge(Long userId, Long cardId, BigDecimal amount, String currency, BigDecimal fee);
+    public Recharge submitRecharge(Long userId, Long cardId, BigDecimal amount, String currency, String orderNo);
 
     /**
      * 查询充值结果（需传入userId做归属校验）

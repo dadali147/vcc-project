@@ -35,6 +35,11 @@ public interface RechargeMapper
 
     public int insertRecharge(Recharge recharge);
 
+    /**
+     * P0 修复：根据 txHash 查询充值记录（用于幂等校验）
+     */
+    public Recharge selectRechargeByTxHash(@org.apache.ibatis.annotations.Param("txHash") String txHash);
+
     public int updateRecharge(Recharge recharge);
 
     public int deleteRechargeById(Long id);

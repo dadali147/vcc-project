@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.risk.mapper.RiskEventMapper">
+
+    <resultMap type="com.vcc.risk.domain.RiskEvent" id="RiskEventResult">
+        <result property="id"             column="id"              />
+        <result property="merchantId"     column="merchant_id"     />
+        <result property="ruleId"         column="rule_id"         />
+        <result property="transactionId"  column="transaction_id"  />
+        <result property="triggerDetail"  column="trigger_detail"  />
+        <result property="status"         column="status"          />
+        <result property="handlerId"      column="handler_id"      />
+        <result property="handleTime"     column="handle_time"     />
+        <result property="handleResult"   column="handle_result"   />
+        <result property="delFlag"        column="del_flag"        />
+        <result property="createdAt"      column="created_at"      />
+        <result property="updatedAt"      column="updated_at"      />
+    </resultMap>
+
+    <sql id="selectRiskEventVo">
+        select id, merchant_id, rule_id, transaction_id, trigger_detail,
+               status, handler_id, handle_time, handle_result, del_flag, created_at, updated_at
+        from vcc_risk_event
+        where del_flag = '0'
+    </sql>
+
+    <select id="selectRiskEventById" parameterType="Long" resultMap="RiskEventResult">
+        <include refid="selectRiskEventVo"/>
+        and id = #{id}
+    </select>
+
+    <select id="selectRiskEventList" parameterType="com.vcc.risk.domain.RiskEvent" resultMap="RiskEventResult">
+        <include refid="selectRiskEventVo"/>
+        <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+        <if test="ruleId != null">and rule_id = #{ruleId}</if>
+        <if test="transactionId != null">and transaction_id = #{transactionId}</if>
+        <if test="status != null and status != ''">and status = #{status}</if>
+        <if test="handlerId != null">and handler_id = #{handlerId}</if>
+        order by id desc
+    </select>
+
+    <insert id="insertRiskEvent" parameterType="com.vcc.risk.domain.RiskEvent" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_risk_event (
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="ruleId != null">rule_id,</if>
+            <if test="transactionId != null">transaction_id,</if>
+            <if test="triggerDetail != null and triggerDetail != ''">trigger_detail,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="handlerId != null">handler_id,</if>
+            <if test="handleTime != null">handle_time,</if>
+            <if test="handleResult != null and handleResult != ''">handle_result,</if>
+            created_at
+        ) values (
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="ruleId != null">#{ruleId},</if>
+            <if test="transactionId != null">#{transactionId},</if>
+            <if test="triggerDetail != null and triggerDetail != ''">#{triggerDetail},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="handlerId != null">#{handlerId},</if>
+            <if test="handleTime != null">#{handleTime},</if>
+            <if test="handleResult != null and handleResult != ''">#{handleResult},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateRiskEvent" parameterType="com.vcc.risk.domain.RiskEvent">
+        update vcc_risk_event
+        <set>
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
+            <if test="ruleId != null">rule_id = #{ruleId},</if>
+            <if test="transactionId != null">transaction_id = #{transactionId},</if>
+            <if test="triggerDetail != null">trigger_detail = #{triggerDetail},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="handlerId != null">handler_id = #{handlerId},</if>
+            <if test="handleTime != null">handle_time = #{handleTime},</if>
+            <if test="handleResult != null">handle_result = #{handleResult},</if>
+            updated_at = sysdate()
+        </set>
+        where id = #{id} and del_flag = '0'
+    </update>
+
+    <update id="deleteRiskEventById" parameterType="Long">
+        update vcc_risk_event set del_flag = '1', updated_at = sysdate() where id = #{id}
+    </update>
+
+    <update id="deleteRiskEventByIds" parameterType="Long">
+        update vcc_risk_event set del_flag = '1', updated_at = sysdate() where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

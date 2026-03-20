@@ -65,8 +65,19 @@ public class RechargeServiceImpl implements IRechargeService
 
     @Override
     @Transactional
-    public Recharge submitRecharge(Long userId, Long cardId, BigDecimal amount, String currency, BigDecimal fee)
+    public Recharge submitRecharge(Long userId, Long cardId, BigDecimal amount, String currency, String orderNo)
     {
+        // P1 修复：基于 orderNo 的幂等校验，防止重复提交
+        if (StringUtils.isNotEmpty(orderNo))
+        {
+            Recharge existing = rechargeMapper.selectRechargeByOrderNo(orderNo);
+            if (existing != null)
+            {
+                log.warn("充值订单重复提交, orderNo={}, userId={}", orderNo, userId);
+                return existing;
+            }
+        }
+
         // 风控开关：关闭时跳过限额校验，但充值流程仍允许继续执行
         String rechargeEnabled = systemConfigService.get("risk.recharge.enabled");
         boolean riskEnabled = !"false".equalsIgnoreCase(rechargeEnabled);
@@ -120,9 +131,9 @@ public class RechargeServiceImpl implements IRechargeService
         }
 
         // VCC-008: 服务端计算手续费（根据卡类型和费率配置）
+        // P1 修复：fee 完全由服务端计算，不接受前端传入
         BigDecimal calculatedFee = calculateRechargeFee(amount, card.getCardType());
-        BigDecimal actualFee = (fee != null && fee.compareTo(calculatedFee) == 0) ? fee : calculatedFee;
-        BigDecimal actualAmount = amount.subtract(actualFee);
+        BigDecimal actualAmount = amount.subtract(calculatedFee);
 
         if (actualAmount.compareTo(BigDecimal.ZERO) <= 0)
         {
@@ -136,7 +147,11 @@ public class RechargeServiceImpl implements IRechargeService
             throw new RuntimeException("账户余额不足，无法完成充值");
         }
 
-        String orderNo = generateOrderNo();
+        // P1 修复：使用前端传入的 orderNo（如有），否则服务端生成
+        if (StringUtils.isEmpty(orderNo))
+        {
+            orderNo = generateOrderNo();
+        }
 
         // 创建充值记录
         Recharge recharge = new Recharge();
@@ -145,7 +160,7 @@ public class RechargeServiceImpl implements IRechargeService
         recharge.setCardId(cardId);
         recharge.setAmount(amount);
         recharge.setCurrency(currency);
-        recharge.setFee(actualFee);
+        recharge.setFee(calculatedFee);
         recharge.setActualAmount(actualAmount);
         recharge.setStatus(Recharge.STATUS_PENDING);
         recharge.setRechargeType(Recharge.TYPE_PREPAID);
@@ -295,6 +310,20 @@ public class RechargeServiceImpl implements IRechargeService
     @Transactional
     public Recharge handleUsdtArrival(Long userId, BigDecimal amount, String currency, String txHash)
     {
+        // P0 修复：txHash 不能为空
+        if (StringUtils.isEmpty(txHash))
+        {
+            throw new RuntimeException("txHash 不能为空");
+        }
+
+        // P0 修复：基于 txHash 的幂等校验，防止重复入账
+        Recharge existing = rechargeMapper.selectRechargeByTxHash(txHash);
+        if (existing != null)
+        {
+            log.warn("USDT到账重复处理, txHash={}, existingOrderNo={}, userId={}", txHash, existing.getOrderNo(), userId);
+            return existing;
+        }
+
         String orderNo = generateOrderNo();
 
         // 增加用户账户余额
@@ -314,7 +343,9 @@ public class RechargeServiceImpl implements IRechargeService
         recharge.setCompletedAt(new Date());
 
         rechargeMapper.insertRecharge(recharge);
-        log.info("USDT到账处理完成, userId={}, amount={}, txHash={}", userId, amount, txHash);
+        // P0 修复：增加审计日志，记录操作人、金额、目标用户、时间
+        log.info("USDT到账处理完成 [审计] operatorUserId={}, targetUserId={}, amount={}, currency={}, txHash={}, orderNo={}, time={}",
+                userId, userId, amount, currency, txHash, orderNo, new Date());
         return recharge;
     }
 

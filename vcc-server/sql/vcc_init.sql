@@ -28,7 +28,8 @@ INSERT INTO `system_configs` (`config_key`, `config_value`, `config_type`, `desc
 ('yeevcc.aes.key.v1', '', 'STRING', 'YeeVCC AES 密钥 v1', 1),
 ('yeevcc.aes.version', 'v1', 'STRING', '当前使用的 AES 密钥版本', 0),
 ('yeevcc.api.baseurl.test', 'https://apiqa.kun.global/yop-center', 'STRING', 'YeeVCC 测试环境地址', 0),
-('yeevcc.api.baseurl.prod', 'https://api.kun.global/yop-center', 'STRING', 'YeeVCC 生产环境地址', 0);
+('yeevcc.api.baseurl.prod', 'https://api.kun.global/yop-center', 'STRING', 'YeeVCC 生产环境地址', 0),
+('vcc.webhook.secret', '', 'STRING', 'YeeVCC Webhook 回调验签 Secret（HMAC-SHA256），上线前必须填入真实值', 1);
 
 
 -- -----------------------------------------------------------------------------

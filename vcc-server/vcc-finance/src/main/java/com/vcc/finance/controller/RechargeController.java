@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.vcc.common.annotation.Log;
 import com.vcc.common.core.controller.BaseController;
 import com.vcc.common.core.domain.AjaxResult;
 import com.vcc.common.core.page.TableDataInfo;
+import com.vcc.common.enums.BusinessType;
 import com.vcc.finance.domain.Recharge;
 import com.vcc.finance.service.IRechargeService;
 
@@ -43,6 +45,7 @@ public class RechargeController extends BaseController
         return success(rechargeService.selectRechargeById(id));
     }
 
+    @Log(title = "充值提交", businessType = BusinessType.INSERT)
     @PreAuthorize("@ss.hasPermi('finance:recharge:add')")
     @PostMapping("/submit")
     public AjaxResult submit(@RequestBody Map<String, Object> params)
@@ -50,9 +53,10 @@ public class RechargeController extends BaseController
         Long cardId = Long.valueOf(params.get("cardId").toString());
         BigDecimal amount = new BigDecimal(params.get("amount").toString());
         String currency = params.getOrDefault("currency", "USD").toString();
-        BigDecimal fee = params.containsKey("fee") ? new BigDecimal(params.get("fee").toString()) : BigDecimal.ZERO;
+        // P1 修复：禁止前端传 fee，完全由服务端计算
+        String orderNo = params.containsKey("orderNo") ? params.get("orderNo").toString() : null;
 
-        Recharge recharge = rechargeService.submitRecharge(getUserId(), cardId, amount, currency, fee);
+        Recharge recharge = rechargeService.submitRecharge(getUserId(), cardId, amount, currency, orderNo);
         return success(recharge);
     }
 
@@ -63,11 +67,13 @@ public class RechargeController extends BaseController
         return success(rechargeService.queryRechargeResult(getUserId(), orderNo));
     }
 
+    @Log(title = "USDT到账处理", businessType = BusinessType.INSERT)
     @PreAuthorize("@ss.hasPermi('finance:recharge:add')")
     @PostMapping("/usdt-arrival")
     public AjaxResult usdtArrival(@RequestBody Map<String, Object> params)
     {
-        Long userId = Long.valueOf(params.get("userId").toString());
+        // P0 修复：userId 只能从当前登录 token 获取，禁止前端传入
+        Long userId = getUserId();
         BigDecimal amount = new BigDecimal(params.get("amount").toString());
         String currency = params.getOrDefault("currency", "USD").toString();
         String txHash = params.getOrDefault("txHash", "").toString();

@@ -8,6 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="id"                column="id"                  />
         <result property="orderNo"           column="order_no"            />
         <result property="userId"            column="user_id"             />
+        <result property="merchantId"        column="merchant_id"         />
         <result property="cardId"            column="card_id"             />
         <result property="amount"            column="amount"              />
         <result property="currency"          column="currency"            />
@@ -15,8 +16,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="actualAmount"      column="actual_amount"       />
         <result property="status"            column="status"              />
         <result property="rechargeType"      column="recharge_type"       />
+        <result property="rechargeScene"     column="recharge_scene"      />
         <result property="upstreamOrderNo"   column="upstream_order_no"   />
         <result property="txHash"            column="tx_hash"             />
+        <result property="chainType"         column="chain_type"          />
         <result property="failReason"        column="fail_reason"         />
         <result property="completedAt"       column="completed_at"        />
         <result property="createTime"        column="created_at"          />
@@ -24,8 +27,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectRechargeVo">
-        select id, order_no, user_id, card_id, amount, currency, fee, actual_amount,
-               status, recharge_type, upstream_order_no, tx_hash, fail_reason,
+        select id, order_no, user_id, merchant_id, card_id, amount, currency, fee, actual_amount,
+               status, recharge_type, recharge_scene, upstream_order_no, tx_hash, chain_type, fail_reason,
                completed_at, created_at, updated_at
         from vcc_recharge
     </sql>
@@ -40,16 +43,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where order_no = #{orderNo}
     </select>
 
+    <!-- P0 修复：根据 txHash 查询充值记录（幂等校验） -->
+    <select id="selectRechargeByTxHash" parameterType="String" resultMap="RechargeResult">
+        <include refid="selectRechargeVo"/>
+        where tx_hash = #{txHash} limit 1
+    </select>
+
     <select id="selectRechargeList" parameterType="com.vcc.finance.domain.Recharge" resultMap="RechargeResult">
         <include refid="selectRechargeVo"/>
         <where>
             <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="merchantId != null">AND merchant_id = #{merchantId}</if>
             <if test="cardId != null">AND card_id = #{cardId}</if>
             <if test="orderNo != null and orderNo != ''">AND order_no = #{orderNo}</if>
             <!-- VCC-013: 添加上游订单号查询条件 -->
             <if test="upstreamOrderNo != null and upstreamOrderNo != ''">AND upstream_order_no = #{upstreamOrderNo}</if>
             <if test="status != null">AND status = #{status}</if>
             <if test="rechargeType != null">AND recharge_type = #{rechargeType}</if>
+            <if test="rechargeScene != null and rechargeScene != ''">AND recharge_scene = #{rechargeScene}</if>
+            <if test="chainType != null and chainType != ''">AND chain_type = #{chainType}</if>
             <if test="currency != null and currency != ''">AND currency = #{currency}</if>
         </where>
         order by id desc
@@ -85,6 +97,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into vcc_recharge (
             <if test="orderNo != null and orderNo != ''">order_no,</if>
             <if test="userId != null">user_id,</if>
+            <if test="merchantId != null">merchant_id,</if>
             <if test="cardId != null">card_id,</if>
             <if test="amount != null">amount,</if>
             <if test="currency != null and currency != ''">currency,</if>
@@ -92,12 +105,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="actualAmount != null">actual_amount,</if>
             <if test="status != null">status,</if>
             <if test="rechargeType != null">recharge_type,</if>
+            <if test="rechargeScene != null and rechargeScene != ''">recharge_scene,</if>
             <if test="upstreamOrderNo != null and upstreamOrderNo != ''">upstream_order_no,</if>
             <if test="txHash != null and txHash != ''">tx_hash,</if>
+            <if test="chainType != null and chainType != ''">chain_type,</if>
             created_at
         ) values (
             <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
             <if test="userId != null">#{userId},</if>
+            <if test="merchantId != null">#{merchantId},</if>
             <if test="cardId != null">#{cardId},</if>
             <if test="amount != null">#{amount},</if>
             <if test="currency != null and currency != ''">#{currency},</if>
@@ -105,8 +121,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="actualAmount != null">#{actualAmount},</if>
             <if test="status != null">#{status},</if>
             <if test="rechargeType != null">#{rechargeType},</if>
+            <if test="rechargeScene != null and rechargeScene != ''">#{rechargeScene},</if>
             <if test="upstreamOrderNo != null and upstreamOrderNo != ''">#{upstreamOrderNo},</if>
             <if test="txHash != null and txHash != ''">#{txHash},</if>
+            <if test="chainType != null and chainType != ''">#{chainType},</if>
             sysdate()
         )
     </insert>
