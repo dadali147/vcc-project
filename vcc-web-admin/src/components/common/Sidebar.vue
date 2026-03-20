@@ -11,43 +11,43 @@
     >
       <el-menu-item index="/dashboard">
         <span class="menu-icon">📊</span>
-        <span>Dashboard</span>
+        <span>仪表盘</span>
       </el-menu-item>
       <el-menu-item index="/users">
         <span class="menu-icon">👥</span>
-        <span>Users</span>
+        <span>用户管理</span>
       </el-menu-item>
       <el-menu-item index="/kyc">
         <span class="menu-icon">✓</span>
-        <span>KYC Review</span>
+        <span>KYC 审核</span>
       </el-menu-item>
       <el-menu-item index="/cards">
         <span class="menu-icon">💳</span>
-        <span>Cards</span>
+        <span>卡片管理</span>
       </el-menu-item>
       <el-menu-item index="/card-bins">
         <span class="menu-icon">🔢</span>
-        <span>BIN Config</span>
+        <span>BIN 配置</span>
       </el-menu-item>
       <el-menu-item index="/transactions">
         <span class="menu-icon">💰</span>
-        <span>Transactions</span>
+        <span>交易记录</span>
       </el-menu-item>
       <el-menu-item index="/fee-config">
         <span class="menu-icon">⚙️</span>
-        <span>Fee Config</span>
+        <span>费率配置</span>
       </el-menu-item>
       <el-menu-item index="/risk-config">
         <span class="menu-icon">🛡️</span>
-        <span>Risk Config</span>
+        <span>风控配置</span>
       </el-menu-item>
       <el-menu-item index="/logs">
         <span class="menu-icon">📝</span>
-        <span>System Logs</span>
+        <span>系统日志</span>
       </el-menu-item>
       <el-menu-item index="/settings">
         <span class="menu-icon">⚙️</span>
-        <span>Settings</span>
+        <span>系统设置</span>
       </el-menu-item>
     </el-menu>
   </div>
