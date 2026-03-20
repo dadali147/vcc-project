@@ -101,9 +101,11 @@ public class WebhookServiceImpl implements WebhookService
             }
             
             // 根据 webhookType 分派给不同的处理器
+            // 事件类型定义来源：接口契约文档 §3.1
             switch (webhookType)
             {
-                case "3DS_OTP":
+                case "OTP":       // 文档定义值（接口契约文档 §3.1）
+                case "3DS_OTP":   // 兼容旧写法（待上游确认后移除）
                     handleOtpWebhook(data);
                     break;
                 case "TRANSACTION":
@@ -115,6 +117,7 @@ public class WebhookServiceImpl implements WebhookService
                     handleCardStatusChangeWebhook(data);
                     break;
                 case "RECHARGE_RESULT":
+                case "TOPUP_RESULT":  // 文档定义值（接口契约文档 §3.1），RECHARGE_RESULT 为兼容写法
                     handleRechargeResultWebhook(data);
                     break;
                 default:
@@ -274,7 +277,8 @@ public class WebhookServiceImpl implements WebhookService
         String bizKey = null;
         switch (webhookType)
         {
-            case "3DS_OTP":
+            case "OTP":       // 文档定义值（接口契约文档 §3.1）
+            case "3DS_OTP":   // 兼容旧写法（待上游确认后移除）
                 // OTP: cardId + otpCode 作为业务唯一键
                 bizKey = getStringValue(data, "cardId") + ":" + getStringValue(data, "otpCode");
                 break;
@@ -298,6 +302,7 @@ public class WebhookServiceImpl implements WebhookService
                 bizKey = getStringValue(data, "cardId") + ":" + cardStatus;
                 break;
             case "RECHARGE_RESULT":
+            case "TOPUP_RESULT":  // 文档定义值（接口契约文档 §3.1）
                 // 充值: orderNo
                 bizKey = getStringValue(data, "orderNo");
                 break;
@@ -310,6 +315,19 @@ public class WebhookServiceImpl implements WebhookService
 
     /**
      * 解析卡片状态
+     *
+     * 上游 YeeVCC 文档定义的卡状态枚举值（来源：接口契约文档 §1.4.3 + 业务流程文档 §2.3）：
+     *   ACTIVE       — 正常/已激活
+     *   INACTIVE     — 待激活
+     *   FROZEN       — 冻结
+     *   CLOSED       — 已销卡
+     *   SUSPENDED    — 停用（业务流程文档 §2.3）
+     *
+     * 以下兼容写法为防御性处理，待上游确认后可移除：
+     *   ACTIVATED / ACTIVATE   → 映射为 ACTIVE
+     *   DEACTIVATED            → 映射为 INACTIVE
+     *   FREEZE / LOCKED        → 映射为 FROZEN
+     *   CANCELLED / CANCEL     → 映射为 CLOSED
      */
     private Integer resolveCardStatus(Map<String, Object> data)
     {
@@ -324,21 +342,35 @@ public class WebhookServiceImpl implements WebhookService
         }
         switch (cardStatus.toUpperCase())
         {
+            // 文档定义值
             case "ACTIVE":
+            // 防御性兼容（待上游确认）
             case "ACTIVATED":
             case "ACTIVATE":
                 return Card.STATUS_ACTIVE;
+
+            // 文档定义值
             case "INACTIVE":
+            // 防御性兼容（待上游确认）
             case "DEACTIVATED":
                 return Card.STATUS_INACTIVE;
+
+            // 文档定义值
             case "FROZEN":
+            // 防御性兼容（待上游确认）
             case "FREEZE":
             case "LOCKED":
                 return Card.STATUS_FROZEN;
-            case "CANCELLED":
+
+            // 文档定义值
             case "CLOSED":
+            // 文档定义值（业务流程文档 §2.3 状态流转）
+            case "SUSPENDED":
+            // 防御性兼容（待上游确认）
+            case "CANCELLED":
             case "CANCEL":
                 return Card.STATUS_CANCELLED;
+
             default:
                 log.warn("未知的卡片状态: {}", cardStatus);
                 return null;

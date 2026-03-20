@@ -91,7 +91,8 @@ public class WebhookController
         }
 
         // 入队处理
-        boolean queued = webhookService.enqueueWebhook("3DS_OTP", payload, signature, data);
+        // 事件类型 "OTP" 来源：接口契约文档 §3.1
+        boolean queued = webhookService.enqueueWebhook("OTP", payload, signature, data);
         if (!queued)
         {
             log.error("3DS OTP回调入队失败，返回 500");
@@ -283,13 +284,18 @@ public class WebhookController
 
     /**
      * 根据回调数据判断事件类型
+     * 事件类型定义来源：接口契约文档 §3.1
+     *   OTP               — OTP验证码通知
+     *   TRANSACTION        — 交易通知
+     *   CARD_STATUS_CHANGE — 卡片状态变更
+     *   TOPUP_RESULT       — 充值结果通知
      */
     private String resolveWebhookType(Map<String, Object> data)
     {
-        // 包含 otpCode 字段 → 3DS 验证码通知
+        // 包含 otpCode 字段 → OTP 验证码通知（文档定义: OTP）
         if (data.containsKey("otpCode"))
         {
-            return "3DS_OTP";
+            return "OTP";
         }
         // 包含 tranId 字段 → 交易通知
         if (data.containsKey("tranId"))
@@ -302,6 +308,8 @@ public class WebhookController
             return "CARD_STATUS_CHANGE";
         }
         // 包含 orderNo + rechargeType 或单独有充值相关字段 → 充值结果
+        // 注：文档定义为 TOPUP_RESULT（§3.1），此处内容检测返回 RECHARGE_RESULT，
+        // dispatchWebhook 已同时支持两种写法
         if (data.containsKey("orderNo") && (data.containsKey("rechargeType") || data.containsKey("rechargeAmount")))
         {
             return "RECHARGE_RESULT";
