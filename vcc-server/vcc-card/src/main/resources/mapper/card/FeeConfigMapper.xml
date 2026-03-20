@@ -7,12 +7,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="com.vcc.card.domain.FeeConfig" id="FeeConfigResult">
         <result property="id"              column="id"               />
         <result property="userId"          column="user_id"          />
+        <result property="scope"           column="scope"            />
+        <result property="merchantId"      column="merchant_id"      />
         <result property="cardBinId"       column="card_bin_id"      />
         <result property="feeType"         column="fee_type"         />
+        <result property="conditionType"   column="condition_type"   />
+        <result property="thresholdAmount" column="threshold_amount" />
         <result property="rate"            column="rate"             />
         <result property="fixedAmount"     column="fixed_amount"     />
         <result property="minFee"          column="min_fee"          />
         <result property="maxFee"          column="max_fee"          />
+        <result property="chargeSource"    column="charge_source"    />
+        <result property="versionNo"       column="version_no"       />
         <result property="status"          column="status"           />
         <result property="effectiveDate"   column="effective_date"   />
         <result property="expiryDate"      column="expiry_date"      />
@@ -21,8 +27,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectFeeConfigVo">
-        select id, user_id, card_bin_id, fee_type, rate, fixed_amount, min_fee, max_fee,
-               status, effective_date, expiry_date, created_at, updated_at
+        select id, user_id, scope, merchant_id, card_bin_id, fee_type, condition_type,
+               threshold_amount, rate, fixed_amount, min_fee, max_fee, charge_source,
+               version_no, status, effective_date, expiry_date, created_at, updated_at
         from vcc_fee_config
     </sql>
 
@@ -35,8 +42,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectFeeConfigVo"/>
         <where>
             <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="scope != null and scope != ''">AND scope = #{scope}</if>
+            <if test="merchantId != null">AND merchant_id = #{merchantId}</if>
             <if test="cardBinId != null and cardBinId != ''">AND card_bin_id = #{cardBinId}</if>
             <if test="feeType != null and feeType != ''">AND fee_type = #{feeType}</if>
+            <if test="conditionType != null and conditionType != ''">AND condition_type = #{conditionType}</if>
             <if test="status != null">AND status = #{status}</if>
         </where>
         order by id desc
@@ -48,27 +58,61 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by user_id asc
     </select>
 
+    <select id="selectEffectiveFeeConfig" resultMap="FeeConfigResult">
+        <include refid="selectFeeConfigVo"/>
+        where fee_type = #{feeType}
+          and status = 1
+          and (
+                (scope = 'MERCHANT' and merchant_id = #{merchantId})
+                or scope = 'PLATFORM'
+              )
+          <if test="conditionType != null and conditionType != ''">
+              and (condition_type is null or condition_type = #{conditionType})
+          </if>
+          <if test="amount != null">
+              and (threshold_amount is null or threshold_amount &lt;= #{amount})
+          </if>
+        order by case when scope = 'MERCHANT' and merchant_id = #{merchantId} then 0 else 1 end,
+                 case when threshold_amount is null then 0 else 1 end desc,
+                 threshold_amount desc,
+                 version_no desc,
+                 id desc
+        limit 1
+    </select>
+
     <insert id="insertFeeConfig" parameterType="com.vcc.card.domain.FeeConfig" useGeneratedKeys="true" keyProperty="id">
         insert into vcc_fee_config (
             <if test="userId != null">user_id,</if>
+            <if test="scope != null and scope != ''">scope,</if>
+            <if test="merchantId != null">merchant_id,</if>
             <if test="cardBinId != null and cardBinId != ''">card_bin_id,</if>
             <if test="feeType != null and feeType != ''">fee_type,</if>
+            <if test="conditionType != null and conditionType != ''">condition_type,</if>
+            <if test="thresholdAmount != null">threshold_amount,</if>
             <if test="rate != null">rate,</if>
             <if test="fixedAmount != null">fixed_amount,</if>
             <if test="minFee != null">min_fee,</if>
             <if test="maxFee != null">max_fee,</if>
+            <if test="chargeSource != null and chargeSource != ''">charge_source,</if>
+            <if test="versionNo != null">version_no,</if>
             <if test="status != null">status,</if>
             <if test="effectiveDate != null">effective_date,</if>
             <if test="expiryDate != null">expiry_date,</if>
             created_at
         ) values (
             <if test="userId != null">#{userId},</if>
+            <if test="scope != null and scope != ''">#{scope},</if>
+            <if test="merchantId != null">#{merchantId},</if>
             <if test="cardBinId != null and cardBinId != ''">#{cardBinId},</if>
             <if test="feeType != null and feeType != ''">#{feeType},</if>
+            <if test="conditionType != null and conditionType != ''">#{conditionType},</if>
+            <if test="thresholdAmount != null">#{thresholdAmount},</if>
             <if test="rate != null">#{rate},</if>
             <if test="fixedAmount != null">#{fixedAmount},</if>
             <if test="minFee != null">#{minFee},</if>
             <if test="maxFee != null">#{maxFee},</if>
+            <if test="chargeSource != null and chargeSource != ''">#{chargeSource},</if>
+            <if test="versionNo != null">#{versionNo},</if>
             <if test="status != null">#{status},</if>
             <if test="effectiveDate != null">#{effectiveDate},</if>
             <if test="expiryDate != null">#{expiryDate},</if>
@@ -80,12 +124,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update vcc_fee_config
         <set>
             <if test="userId != null">user_id = #{userId},</if>
+            <if test="scope != null and scope != ''">scope = #{scope},</if>
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
             <if test="cardBinId != null">card_bin_id = #{cardBinId},</if>
             <if test="feeType != null and feeType != ''">fee_type = #{feeType},</if>
+            <if test="conditionType != null">condition_type = #{conditionType},</if>
+            <if test="thresholdAmount != null">threshold_amount = #{thresholdAmount},</if>
             <if test="rate != null">rate = #{rate},</if>
             <if test="fixedAmount != null">fixed_amount = #{fixedAmount},</if>
             <if test="minFee != null">min_fee = #{minFee},</if>
             <if test="maxFee != null">max_fee = #{maxFee},</if>
+            <if test="chargeSource != null">charge_source = #{chargeSource},</if>
+            <if test="versionNo != null">version_no = #{versionNo},</if>
             <if test="status != null">status = #{status},</if>
             <if test="effectiveDate != null">effective_date = #{effectiveDate},</if>
             <if test="expiryDate != null">expiry_date = #{expiryDate},</if>

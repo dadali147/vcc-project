@@ -1,8 +1,10 @@
 package com.vcc.card.mapper;
 
-import java.util.List;
 import com.vcc.card.domain.FeeConfig;
 import org.apache.ibatis.annotations.Param;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 费率配置 数据层
@@ -14,6 +16,11 @@ public interface FeeConfigMapper
     public List<FeeConfig> selectFeeConfigList(FeeConfig feeConfig);
 
     public List<FeeConfig> selectFeeConfigByFeeType(@Param("feeType") String feeType);
+
+    public FeeConfig selectEffectiveFeeConfig(@Param("merchantId") Long merchantId,
+                                              @Param("feeType") String feeType,
+                                              @Param("conditionType") String conditionType,
+                                              @Param("amount") BigDecimal amount);
 
     public int insertFeeConfig(FeeConfig feeConfig);
 

@@ -89,6 +89,38 @@ public class YeeVccClient
     private static final String PATH_CARD_LIMIT = "/rest/v1.0/vcc/card-limit";
     private static final String PATH_USER_INFO = "/rest/v1.0/vcc/user-info";
 
+    // ==================== Demo 路径映射 ====================
+    private static final Map<String, String> DEMO_PATH_MAP = new LinkedHashMap<>();
+    static {
+        // 用户/持卡人
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/user-info",              "/demo/user/userInfo");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-holders",           "/demo/user/cardholders");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-holder",            "/demo/user/cardholders");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/add-card-holder",        "/demo/user/addCardholder");
+        // 账户
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/user-account/create",       "/demo/account/create");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/user-account/transfer-in",  "/demo/account/transferIn");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/user-account/transfer-out", "/demo/account/transferOut");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/user-account/list",         "/demo/account/list");
+        // 卡片
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-bins",              "/demo/card/cardBins");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-open",              "/demo/card/open");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-open-task",         "/demo/card/queryTask");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-info",              "/demo/card/cardInfo");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-key-info",          "/demo/card/sensitiveInfo");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-keyinfo",           "/demo/card/sensitiveInfo");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-balance",           "/demo/card/balance");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-activate",          "/demo/card/activate");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-recharge",          "/demo/card/recharge");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-charge-out",        "/demo/card/chargeOut");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-freeze",            "/demo/card/freeze");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-unfreeze",          "/demo/card/unfreeze");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-cancel",            "/demo/card/cancel");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-remark",            "/demo/card/modifyRemark");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/card-limit",             "/demo/card/limitConfig");
+        DEMO_PATH_MAP.put("/rest/v1.0/vcc/transactions",           "/demo/card/authList");
+    }
+
     private final YeeVccConfig config;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
@@ -104,7 +136,7 @@ public class YeeVccClient
     {
         YeeVccRequests.AddCardHolderRequest safeRequest = requireRequest(request, "addCardHolder");
         fillCustomerId(safeRequest::getCustomerId, safeRequest::setCustomerId);
-        return execute(HttpMethod.POST, PATH_ADD_CARD_HOLDER, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_ADD_CARD_HOLDER), safeRequest,
                 node -> mapNode(node, YeeVccModels.CardHolderData.class));
     }
 
@@ -113,14 +145,14 @@ public class YeeVccClient
     {
         YeeVccRequests.GetCardHolderRequest safeRequest = requireRequest(request, "getCardHolder");
         fillCustomerId(safeRequest::getCustomerId, safeRequest::setCustomerId);
-        return executeWithFallback(HttpMethod.GET, PATH_CARD_HOLDER_CANDIDATES, safeRequest,
+        return executeWithFallback(HttpMethod.GET, resolvePathList(PATH_CARD_HOLDER_CANDIDATES), safeRequest,
                 node -> mapPageData(node, YeeVccModels.CardHolderData.class, "records", "list", "items"));
     }
 
     public YeeVccApiResponse<YeeVccModels.OpenCardTaskData> openCard(YeeVccRequests.OpenCardRequest request)
     {
         YeeVccRequests.OpenCardRequest safeRequest = requireRequest(request, "openCard");
-        return execute(HttpMethod.POST, PATH_OPEN_CARD, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_OPEN_CARD), safeRequest,
                 node -> mapNode(node, YeeVccModels.OpenCardTaskData.class));
     }
 
@@ -128,41 +160,41 @@ public class YeeVccClient
             YeeVccRequests.QueryOpenCardResultRequest request)
     {
         YeeVccRequests.QueryOpenCardResultRequest safeRequest = requireRequest(request, "queryOpenCardResult");
-        return execute(HttpMethod.GET, PATH_QUERY_OPEN_CARD, safeRequest,
+        return execute(HttpMethod.GET, resolvePath(PATH_QUERY_OPEN_CARD), safeRequest,
                 node -> mapNode(node, YeeVccModels.OpenCardTaskData.class));
     }
 
     public YeeVccApiResponse<YeeVccModels.OperationData> activateCard(YeeVccRequests.ActivateCardRequest request)
     {
         YeeVccRequests.ActivateCardRequest safeRequest = requireRequest(request, "activateCard");
-        return execute(HttpMethod.POST, PATH_ACTIVATE_CARD, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_ACTIVATE_CARD), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
     public YeeVccApiResponse<YeeVccModels.CardKeyInfoData> getCardKeyInfo(YeeVccRequests.GetCardKeyInfoRequest request)
     {
         YeeVccRequests.GetCardKeyInfoRequest safeRequest = requireRequest(request, "getCardKeyInfo");
-        return executeWithFallback(HttpMethod.GET, PATH_CARD_KEY_INFO_CANDIDATES, safeRequest, this::mapCardKeyInfo);
+        return executeWithFallback(HttpMethod.GET, resolvePathList(PATH_CARD_KEY_INFO_CANDIDATES), safeRequest, this::mapCardKeyInfo);
     }
 
     public YeeVccApiResponse<YeeVccModels.OperationData> freezeCard(YeeVccRequests.FreezeCardRequest request)
     {
         YeeVccRequests.FreezeCardRequest safeRequest = requireRequest(request, "freezeCard");
-        return execute(HttpMethod.POST, PATH_FREEZE_CARD, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_FREEZE_CARD), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
     public YeeVccApiResponse<YeeVccModels.OperationData> unfreezeCard(YeeVccRequests.UnfreezeCardRequest request)
     {
         YeeVccRequests.UnfreezeCardRequest safeRequest = requireRequest(request, "unfreezeCard");
-        return execute(HttpMethod.POST, PATH_UNFREEZE_CARD, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_UNFREEZE_CARD), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
     public YeeVccApiResponse<YeeVccModels.OperationData> cancelCard(YeeVccRequests.CancelCardRequest request)
     {
         YeeVccRequests.CancelCardRequest safeRequest = requireRequest(request, "cancelCard");
-        return execute(HttpMethod.POST, PATH_CANCEL_CARD, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_CANCEL_CARD), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
@@ -173,7 +205,7 @@ public class YeeVccClient
         {
             safeRequest.setDeductCurrency(safeRequest.getCurrency());
         }
-        return execute(HttpMethod.POST, PATH_RECHARGE, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_RECHARGE), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
@@ -181,14 +213,14 @@ public class YeeVccClient
             YeeVccRequests.QueryRechargeResultRequest request)
     {
         YeeVccRequests.QueryRechargeResultRequest safeRequest = requireRequest(request, "queryRechargeResult");
-        return execute(HttpMethod.GET, PATH_QUERY_RECHARGE, safeRequest,
+        return execute(HttpMethod.GET, resolvePath(PATH_QUERY_RECHARGE), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
     public YeeVccApiResponse<YeeVccModels.OperationData> withdraw(YeeVccRequests.WithdrawRequest request)
     {
         YeeVccRequests.WithdrawRequest safeRequest = requireRequest(request, "withdraw");
-        return execute(HttpMethod.POST, PATH_WITHDRAW, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_WITHDRAW), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
@@ -196,7 +228,7 @@ public class YeeVccClient
             YeeVccRequests.GetTransactionsRequest request)
     {
         YeeVccRequests.GetTransactionsRequest safeRequest = requireRequest(request, "getTransactions");
-        return execute(HttpMethod.GET, PATH_TRANSACTIONS, safeRequest,
+        return execute(HttpMethod.GET, resolvePath(PATH_TRANSACTIONS), safeRequest,
                 node -> mapPageData(node, YeeVccModels.TransactionData.class, "records", "list", "items"));
     }
 
@@ -205,7 +237,7 @@ public class YeeVccClient
     {
         YeeVccRequests.GetCardBinsRequest safeRequest = requireRequest(request, "getCardBins");
         fillCustomerId(safeRequest::getCustomerId, safeRequest::setCustomerId);
-        return execute(HttpMethod.GET, PATH_CARD_BINS, safeRequest,
+        return execute(HttpMethod.GET, resolvePath(PATH_CARD_BINS), safeRequest,
                 node -> mapPageData(node, YeeVccModels.CardBinData.class, "records", "list", "items", "cardBins"));
     }
 
@@ -215,7 +247,7 @@ public class YeeVccClient
     {
         YeeVccRequests.CreateAccountRequest safeRequest = requireRequest(request, "createAccount");
         fillCustomerId(safeRequest::getCustomerId, safeRequest::setCustomerId);
-        return execute(HttpMethod.POST, PATH_CREATE_ACCOUNT, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_CREATE_ACCOUNT), safeRequest,
                 node -> mapNode(node, YeeVccModels.AccountData.class));
     }
 
@@ -223,7 +255,7 @@ public class YeeVccClient
             YeeVccRequests.AccountTransferRequest request)
     {
         YeeVccRequests.AccountTransferRequest safeRequest = requireRequest(request, "accountTransferIn");
-        return execute(HttpMethod.POST, PATH_ACCOUNT_TRANSFER_IN, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_ACCOUNT_TRANSFER_IN), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
@@ -231,7 +263,7 @@ public class YeeVccClient
             YeeVccRequests.AccountTransferRequest request)
     {
         YeeVccRequests.AccountTransferRequest safeRequest = requireRequest(request, "accountTransferOut");
-        return execute(HttpMethod.POST, PATH_ACCOUNT_TRANSFER_OUT, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_ACCOUNT_TRANSFER_OUT), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
@@ -240,7 +272,7 @@ public class YeeVccClient
     {
         YeeVccRequests.GetAccountInfoRequest safeRequest = requireRequest(request, "getAccountInfo");
         fillCustomerId(safeRequest::getCustomerId, safeRequest::setCustomerId);
-        return execute(HttpMethod.GET, PATH_ACCOUNT_INFO, safeRequest,
+        return execute(HttpMethod.GET, resolvePath(PATH_ACCOUNT_INFO), safeRequest,
                 node -> mapPageData(node, YeeVccModels.AccountData.class, "records", "list", "items"));
     }
 
@@ -249,7 +281,7 @@ public class YeeVccClient
     public YeeVccApiResponse<YeeVccModels.CardData> getCardInfo(YeeVccRequests.GetCardInfoRequest request)
     {
         YeeVccRequests.GetCardInfoRequest safeRequest = requireRequest(request, "getCardInfo");
-        return execute(HttpMethod.GET, PATH_CARD_INFO, safeRequest,
+        return execute(HttpMethod.GET, resolvePath(PATH_CARD_INFO), safeRequest,
                 node -> mapNode(node, YeeVccModels.CardData.class));
     }
 
@@ -257,7 +289,7 @@ public class YeeVccClient
             YeeVccRequests.GetCardBalanceRequest request)
     {
         YeeVccRequests.GetCardBalanceRequest safeRequest = requireRequest(request, "getCardBalance");
-        return execute(HttpMethod.POST, PATH_CARD_BALANCE, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_CARD_BALANCE), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
@@ -265,7 +297,7 @@ public class YeeVccClient
             YeeVccRequests.SetCardRemarkRequest request)
     {
         YeeVccRequests.SetCardRemarkRequest safeRequest = requireRequest(request, "setCardRemark");
-        return execute(HttpMethod.POST, PATH_CARD_REMARK, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_CARD_REMARK), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
@@ -273,7 +305,7 @@ public class YeeVccClient
             YeeVccRequests.SetCardLimitRequest request)
     {
         YeeVccRequests.SetCardLimitRequest safeRequest = requireRequest(request, "setCardLimit");
-        return execute(HttpMethod.POST, PATH_CARD_LIMIT, safeRequest,
+        return execute(HttpMethod.POST, resolvePath(PATH_CARD_LIMIT), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
@@ -282,7 +314,7 @@ public class YeeVccClient
     {
         YeeVccRequests.GetUserInfoRequest safeRequest = requireRequest(request, "getUserInfo");
         fillCustomerId(safeRequest::getCustomerId, safeRequest::setCustomerId);
-        return execute(HttpMethod.GET, PATH_USER_INFO, safeRequest,
+        return execute(HttpMethod.GET, resolvePath(PATH_USER_INFO), safeRequest,
                 node -> mapNode(node, YeeVccModels.CardHolderData.class));
     }
 
@@ -305,6 +337,41 @@ public class YeeVccClient
             }
             consumer.accept(config.getCustomerId());
         }
+    }
+
+    /**
+     * Demo 模式路径映射：将生产 API 路径转换为 demo server 路径。
+     * 非 demo 模式直接返回原路径。
+     */
+    private String resolvePath(String productionPath)
+    {
+        if (config.isDemoMode())
+        {
+            String demoPath = DEMO_PATH_MAP.get(productionPath);
+            if (demoPath != null)
+            {
+                return demoPath;
+            }
+            log.warn("YeeVCC demo mode: 未找到路径映射 {}, 使用原路径", productionPath);
+        }
+        return productionPath;
+    }
+
+    /**
+     * 对 fallback 路径列表做 demo 映射。
+     */
+    private List<String> resolvePathList(List<String> productionPaths)
+    {
+        if (!config.isDemoMode())
+        {
+            return productionPaths;
+        }
+        List<String> resolved = new ArrayList<>(productionPaths.size());
+        for (String p : productionPaths)
+        {
+            resolved.add(resolvePath(p));
+        }
+        return resolved;
     }
 
     private <T> YeeVccApiResponse<T> executeWithFallback(HttpMethod method, List<String> paths,

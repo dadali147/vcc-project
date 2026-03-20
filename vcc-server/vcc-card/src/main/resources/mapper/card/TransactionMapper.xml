@@ -9,7 +9,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="txnId"            column="txn_id"             />
         <result property="cardId"           column="card_id"            />
         <result property="userId"           column="user_id"            />
+        <result property="merchantId"       column="merchant_id"        />
+        <result property="holderId"         column="holder_id"          />
         <result property="txnType"          column="txn_type"           />
+        <result property="txnCategory"      column="txn_category"       />
+        <result property="relatedTxnId"     column="related_txn_id"     />
         <result property="amount"           column="amount"             />
         <result property="currency"         column="currency"           />
         <result property="merchantName"     column="merchant_name"      />
@@ -18,15 +22,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="status"           column="status"             />
         <result property="authCode"         column="auth_code"          />
         <result property="failReason"       column="fail_reason"        />
+        <result property="failReasonCode"   column="fail_reason_code"   />
+        <result property="failReasonText"   column="fail_reason_text"   />
+        <result property="displayMode"      column="display_mode"       />
         <result property="txnTime"          column="txn_time"           />
         <result property="createTime"       column="created_at"         />
         <result property="updateTime"       column="updated_at"         />
     </resultMap>
 
     <sql id="selectTransactionVo">
-        select id, txn_id, card_id, user_id, txn_type, amount, currency,
-               merchant_name, merchant_mcc, merchant_country, status,
-               auth_code, fail_reason, txn_time, created_at, updated_at
+        select id, txn_id, card_id, user_id, merchant_id, holder_id,
+               txn_type, txn_category, related_txn_id,
+               amount, currency, merchant_name, merchant_mcc, merchant_country,
+               status, auth_code, fail_reason, fail_reason_code, fail_reason_text,
+               display_mode, txn_time, created_at, updated_at
         from vcc_transaction
     </sql>
 
@@ -40,15 +49,38 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where txn_id = #{txnId}
     </select>
 
+    <select id="selectTransactionsByCardId" parameterType="Long" resultMap="TransactionResult">
+        <include refid="selectTransactionVo"/>
+        where card_id = #{cardId}
+        order by id desc
+    </select>
+
+    <select id="selectTransactionsByMerchantId" parameterType="Long" resultMap="TransactionResult">
+        <include refid="selectTransactionVo"/>
+        where merchant_id = #{merchantId}
+        order by id desc
+    </select>
+
+    <select id="selectRelatedTransactions" resultMap="TransactionResult">
+        <include refid="selectTransactionVo"/>
+        where related_txn_id = #{relatedTxnId}
+        order by id desc
+    </select>
+
     <select id="selectTransactionList" parameterType="com.vcc.card.domain.Transaction" resultMap="TransactionResult">
         <include refid="selectTransactionVo"/>
         <where>
             <if test="txnId != null and txnId != ''">AND txn_id = #{txnId}</if>
             <if test="cardId != null">AND card_id = #{cardId}</if>
             <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="merchantId != null">AND merchant_id = #{merchantId}</if>
+            <if test="holderId != null">AND holder_id = #{holderId}</if>
             <if test="txnType != null and txnType != ''">AND txn_type = #{txnType}</if>
+            <if test="txnCategory != null and txnCategory != ''">AND txn_category = #{txnCategory}</if>
+            <if test="relatedTxnId != null and relatedTxnId != ''">AND related_txn_id = #{relatedTxnId}</if>
             <if test="status != null">AND status = #{status}</if>
             <if test="currency != null and currency != ''">AND currency = #{currency}</if>
+            <if test="displayMode != null and displayMode != ''">AND display_mode = #{displayMode}</if>
             <if test="params.beginTxnTime != null and params.beginTxnTime != ''">
                 AND txn_time &gt;= #{params.beginTxnTime}
             </if>
@@ -64,7 +96,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="txnId != null and txnId != ''">txn_id,</if>
             <if test="cardId != null">card_id,</if>
             <if test="userId != null">user_id,</if>
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="holderId != null">holder_id,</if>
             <if test="txnType != null and txnType != ''">txn_type,</if>
+            <if test="txnCategory != null and txnCategory != ''">txn_category,</if>
+            <if test="relatedTxnId != null and relatedTxnId != ''">related_txn_id,</if>
             <if test="amount != null">amount,</if>
             <if test="currency != null and currency != ''">currency,</if>
             <if test="merchantName != null and merchantName != ''">merchant_name,</if>
@@ -73,13 +109,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="status != null">status,</if>
             <if test="authCode != null and authCode != ''">auth_code,</if>
             <if test="failReason != null and failReason != ''">fail_reason,</if>
+            <if test="failReasonCode != null and failReasonCode != ''">fail_reason_code,</if>
+            <if test="failReasonText != null and failReasonText != ''">fail_reason_text,</if>
+            <if test="displayMode != null and displayMode != ''">display_mode,</if>
             <if test="txnTime != null">txn_time,</if>
             created_at
         ) values (
             <if test="txnId != null and txnId != ''">#{txnId},</if>
             <if test="cardId != null">#{cardId},</if>
             <if test="userId != null">#{userId},</if>
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="holderId != null">#{holderId},</if>
             <if test="txnType != null and txnType != ''">#{txnType},</if>
+            <if test="txnCategory != null and txnCategory != ''">#{txnCategory},</if>
+            <if test="relatedTxnId != null and relatedTxnId != ''">#{relatedTxnId},</if>
             <if test="amount != null">#{amount},</if>
             <if test="currency != null and currency != ''">#{currency},</if>
             <if test="merchantName != null and merchantName != ''">#{merchantName},</if>
@@ -88,6 +131,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="status != null">#{status},</if>
             <if test="authCode != null and authCode != ''">#{authCode},</if>
             <if test="failReason != null and failReason != ''">#{failReason},</if>
+            <if test="failReasonCode != null and failReasonCode != ''">#{failReasonCode},</if>
+            <if test="failReasonText != null and failReasonText != ''">#{failReasonText},</if>
+            <if test="displayMode != null and displayMode != ''">#{displayMode},</if>
             <if test="txnTime != null">#{txnTime},</if>
             sysdate()
         )
@@ -99,8 +145,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="status != null">status = #{status},</if>
             <if test="authCode != null and authCode != ''">auth_code = #{authCode},</if>
             <if test="failReason != null and failReason != ''">fail_reason = #{failReason},</if>
+            <if test="failReasonCode != null and failReasonCode != ''">fail_reason_code = #{failReasonCode},</if>
+            <if test="failReasonText != null and failReasonText != ''">fail_reason_text = #{failReasonText},</if>
+            <if test="displayMode != null and displayMode != ''">display_mode = #{displayMode},</if>
+            <if test="txnCategory != null and txnCategory != ''">txn_category = #{txnCategory},</if>
+            <if test="relatedTxnId != null and relatedTxnId != ''">related_txn_id = #{relatedTxnId},</if>
             updated_at = sysdate()
         </set>
+        where id = #{id}
+    </update>
+
+    <update id="updateTransactionStatus">
+        update vcc_transaction
+        set status = #{status},
+            <if test="failReasonCode != null and failReasonCode != ''">fail_reason_code = #{failReasonCode},</if>
+            <if test="failReasonText != null and failReasonText != ''">fail_reason_text = #{failReasonText},</if>
+            updated_at = sysdate()
         where id = #{id}
     </update>
 

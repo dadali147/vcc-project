@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.card.mapper.CardOperationLogMapper">
+
+    <resultMap type="com.vcc.card.domain.CardOperationLog" id="CardOperationLogResult">
+        <result property="id"               column="id"                 />
+        <result property="merchantId"       column="merchant_id"        />
+        <result property="cardId"           column="card_id"            />
+        <result property="holderId"         column="holder_id"          />
+        <result property="operationType"    column="operation_type"     />
+        <result property="beforeValue"      column="before_value"       />
+        <result property="afterValue"       column="after_value"        />
+        <result property="operatorId"       column="operator_id"        />
+        <result property="operateTime"      column="operate_time"       />
+        <result property="remark"           column="remark"             />
+        <result property="delFlag"          column="del_flag"           />
+        <result property="createTime"       column="created_at"         />
+        <result property="updateTime"       column="updated_at"         />
+    </resultMap>
+
+    <sql id="selectVo">
+        select id, merchant_id, card_id, holder_id, operation_type,
+               before_value, after_value, operator_id, operate_time,
+               remark, del_flag, created_at, updated_at
+        from vcc_card_operation_log
+        where del_flag = '0'
+    </sql>
+
+    <select id="selectByCardId" parameterType="Long" resultMap="CardOperationLogResult">
+        <include refid="selectVo"/>
+        and card_id = #{cardId}
+        order by operate_time desc
+    </select>
+
+    <select id="selectByMerchantId" parameterType="Long" resultMap="CardOperationLogResult">
+        <include refid="selectVo"/>
+        and merchant_id = #{merchantId}
+        order by operate_time desc
+    </select>
+
+    <select id="selectList" parameterType="com.vcc.card.domain.CardOperationLog" resultMap="CardOperationLogResult">
+        <include refid="selectVo"/>
+        <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+        <if test="cardId != null">and card_id = #{cardId}</if>
+        <if test="holderId != null">and holder_id = #{holderId}</if>
+        <if test="operationType != null and operationType != ''">and operation_type = #{operationType}</if>
+        <if test="operatorId != null">and operator_id = #{operatorId}</if>
+        order by operate_time desc
+    </select>
+
+    <insert id="insert" parameterType="com.vcc.card.domain.CardOperationLog" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_card_operation_log (
+            merchant_id, card_id, holder_id, operation_type,
+            before_value, after_value, operator_id, operate_time,
+            remark, del_flag
+        ) values (
+            #{merchantId}, #{cardId}, #{holderId}, #{operationType},
+            #{beforeValue}, #{afterValue}, #{operatorId}, #{operateTime},
+            #{remark}, '0'
+        )
+    </insert>
+
+</mapper>

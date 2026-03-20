@@ -14,6 +14,10 @@ public interface CardMapper
 
     public List<Card> selectCardList(Card card);
 
+    public List<Card> selectCardsByHolderId(Long holderId);
+
+    public int countByHolderId(Long holderId);
+
     public int insertCard(Card card);
 
     public int updateCard(Card card);

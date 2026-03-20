@@ -1,0 +1,61 @@
+package com.vcc.finance.domain;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.vcc.common.core.domain.BaseEntity;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+/**
+ * 欠费记录 vcc_card_debt (PREPAID 卡余额负数时自动产生)
+ */
+public class CardDebt extends BaseEntity
+{
+    private static final long serialVersionUID = 1L;
+
+    public static final String STATUS_OUTSTANDING = "OUTSTANDING";
+    public static final String STATUS_SETTLED     = "SETTLED";
+
+    private Long id;
+
+    private Long merchantId;
+
+    private Long cardId;
+
+    private BigDecimal debtAmount;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date occurredAt;
+
+    /** 状态：OUTSTANDING/SETTLED */
+    private String status;
+
+    private BigDecimal settleAmount;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date settleTime;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getMerchantId() { return merchantId; }
+    public void setMerchantId(Long merchantId) { this.merchantId = merchantId; }
+
+    public Long getCardId() { return cardId; }
+    public void setCardId(Long cardId) { this.cardId = cardId; }
+
+    public BigDecimal getDebtAmount() { return debtAmount; }
+    public void setDebtAmount(BigDecimal debtAmount) { this.debtAmount = debtAmount; }
+
+    public Date getOccurredAt() { return occurredAt; }
+    public void setOccurredAt(Date occurredAt) { this.occurredAt = occurredAt; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public BigDecimal getSettleAmount() { return settleAmount; }
+    public void setSettleAmount(BigDecimal settleAmount) { this.settleAmount = settleAmount; }
+
+    public Date getSettleTime() { return settleTime; }
+    public void setSettleTime(Date settleTime) { this.settleTime = settleTime; }
+}

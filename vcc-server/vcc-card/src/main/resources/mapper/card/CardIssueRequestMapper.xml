@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.card.mapper.CardIssueRequestMapper">
+
+    <resultMap id="CardIssueRequestResult" type="com.vcc.card.domain.CardIssueRequest">
+        <result property="id"           column="id"/>
+        <result property="merchantId"   column="merchant_id"/>
+        <result property="batchNo"      column="batch_no"/>
+        <result property="cardType"     column="card_type"/>
+        <result property="binId"        column="bin_id"/>
+        <result property="totalCount"   column="total_count"/>
+        <result property="successCount" column="success_count"/>
+        <result property="failCount"    column="fail_count"/>
+        <result property="status"       column="status"/>
+        <result property="remark"       column="remark"/>
+        <result property="submitTime"   column="submit_time"/>
+        <result property="completeTime" column="complete_time"/>
+        <result property="createTime"   column="created_at"/>
+        <result property="updateTime"   column="updated_at"/>
+    </resultMap>
+
+    <sql id="selectColumns">
+        select id, merchant_id, batch_no, card_type, bin_id, total_count, success_count, fail_count,
+               status, remark, submit_time, complete_time, created_at, updated_at
+        from vcc_card_issue_request
+        where del_flag = '0'
+    </sql>
+
+    <select id="selectById" parameterType="Long" resultMap="CardIssueRequestResult">
+        <include refid="selectColumns"/>
+          and id = #{id}
+    </select>
+
+    <select id="selectByBatchNo" parameterType="String" resultMap="CardIssueRequestResult">
+        <include refid="selectColumns"/>
+          and batch_no = #{batchNo}
+    </select>
+
+    <select id="selectList" parameterType="com.vcc.card.domain.CardIssueRequest" resultMap="CardIssueRequestResult">
+        <include refid="selectColumns"/>
+        <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+        <if test="cardType != null and cardType != ''">and card_type = #{cardType}</if>
+        <if test="status != null and status != ''">and status = #{status}</if>
+        <if test="batchNo != null and batchNo != ''">and batch_no = #{batchNo}</if>
+        order by id desc
+    </select>
+
+    <insert id="insert" parameterType="com.vcc.card.domain.CardIssueRequest" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_card_issue_request (
+            merchant_id, batch_no, card_type, bin_id, total_count, success_count, fail_count,
+            status, remark, submit_time, del_flag, created_at, updated_at
+        ) values (
+            #{merchantId}, #{batchNo}, #{cardType}, #{binId}, #{totalCount}, 0, 0,
+            #{status}, #{remark}, sysdate(), '0', sysdate(), sysdate()
+        )
+    </insert>
+
+    <update id="updateStatus">
+        update vcc_card_issue_request
+        set status        = #{status},
+            success_count = #{successCount},
+            fail_count    = #{failCount},
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+            updated_at    = sysdate()
+        where id = #{id}
+    </update>
+
+    <update id="incrementSuccessCount" parameterType="Long">
+        update vcc_card_issue_request
+        set success_count = success_count + 1,
+            updated_at    = sysdate()
+        where id = #{id}
+    </update>
+
+    <update id="incrementFailCount" parameterType="Long">
+        update vcc_card_issue_request
+        set fail_count = fail_count + 1,
+            updated_at = sysdate()
+        where id = #{id}
+    </update>
+
+</mapper>

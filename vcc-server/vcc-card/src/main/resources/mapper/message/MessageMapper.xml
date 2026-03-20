@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.message.mapper.MessageMapper">
+
+    <resultMap type="com.vcc.message.domain.Message" id="MessageResult">
+        <result property="id"            column="id"            />
+        <result property="receiverType"  column="receiver_type" />
+        <result property="receiverId"    column="receiver_id"   />
+        <result property="title"         column="title"         />
+        <result property="content"       column="content"       />
+        <result property="messageType"   column="message_type"  />
+        <result property="isRead"        column="is_read"       />
+        <result property="readTime"      column="read_time"     />
+        <result property="businessType"  column="business_type" />
+        <result property="businessId"    column="business_id"   />
+        <result property="delFlag"       column="del_flag"      />
+        <result property="createdAt"     column="created_at"    />
+        <result property="updatedAt"     column="updated_at"    />
+    </resultMap>
+
+    <sql id="selectMessageVo">
+        select id, receiver_type, receiver_id, title, content, message_type,
+               is_read, read_time, business_type, business_id, del_flag,
+               created_at, updated_at
+        from vcc_message
+        where del_flag = '0'
+    </sql>
+
+    <select id="selectMessageById" parameterType="Long" resultMap="MessageResult">
+        <include refid="selectMessageVo"/>
+        and id = #{id}
+    </select>
+
+    <select id="selectMessageList" parameterType="com.vcc.message.domain.Message" resultMap="MessageResult">
+        <include refid="selectMessageVo"/>
+        <if test="receiverType != null and receiverType != ''">and receiver_type = #{receiverType}</if>
+        <if test="receiverId != null">and receiver_id = #{receiverId}</if>
+        <if test="title != null and title != ''">and title like concat('%', #{title}, '%')</if>
+        <if test="messageType != null and messageType != ''">and message_type = #{messageType}</if>
+        <if test="isRead != null and isRead != ''">and is_read = #{isRead}</if>
+        <if test="businessType != null and businessType != ''">and business_type = #{businessType}</if>
+        <if test="businessId != null and businessId != ''">and business_id = #{businessId}</if>
+        order by id desc
+    </select>
+
+    <select id="selectUnreadCount" resultType="int">
+        select count(1) from vcc_message
+        where del_flag = '0'
+          and is_read = '0'
+          and receiver_type = #{receiverType}
+          and receiver_id = #{receiverId}
+    </select>
+
+    <insert id="insertMessage" parameterType="com.vcc.message.domain.Message" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_message (
+            <if test="receiverType != null and receiverType != ''">receiver_type,</if>
+            <if test="receiverId != null">receiver_id,</if>
+            <if test="title != null and title != ''">title,</if>
+            <if test="content != null and content != ''">content,</if>
+            <if test="messageType != null and messageType != ''">message_type,</if>
+            <if test="isRead != null and isRead != ''">is_read,</if>
+            <if test="readTime != null">read_time,</if>
+            <if test="businessType != null and businessType != ''">business_type,</if>
+            <if test="businessId != null and businessId != ''">business_id,</if>
+            <if test="delFlag != null and delFlag != ''">del_flag,</if>
+            created_at
+        ) values (
+            <if test="receiverType != null and receiverType != ''">#{receiverType},</if>
+            <if test="receiverId != null">#{receiverId},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="content != null and content != ''">#{content},</if>
+            <if test="messageType != null and messageType != ''">#{messageType},</if>
+            <if test="isRead != null and isRead != ''">#{isRead},</if>
+            <if test="readTime != null">#{readTime},</if>
+            <if test="businessType != null and businessType != ''">#{businessType},</if>
+            <if test="businessId != null and businessId != ''">#{businessId},</if>
+            <if test="delFlag != null and delFlag != ''">#{delFlag},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateMessage" parameterType="com.vcc.message.domain.Message">
+        update vcc_message
+        <set>
+            <if test="receiverType != null and receiverType != ''">receiver_type = #{receiverType},</if>
+            <if test="receiverId != null">receiver_id = #{receiverId},</if>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="content != null and content != ''">content = #{content},</if>
+            <if test="messageType != null and messageType != ''">message_type = #{messageType},</if>
+            <if test="isRead != null and isRead != ''">is_read = #{isRead},</if>
+            <if test="readTime != null">read_time = #{readTime},</if>
+            <if test="businessType != null">business_type = #{businessType},</if>
+            <if test="businessId != null">business_id = #{businessId},</if>
+            <if test="delFlag != null and delFlag != ''">del_flag = #{delFlag},</if>
+            updated_at = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <update id="markAsRead" parameterType="Long">
+        update vcc_message
+        set is_read = '1', read_time = sysdate(), updated_at = sysdate()
+        where id = #{id} and del_flag = '0'
+    </update>
+
+    <update id="markAllAsRead">
+        update vcc_message
+        set is_read = '1', read_time = sysdate(), updated_at = sysdate()
+        where del_flag = '0'
+          and is_read = '0'
+          and receiver_type = #{receiverType}
+          and receiver_id = #{receiverId}
+    </update>
+
+    <update id="deleteMessageById" parameterType="Long">
+        update vcc_message set del_flag = '1', updated_at = sysdate() where id = #{id}
+    </update>
+
+    <update id="deleteMessageByIds" parameterType="Long">
+        update vcc_message set del_flag = '1', updated_at = sysdate() where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

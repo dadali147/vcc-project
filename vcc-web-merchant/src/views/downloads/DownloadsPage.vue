@@ -159,7 +159,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { ElTabs, ElTabPane } from 'element-plus'
+
 import { formatDate } from '@/utils/common'
 
 const activeTab = ref('transactions')

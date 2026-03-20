@@ -27,11 +27,19 @@ public class Recharge extends BaseEntity
     /** 充值类型：预算卡设额度 */
     public static final int TYPE_BUDGET = 2;
 
+    /** V3 充值场景：账户充值 */
+    public static final String SCENE_TOP_UP = "TOP_UP";
+    /** V3 充值场景：充值到卡 */
+    public static final String SCENE_CARD_LOAD = "CARD_LOAD";
+
     private Long id;
 
     private String orderNo;
 
     private Long userId;
+
+    /** V3: 商户ID */
+    private Long merchantId;
 
     private Long cardId;
 
@@ -49,9 +57,15 @@ public class Recharge extends BaseEntity
     /** 充值类型（1储值卡充值 2预算卡设额度） */
     private Integer rechargeType;
 
+    /** V3: 充值场景：TOP_UP/CARD_LOAD */
+    private String rechargeScene;
+
     private String upstreamOrderNo;
 
     private String txHash;
+
+    /** V3: 链类型：TRC20/ERC20/BEP20 */
+    private String chainType;
 
     private String failReason;
 
@@ -86,6 +100,16 @@ public class Recharge extends BaseEntity
     public void setUserId(Long userId)
     {
         this.userId = userId;
+    }
+
+    public Long getMerchantId()
+    {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId)
+    {
+        this.merchantId = merchantId;
     }
 
     public Long getCardId()
@@ -158,6 +182,16 @@ public class Recharge extends BaseEntity
         this.rechargeType = rechargeType;
     }
 
+    public String getRechargeScene()
+    {
+        return rechargeScene;
+    }
+
+    public void setRechargeScene(String rechargeScene)
+    {
+        this.rechargeScene = rechargeScene;
+    }
+
     public String getUpstreamOrderNo()
     {
         return upstreamOrderNo;
@@ -176,6 +210,16 @@ public class Recharge extends BaseEntity
     public void setTxHash(String txHash)
     {
         this.txHash = txHash;
+    }
+
+    public String getChainType()
+    {
+        return chainType;
+    }
+
+    public void setChainType(String chainType)
+    {
+        this.chainType = chainType;
     }
 
     public String getFailReason()

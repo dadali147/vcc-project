@@ -55,6 +55,15 @@ public class Card extends BaseEntity
 
     private String expiryDate;
 
+    /** V3: 卡号前6位 */
+    private String first6;
+
+    /** V3: 卡号后4位 */
+    private String last4;
+
+    /** V3: 备注 */
+    private String cardRemark;
+
     private Integer isAutoActivate;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -211,6 +220,36 @@ public class Card extends BaseEntity
     public void setCancelledAt(Date cancelledAt)
     {
         this.cancelledAt = cancelledAt;
+    }
+
+    public String getFirst6()
+    {
+        return first6;
+    }
+
+    public void setFirst6(String first6)
+    {
+        this.first6 = first6;
+    }
+
+    public String getLast4()
+    {
+        return last4;
+    }
+
+    public void setLast4(String last4)
+    {
+        this.last4 = last4;
+    }
+
+    public String getCardRemark()
+    {
+        return cardRemark;
+    }
+
+    public void setCardRemark(String cardRemark)
+    {
+        this.cardRemark = cardRemark;
     }
 
     @Override

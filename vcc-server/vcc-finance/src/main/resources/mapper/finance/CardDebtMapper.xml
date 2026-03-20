@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.finance.mapper.CardDebtMapper">
+
+    <resultMap id="CardDebtResult" type="com.vcc.finance.domain.CardDebt">
+        <result property="id"           column="id"/>
+        <result property="merchantId"   column="merchant_id"/>
+        <result property="cardId"       column="card_id"/>
+        <result property="debtAmount"   column="debt_amount"/>
+        <result property="occurredAt"   column="occurred_at"/>
+        <result property="status"       column="status"/>
+        <result property="settleAmount" column="settle_amount"/>
+        <result property="settleTime"   column="settle_time"/>
+        <result property="remark"       column="remark"/>
+        <result property="createTime"   column="created_at"/>
+        <result property="updateTime"   column="updated_at"/>
+    </resultMap>
+
+    <sql id="selectColumns">
+        select id, merchant_id, card_id, debt_amount, occurred_at, status,
+               settle_amount, settle_time, remark, created_at, updated_at
+        from vcc_card_debt
+        where del_flag = '0'
+    </sql>
+
+    <select id="selectById" parameterType="Long" resultMap="CardDebtResult">
+        <include refid="selectColumns"/>
+          and id = #{id}
+    </select>
+
+    <select id="selectCardDebtList" parameterType="com.vcc.finance.domain.CardDebt" resultMap="CardDebtResult">
+        <include refid="selectColumns"/>
+        <if test="merchantId != null"> and merchant_id = #{merchantId}</if>
+        <if test="cardId != null"> and card_id = #{cardId}</if>
+        <if test="status != null and status != ''"> and status = #{status}</if>
+        order by id desc
+    </select>
+
+    <select id="selectByCardId" parameterType="Long" resultMap="CardDebtResult">
+        <include refid="selectColumns"/>
+          and card_id = #{cardId}
+        order by id desc
+    </select>
+
+    <select id="selectOutstandingByMerchant" parameterType="Long" resultMap="CardDebtResult">
+        <include refid="selectColumns"/>
+          and merchant_id = #{merchantId}
+          and status = 'OUTSTANDING'
+        order by id asc
+    </select>
+
+    <insert id="insert" parameterType="com.vcc.finance.domain.CardDebt" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_card_debt (
+            merchant_id, card_id, debt_amount, occurred_at, status, remark, del_flag, created_at, updated_at
+        ) values (
+            #{merchantId}, #{cardId}, #{debtAmount}, sysdate(), #{status}, #{remark}, '0', sysdate(), sysdate()
+        )
+    </insert>
+
+    <update id="updateCardDebt" parameterType="com.vcc.finance.domain.CardDebt">
+        update vcc_card_debt
+        <set>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="settleAmount != null">settle_amount = #{settleAmount},</if>
+            <if test="settleTime != null">settle_time = #{settleTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            updated_at = sysdate()
+        </set>
+        where id = #{id} and del_flag = '0'
+    </update>
+
+    <update id="settle" parameterType="com.vcc.finance.domain.CardDebt">
+        update vcc_card_debt
+        set status        = 'SETTLED',
+            settle_amount = #{settleAmount},
+            settle_time   = sysdate(),
+            updated_at    = sysdate()
+        where id = #{id}
+          and status = 'OUTSTANDING'
+    </update>
+
+    <update id="deleteCardDebtById" parameterType="Long">
+        update vcc_card_debt set del_flag = '1' where id = #{id}
+    </update>
+
+    <update id="deleteCardDebtByIds" parameterType="Long">
+        update vcc_card_debt set del_flag = '1' where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

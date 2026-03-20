@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vcc.finance.mapper.LimitHistoryMapper">
+
+    <resultMap id="LimitHistoryResult" type="com.vcc.finance.domain.LimitHistory">
+        <result property="id"           column="id"/>
+        <result property="merchantId"   column="merchant_id"/>
+        <result property="cardId"       column="card_id"/>
+        <result property="limitType"    column="limit_type"/>
+        <result property="beforeAmount" column="before_amount"/>
+        <result property="afterAmount"  column="after_amount"/>
+        <result property="operatorId"   column="operator_id"/>
+        <result property="operateTime"  column="operate_time"/>
+        <result property="reason"       column="reason"/>
+        <result property="createTime"   column="created_at"/>
+        <result property="updateTime"   column="updated_at"/>
+    </resultMap>
+
+    <sql id="selectColumns">
+        select id, merchant_id, card_id, limit_type, before_amount, after_amount,
+               operator_id, operate_time, reason, created_at, updated_at
+        from vcc_limit_history
+        where del_flag = '0'
+    </sql>
+
+    <select id="selectById" parameterType="Long" resultMap="LimitHistoryResult">
+        <include refid="selectColumns"/>
+          and id = #{id}
+    </select>
+
+    <select id="selectByCardId" parameterType="Long" resultMap="LimitHistoryResult">
+        <include refid="selectColumns"/>
+          and card_id = #{cardId}
+        order by id desc
+    </select>
+
+    <select id="selectList" parameterType="com.vcc.finance.domain.LimitHistory" resultMap="LimitHistoryResult">
+        <include refid="selectColumns"/>
+        <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+        <if test="cardId != null">and card_id = #{cardId}</if>
+        <if test="limitType != null and limitType != ''">and limit_type = #{limitType}</if>
+        order by id desc
+    </select>
+
+    <insert id="insert" parameterType="com.vcc.finance.domain.LimitHistory" useGeneratedKeys="true" keyProperty="id">
+        insert into vcc_limit_history (
+            merchant_id, card_id, limit_type, before_amount, after_amount,
+            operator_id, operate_time, reason, del_flag, created_at, updated_at
+        ) values (
+            #{merchantId}, #{cardId}, #{limitType}, #{beforeAmount}, #{afterAmount},
+            #{operatorId}, sysdate(), #{reason}, '0', sysdate(), sysdate()
+        )
+    </insert>
+
+</mapper>

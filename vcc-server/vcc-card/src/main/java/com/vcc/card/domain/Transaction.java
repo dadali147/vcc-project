@@ -24,12 +24,23 @@ public class Transaction extends BaseEntity
     /** 交易类型：撤销 */
     public static final String TYPE_REVERSE = "REVERSE";
 
+    /** 交易分类 */
+    public static final String CATEGORY_PURCHASE = "PURCHASE";
+    public static final String CATEGORY_REFUND = "REFUND";
+    public static final String CATEGORY_REVERSE = "REVERSE";
+    public static final String CATEGORY_FEE = "FEE";
+    public static final String CATEGORY_ADJUSTMENT = "ADJUSTMENT";
+
     /** 状态：处理中 */
     public static final int STATUS_PROCESSING = 0;
     /** 状态：成功 */
     public static final int STATUS_SUCCESS = 1;
     /** 状态：失败 */
     public static final int STATUS_FAILED = 2;
+
+    /** 展示模式 */
+    public static final String DISPLAY_NORMAL = "NORMAL";
+    public static final String DISPLAY_HIDDEN = "HIDDEN";
 
     private Long id;
 
@@ -40,8 +51,20 @@ public class Transaction extends BaseEntity
 
     private Long userId;
 
+    /** 商户ID */
+    private Long merchantId;
+
+    /** 持卡人ID */
+    private Long holderId;
+
     /** 交易类型：AUTH/CAPTURE/REFUND/REVERSE */
     private String txnType;
+
+    /** 交易分类：PURCHASE/REFUND/REVERSE/FEE/ADJUSTMENT */
+    private String txnCategory;
+
+    /** 关联交易ID */
+    private String relatedTxnId;
 
     private BigDecimal amount;
 
@@ -59,6 +82,15 @@ public class Transaction extends BaseEntity
     private String authCode;
 
     private String failReason;
+
+    /** 失败原因编码 */
+    private String failReasonCode;
+
+    /** 失败原因描述 */
+    private String failReasonText;
+
+    /** 展示模式：NORMAL/HIDDEN */
+    private String displayMode;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date txnTime;
@@ -203,6 +235,76 @@ public class Transaction extends BaseEntity
         this.txnTime = txnTime;
     }
 
+    public Long getMerchantId()
+    {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId)
+    {
+        this.merchantId = merchantId;
+    }
+
+    public Long getHolderId()
+    {
+        return holderId;
+    }
+
+    public void setHolderId(Long holderId)
+    {
+        this.holderId = holderId;
+    }
+
+    public String getTxnCategory()
+    {
+        return txnCategory;
+    }
+
+    public void setTxnCategory(String txnCategory)
+    {
+        this.txnCategory = txnCategory;
+    }
+
+    public String getRelatedTxnId()
+    {
+        return relatedTxnId;
+    }
+
+    public void setRelatedTxnId(String relatedTxnId)
+    {
+        this.relatedTxnId = relatedTxnId;
+    }
+
+    public String getFailReasonCode()
+    {
+        return failReasonCode;
+    }
+
+    public void setFailReasonCode(String failReasonCode)
+    {
+        this.failReasonCode = failReasonCode;
+    }
+
+    public String getFailReasonText()
+    {
+        return failReasonText;
+    }
+
+    public void setFailReasonText(String failReasonText)
+    {
+        this.failReasonText = failReasonText;
+    }
+
+    public String getDisplayMode()
+    {
+        return displayMode;
+    }
+
+    public void setDisplayMode(String displayMode)
+    {
+        this.displayMode = displayMode;
+    }
+
     @Override
     public String toString()
     {
@@ -211,7 +313,10 @@ public class Transaction extends BaseEntity
                 .append("txnId", getTxnId())
                 .append("cardId", getCardId())
                 .append("userId", getUserId())
+                .append("merchantId", getMerchantId())
+                .append("holderId", getHolderId())
                 .append("txnType", getTxnType())
+                .append("txnCategory", getTxnCategory())
                 .append("amount", getAmount())
                 .append("currency", getCurrency())
                 .append("status", getStatus())

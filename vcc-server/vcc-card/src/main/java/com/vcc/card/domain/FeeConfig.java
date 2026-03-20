@@ -21,17 +21,31 @@ public class FeeConfig extends BaseEntity
     public static final String FEE_TYPE_MONTHLY = "MONTHLY";
     /** 费用类型：交易手续费 */
     public static final String FEE_TYPE_TXN = "TXN";
+    /** 费用类型：充值手续费 */
+    public static final String FEE_TYPE_RECHARGE = "RECHARGE";
 
     private Long id;
 
     /** 用户ID（0表示默认配置） */
     private Long userId;
 
+    /** 作用域：PLATFORM/MERCHANT */
+    private String scope;
+
+    /** 商户ID */
+    private Long merchantId;
+
     /** 卡Bin ID（null表示所有Bin） */
     private String cardBinId;
 
     /** 费用类型：OPEN/MONTHLY/TXN */
     private String feeType;
+
+    /** 条件类型 */
+    private String conditionType;
+
+    /** 阈值金额 */
+    private BigDecimal thresholdAmount;
 
     /** 费率（百分比） */
     private BigDecimal rate;
@@ -44,6 +58,12 @@ public class FeeConfig extends BaseEntity
 
     /** 最高手续费 */
     private BigDecimal maxFee;
+
+    /** 扣费来源 */
+    private String chargeSource;
+
+    /** 版本号 */
+    private Integer versionNo;
 
     /** 状态：0-禁用，1-启用 */
     private Integer status;
@@ -74,6 +94,26 @@ public class FeeConfig extends BaseEntity
         this.userId = userId;
     }
 
+    public String getScope()
+    {
+        return scope;
+    }
+
+    public void setScope(String scope)
+    {
+        this.scope = scope;
+    }
+
+    public Long getMerchantId()
+    {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId)
+    {
+        this.merchantId = merchantId;
+    }
+
     public String getCardBinId()
     {
         return cardBinId;
@@ -92,6 +132,26 @@ public class FeeConfig extends BaseEntity
     public void setFeeType(String feeType)
     {
         this.feeType = feeType;
+    }
+
+    public String getConditionType()
+    {
+        return conditionType;
+    }
+
+    public void setConditionType(String conditionType)
+    {
+        this.conditionType = conditionType;
+    }
+
+    public BigDecimal getThresholdAmount()
+    {
+        return thresholdAmount;
+    }
+
+    public void setThresholdAmount(BigDecimal thresholdAmount)
+    {
+        this.thresholdAmount = thresholdAmount;
     }
 
     public BigDecimal getRate()
@@ -134,6 +194,26 @@ public class FeeConfig extends BaseEntity
         this.maxFee = maxFee;
     }
 
+    public String getChargeSource()
+    {
+        return chargeSource;
+    }
+
+    public void setChargeSource(String chargeSource)
+    {
+        this.chargeSource = chargeSource;
+    }
+
+    public Integer getVersionNo()
+    {
+        return versionNo;
+    }
+
+    public void setVersionNo(Integer versionNo)
+    {
+        this.versionNo = versionNo;
+    }
+
     public Integer getStatus()
     {
         return status;
@@ -170,8 +250,11 @@ public class FeeConfig extends BaseEntity
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
                 .append("id", getId())
                 .append("userId", getUserId())
+                .append("scope", getScope())
+                .append("merchantId", getMerchantId())
                 .append("cardBinId", getCardBinId())
                 .append("feeType", getFeeType())
+                .append("conditionType", getConditionType())
                 .append("rate", getRate())
                 .append("fixedAmount", getFixedAmount())
                 .append("status", getStatus())

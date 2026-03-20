@@ -32,6 +32,12 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- YeeVCC YOP SDK（本地安装到 ~/.m2） -->
+        <dependency>
+            <groupId>global.kun.shade</groupId>
+            <artifactId>yop-java-sdk-web3</artifactId>
+            <version>4.4.10</version>
+        </dependency>
     </dependencies>
 
 </project>

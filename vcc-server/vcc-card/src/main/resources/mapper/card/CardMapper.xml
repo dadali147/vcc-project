@@ -17,6 +17,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="budgetAmount"      column="budget_amount"      />
         <result property="upstreamCardId"    column="upstream_card_id"   />
         <result property="expiryDate"        column="expiry_date"        />
+        <result property="first6"            column="first6"             />
+        <result property="last4"             column="last4"              />
+        <result property="cardRemark"        column="remark"             />
         <result property="isAutoActivate"    column="is_auto_activate"   />
         <result property="activatedAt"       column="activated_at"       />
         <result property="cancelledAt"       column="cancelled_at"       />
@@ -27,6 +30,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <sql id="selectCardVo">
         select id, holder_id, user_id, card_no_mask, card_bin_id, card_type, status,
                balance, currency, budget_amount, upstream_card_id, expiry_date,
+               first6, last4, remark,
                is_auto_activate, activated_at, cancelled_at, created_at, updated_at
         from vcc_card
     </sql>
@@ -39,6 +43,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectCardByUpstreamCardId" parameterType="String" resultMap="CardResult">
         <include refid="selectCardVo"/>
         where upstream_card_id = #{upstreamCardId}
+    </select>
+
+    <select id="selectCardsByHolderId" parameterType="Long" resultMap="CardResult">
+        <include refid="selectCardVo"/>
+        where holder_id = #{holderId}
+        order by id desc
+    </select>
+
+    <select id="countByHolderId" parameterType="Long" resultType="int">
+        select count(1) from vcc_card where holder_id = #{holderId}
     </select>
 
     <select id="selectCardList" parameterType="com.vcc.card.domain.Card" resultMap="CardResult">
@@ -69,6 +83,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="budgetAmount != null">budget_amount,</if>
             <if test="upstreamCardId != null and upstreamCardId != ''">upstream_card_id,</if>
             <if test="expiryDate != null and expiryDate != ''">expiry_date,</if>
+            <if test="first6 != null and first6 != ''">first6,</if>
+            <if test="last4 != null and last4 != ''">last4,</if>
+            <if test="cardRemark != null">remark,</if>
             <if test="isAutoActivate != null">is_auto_activate,</if>
             <if test="activatedAt != null">activated_at,</if>
             created_at
@@ -84,6 +101,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="budgetAmount != null">#{budgetAmount},</if>
             <if test="upstreamCardId != null and upstreamCardId != ''">#{upstreamCardId},</if>
             <if test="expiryDate != null and expiryDate != ''">#{expiryDate},</if>
+            <if test="first6 != null and first6 != ''">#{first6},</if>
+            <if test="last4 != null and last4 != ''">#{last4},</if>
+            <if test="cardRemark != null">#{cardRemark},</if>
             <if test="isAutoActivate != null">#{isAutoActivate},</if>
             <if test="activatedAt != null">#{activatedAt},</if>
             sysdate()
@@ -101,6 +121,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="budgetAmount != null">budget_amount = #{budgetAmount},</if>
             <if test="upstreamCardId != null and upstreamCardId != ''">upstream_card_id = #{upstreamCardId},</if>
             <if test="expiryDate != null and expiryDate != ''">expiry_date = #{expiryDate},</if>
+            <if test="first6 != null and first6 != ''">first6 = #{first6},</if>
+            <if test="last4 != null and last4 != ''">last4 = #{last4},</if>
+            <if test="cardRemark != null">remark = #{cardRemark},</if>
             <if test="isAutoActivate != null">is_auto_activate = #{isAutoActivate},</if>
             <if test="activatedAt != null">activated_at = #{activatedAt},</if>
             <if test="cancelledAt != null">cancelled_at = #{cancelledAt},</if>
