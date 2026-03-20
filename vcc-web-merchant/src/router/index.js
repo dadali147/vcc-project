@@ -1,21 +1,21 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-import Layout from '@/components/common/Layout.vue'
-import LoginPage from '@/views/auth/LoginPage.vue'
-import RegisterPage from '@/views/auth/RegisterPage.vue'
-import DashboardPage from '@/views/dashboard/DashboardPage.vue'
-import CardholdersPage from '@/views/cardholders/CardholdersPage.vue'
-import CardsPage from '@/views/cards/CardsPage.vue'
-import CardDetailPage from '@/views/cards/CardDetailPage.vue'
-import CardApplyPage from '@/views/card-apply/CardApplyPage.vue'
-import CardApplicationsPage from '@/views/card-applications/CardApplicationsPage.vue'
-import TransactionsPage from '@/views/transactions/TransactionsPage.vue'
-import ProfilePage from '@/views/profile/ProfilePage.vue'
-import KycPage from '@/views/kyc/KycPage.vue'
-import DownloadsPage from '@/views/downloads/DownloadsPage.vue'
-import SharedCardLimitsPage from '@/views/shared-card-limits/SharedCardLimitsPage.vue'
-import NotFoundPage from '@/views/NotFoundPage.vue'
+const Layout = () => import('@/components/common/Layout.vue')
+const LoginPage = () => import('@/views/auth/LoginPage.vue')
+const RegisterPage = () => import('@/views/auth/RegisterPage.vue')
+const DashboardPage = () => import('@/views/dashboard/DashboardPage.vue')
+const CardholdersPage = () => import('@/views/cardholders/CardholdersPage.vue')
+const CardsPage = () => import('@/views/cards/CardsPage.vue')
+const CardDetailPage = () => import('@/views/cards/CardDetailPage.vue')
+const CardApplyPage = () => import('@/views/card-apply/CardApplyPage.vue')
+const CardApplicationsPage = () => import('@/views/card-applications/CardApplicationsPage.vue')
+const TransactionsPage = () => import('@/views/transactions/TransactionsPage.vue')
+const ProfilePage = () => import('@/views/profile/ProfilePage.vue')
+const KycPage = () => import('@/views/kyc/KycPage.vue')
+const DownloadsPage = () => import('@/views/downloads/DownloadsPage.vue')
+const SharedCardLimitsPage = () => import('@/views/shared-card-limits/SharedCardLimitsPage.vue')
+const NotFoundPage = () => import('@/views/NotFoundPage.vue')
 
 const routes = [
   {
