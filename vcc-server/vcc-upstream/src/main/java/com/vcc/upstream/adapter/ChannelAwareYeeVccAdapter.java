@@ -264,6 +264,7 @@ public class ChannelAwareYeeVccAdapter
                 config.setReadTimeoutMillis(node.has("readTimeoutMillis") ? node.get("readTimeoutMillis").asInt(config.getReadTimeoutMillis()) : config.getReadTimeoutMillis());
                 config.setMaxRetries(node.has("maxRetries") ? node.get("maxRetries").asInt(config.getMaxRetries()) : config.getMaxRetries());
                 config.setRetryIntervalMillis(node.has("retryIntervalMillis") ? node.get("retryIntervalMillis").asLong(config.getRetryIntervalMillis()) : config.getRetryIntervalMillis());
+                config.setDemoMode(node.has("demoMode") && node.get("demoMode").asBoolean());
                 config.setVerifyResponseSignature(node.has("verifyResponseSignature") && node.get("verifyResponseSignature").asBoolean());
                 config.setFailOnMissingSignature(node.has("failOnMissingSignature") && node.get("failOnMissingSignature").asBoolean());
                 config.setAutoDecryptKeyInfo(!node.has("autoDecryptKeyInfo") || node.get("autoDecryptKeyInfo").asBoolean(true));
