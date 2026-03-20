@@ -645,11 +645,10 @@ public final class YeeVccRequests
         }
     }
 
-    public static class AccountTransferRequest extends YeeVccBaseRequest
+    public static class AccountTransferInRequest extends YeeVccBaseRequest
     {
         private String accountNo;
-        private BigDecimal amount;
-        private String currency;
+        private BigDecimal transferInAmount;
         private String deductCurrency;
         private String orderId;
 
@@ -663,24 +662,73 @@ public final class YeeVccRequests
             this.accountNo = accountNo;
         }
 
-        public BigDecimal getAmount()
+        public BigDecimal getTransferInAmount()
         {
-            return amount;
+            return transferInAmount;
         }
 
-        public void setAmount(BigDecimal amount)
+        public void setTransferInAmount(BigDecimal transferInAmount)
         {
-            this.amount = amount;
+            this.transferInAmount = transferInAmount;
         }
 
-        public String getCurrency()
+        public String getDeductCurrency()
         {
-            return currency;
+            return deductCurrency;
         }
 
-        public void setCurrency(String currency)
+        public void setDeductCurrency(String deductCurrency)
         {
-            this.currency = currency;
+            this.deductCurrency = deductCurrency;
+        }
+
+        public String getOrderId()
+        {
+            return orderId;
+        }
+
+        public void setOrderId(String orderId)
+        {
+            this.orderId = orderId;
+        }
+    }
+
+    public static class AccountTransferOutRequest extends YeeVccBaseRequest
+    {
+        private String accountNo;
+        private BigDecimal transferOutAmount;
+        private String depositCurrency;
+        private String deductCurrency;
+        private String orderId;
+
+        public String getAccountNo()
+        {
+            return accountNo;
+        }
+
+        public void setAccountNo(String accountNo)
+        {
+            this.accountNo = accountNo;
+        }
+
+        public BigDecimal getTransferOutAmount()
+        {
+            return transferOutAmount;
+        }
+
+        public void setTransferOutAmount(BigDecimal transferOutAmount)
+        {
+            this.transferOutAmount = transferOutAmount;
+        }
+
+        public String getDepositCurrency()
+        {
+            return depositCurrency;
+        }
+
+        public void setDepositCurrency(String depositCurrency)
+        {
+            this.depositCurrency = depositCurrency;
         }
 
         public String getDeductCurrency()

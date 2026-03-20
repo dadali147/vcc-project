@@ -211,13 +211,13 @@ public class ChannelAwareYeeVccAdapter
     }
 
     public YeeVccApiResponse<YeeVccModels.OperationData> accountTransferIn(
-            YeeVccRequests.AccountTransferRequest request)
+            YeeVccRequests.AccountTransferInRequest request)
     {
         return getYeeVccClient().accountTransferIn(request);
     }
 
     public YeeVccApiResponse<YeeVccModels.OperationData> accountTransferOut(
-            YeeVccRequests.AccountTransferRequest request)
+            YeeVccRequests.AccountTransferOutRequest request)
     {
         return getYeeVccClient().accountTransferOut(request);
     }

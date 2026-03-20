@@ -165,10 +165,9 @@ public class UserAccountServiceImpl implements IUserAccountService
     public YeeVccApiResponse<YeeVccModels.OperationData> upstreamTransferIn(
             String accountNo, BigDecimal amount, String currency, String deductCurrency, String orderId)
     {
-        YeeVccRequests.AccountTransferRequest request = new YeeVccRequests.AccountTransferRequest();
+        YeeVccRequests.AccountTransferInRequest request = new YeeVccRequests.AccountTransferInRequest();
         request.setAccountNo(accountNo);
-        request.setAmount(amount);
-        request.setCurrency(currency);
+        request.setTransferInAmount(amount);
         request.setDeductCurrency(deductCurrency);
         request.setOrderId(orderId);
         log.info("账户充值(转入), accountNo={}, amount={}, currency={}, deductCurrency={}, orderId={}",
@@ -180,10 +179,10 @@ public class UserAccountServiceImpl implements IUserAccountService
     public YeeVccApiResponse<YeeVccModels.OperationData> upstreamTransferOut(
             String accountNo, BigDecimal amount, String currency, String deductCurrency, String orderId)
     {
-        YeeVccRequests.AccountTransferRequest request = new YeeVccRequests.AccountTransferRequest();
+        YeeVccRequests.AccountTransferOutRequest request = new YeeVccRequests.AccountTransferOutRequest();
         request.setAccountNo(accountNo);
-        request.setAmount(amount);
-        request.setCurrency(currency);
+        request.setTransferOutAmount(amount);
+        request.setDepositCurrency(currency);
         request.setDeductCurrency(deductCurrency);
         request.setOrderId(orderId);
         log.info("账户提现(转出), accountNo={}, amount={}, currency={}, deductCurrency={}, orderId={}",

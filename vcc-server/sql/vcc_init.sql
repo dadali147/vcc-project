@@ -218,7 +218,7 @@ CREATE TABLE `vcc_recharge` (
     KEY `idx_card_id` (`card_id`),
     KEY `idx_status` (`status`),
     KEY `idx_upstream_order_no` (`upstream_order_no`),
-    KEY `idx_tx_hash` (`tx_hash`),
+    UNIQUE KEY `uk_tx_hash` (`tx_hash`),
     KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='充值记录表';
 

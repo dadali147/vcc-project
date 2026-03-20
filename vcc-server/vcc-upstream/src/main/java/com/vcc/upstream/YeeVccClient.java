@@ -252,17 +252,17 @@ public class YeeVccClient
     }
 
     public YeeVccApiResponse<YeeVccModels.OperationData> accountTransferIn(
-            YeeVccRequests.AccountTransferRequest request)
+            YeeVccRequests.AccountTransferInRequest request)
     {
-        YeeVccRequests.AccountTransferRequest safeRequest = requireRequest(request, "accountTransferIn");
+        YeeVccRequests.AccountTransferInRequest safeRequest = requireRequest(request, "accountTransferIn");
         return execute(HttpMethod.POST, resolvePath(PATH_ACCOUNT_TRANSFER_IN), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
 
     public YeeVccApiResponse<YeeVccModels.OperationData> accountTransferOut(
-            YeeVccRequests.AccountTransferRequest request)
+            YeeVccRequests.AccountTransferOutRequest request)
     {
-        YeeVccRequests.AccountTransferRequest safeRequest = requireRequest(request, "accountTransferOut");
+        YeeVccRequests.AccountTransferOutRequest safeRequest = requireRequest(request, "accountTransferOut");
         return execute(HttpMethod.POST, resolvePath(PATH_ACCOUNT_TRANSFER_OUT), safeRequest,
                 node -> mapNode(node, YeeVccModels.OperationData.class));
     }
