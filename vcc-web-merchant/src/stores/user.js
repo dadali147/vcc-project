@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useUserStore = defineStore('user', () => {
-  const language = ref(localStorage.getItem('language') || 'en')
+  const language = ref(localStorage.getItem('language') || 'zh')
   const theme = ref(localStorage.getItem('theme') || 'light')
   const sidebarCollapsed = ref(false)
 

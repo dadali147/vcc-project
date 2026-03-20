@@ -49,7 +49,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
-import { ElIcon, ElDropdown, ElDropdownMenu, ElDropdownItem, ElDivider } from 'element-plus'
+
 import { ArrowDown, User } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
