@@ -1,8 +1,7 @@
 <template>
   <nav class="navbar">
     <div class="navbar-left">
-      <img src="@/assets/logo/kimoox-logo.png" alt="kimoox" class="logo-img" />
-      <h1 class="app-title">kimoox</h1>
+      <img src="@/assets/logo/kimoox-logo-text.svg" alt="kimoox" class="logo-img" />
     </div>
     <div class="navbar-right">
       <div class="navbar-menu">
@@ -93,17 +92,11 @@ function logout() {
 }
 
 .logo-img {
-  height: 36px;
+  height: 32px;
   width: auto;
   object-fit: contain;
 }
 
-.app-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-}
 
 .navbar-right {
   display: flex;
