@@ -7,7 +7,7 @@ import com.vcc.finance.domain.Recharge;
 import com.vcc.finance.mapper.RechargeMapper;
 import com.vcc.finance.service.impl.RechargeServiceImpl;
 import com.vcc.system.service.ISystemConfigService;
-import com.vcc.upstream.YeeVccClient;
+import com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
 import com.vcc.user.service.IUserAccountService;
@@ -41,7 +41,7 @@ class RiskControlTest
     private CardMapper cardMapper;
 
     @Mock
-    private YeeVccClient yeeVccClient;
+    private ChannelAwareYeeVccAdapter yeeVccAdapter;
 
     @Mock
     private IUserAccountService userAccountService;
@@ -113,7 +113,7 @@ class RiskControlTest
         Card card = TestUtils.buildCard(200L, 100L, Card.STATUS_ACTIVE);
         when(cardMapper.selectCardById(200L)).thenReturn(card);
         when(userAccountService.deductBalance(100L, "USD", TestUtils.amount("1000.00"))).thenReturn(true);
-        when(yeeVccClient.recharge(any())).thenReturn(successResponse());
+        when(yeeVccAdapter.recharge(any())).thenReturn(successResponse());
 
         // when: 提交一笔本会被风控拦截的大额充值
         Recharge recharge = rechargeService.submitRecharge(100L, 200L, TestUtils.amount("1000.00"), "USD", null);

@@ -23,7 +23,7 @@ import com.vcc.card.mapper.CardHolderMapper;
 import com.vcc.card.mapper.TransactionMapper;
 import com.vcc.card.service.ICardService;
 import com.vcc.system.service.ISystemConfigService;
-import com.vcc.upstream.YeeVccClient;
+import com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
 import com.vcc.upstream.dto.YeeVccRequests;
@@ -52,7 +52,7 @@ public class CardServiceImpl implements ICardService
     private CardHolderMapper cardHolderMapper;
 
     @Autowired
-    private YeeVccClient yeeVccClient;
+    private ChannelAwareYeeVccAdapter yeeVccAdapter;
 
     @Autowired
     private ISystemConfigService systemConfigService;
@@ -110,7 +110,7 @@ public class CardServiceImpl implements ICardService
             request.setAmount(amount);
         }
 
-        YeeVccApiResponse<YeeVccModels.OpenCardTaskData> openResponse = yeeVccClient.openCard(request);
+        YeeVccApiResponse<YeeVccModels.OpenCardTaskData> openResponse = yeeVccAdapter.openCard(request);
         if (!openResponse.isSuccess())
         {
             throw new RuntimeException("上游开卡请求失败: " + openResponse.getMessage());
@@ -150,7 +150,7 @@ public class CardServiceImpl implements ICardService
 
             YeeVccRequests.QueryOpenCardResultRequest queryRequest = new YeeVccRequests.QueryOpenCardResultRequest();
             queryRequest.setTaskId(taskId);
-            YeeVccApiResponse<YeeVccModels.OpenCardTaskData> queryResponse = yeeVccClient.queryOpenCardResult(queryRequest);
+            YeeVccApiResponse<YeeVccModels.OpenCardTaskData> queryResponse = yeeVccAdapter.queryOpenCardResult(queryRequest);
 
             if (!queryResponse.isSuccess())
             {
@@ -204,7 +204,7 @@ public class CardServiceImpl implements ICardService
 
         YeeVccRequests.ActivateCardRequest request = new YeeVccRequests.ActivateCardRequest();
         request.setCardId(card.getUpstreamCardId());
-        YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccClient.activateCard(request);
+        YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccAdapter.activateCard(request);
         if (!response.isSuccess())
         {
             throw new RuntimeException("上游激活卡片失败: " + response.getMessage());
@@ -229,7 +229,7 @@ public class CardServiceImpl implements ICardService
 
         YeeVccRequests.FreezeCardRequest request = new YeeVccRequests.FreezeCardRequest();
         request.setCardId(card.getUpstreamCardId());
-        YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccClient.freezeCard(request);
+        YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccAdapter.freezeCard(request);
         if (!response.isSuccess())
         {
             throw new RuntimeException("上游冻结卡片失败: " + response.getMessage());
@@ -253,7 +253,7 @@ public class CardServiceImpl implements ICardService
 
         YeeVccRequests.UnfreezeCardRequest request = new YeeVccRequests.UnfreezeCardRequest();
         request.setCardId(card.getUpstreamCardId());
-        YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccClient.unfreezeCard(request);
+        YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccAdapter.unfreezeCard(request);
         if (!response.isSuccess())
         {
             throw new RuntimeException("上游解冻卡片失败: " + response.getMessage());
@@ -278,7 +278,7 @@ public class CardServiceImpl implements ICardService
         YeeVccRequests.CancelCardRequest request = new YeeVccRequests.CancelCardRequest();
         request.setCardId(card.getUpstreamCardId());
         request.setRefundCurrency(card.getCurrency());
-        YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccClient.cancelCard(request);
+        YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccAdapter.cancelCard(request);
         if (!response.isSuccess())
         {
             throw new RuntimeException("上游销卡失败: " + response.getMessage());
@@ -298,7 +298,7 @@ public class CardServiceImpl implements ICardService
 
         YeeVccRequests.GetCardKeyInfoRequest request = new YeeVccRequests.GetCardKeyInfoRequest();
         request.setCardId(card.getUpstreamCardId());
-        YeeVccApiResponse<YeeVccModels.CardKeyInfoData> response = yeeVccClient.getCardKeyInfo(request);
+        YeeVccApiResponse<YeeVccModels.CardKeyInfoData> response = yeeVccAdapter.getCardKeyInfo(request);
         if (!response.isSuccess())
         {
             throw new RuntimeException("查询三要素失败: " + response.getMessage());

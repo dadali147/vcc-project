@@ -10,7 +10,7 @@ import com.vcc.card.service.ICardIssueService;
 import com.vcc.common.exception.ServiceException;
 import com.vcc.holder.domain.VccCardHolder;
 import com.vcc.holder.mapper.VccCardHolderMapper;
-import com.vcc.upstream.YeeVccClient;
+import com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
 import com.vcc.upstream.dto.YeeVccRequests;
@@ -39,19 +39,19 @@ public class CardIssueServiceImpl implements ICardIssueService
     private final CardIssueRequestMapper requestMapper;
     private final CardIssueItemMapper itemMapper;
     private final VccCardHolderMapper holderMapper;
-    private final YeeVccClient yeeVccClient;
+    private final ChannelAwareYeeVccAdapter yeeVccAdapter;
     private final CardPersistService cardPersistService;
 
     public CardIssueServiceImpl(CardIssueRequestMapper requestMapper,
                                 CardIssueItemMapper itemMapper,
                                 VccCardHolderMapper holderMapper,
-                                YeeVccClient yeeVccClient,
+                                ChannelAwareYeeVccAdapter yeeVccAdapter,
                                 CardPersistService cardPersistService)
     {
         this.requestMapper = requestMapper;
         this.itemMapper = itemMapper;
         this.holderMapper = holderMapper;
-        this.yeeVccClient = yeeVccClient;
+        this.yeeVccAdapter = yeeVccAdapter;
         this.cardPersistService = cardPersistService;
     }
 
@@ -192,7 +192,7 @@ public class CardIssueServiceImpl implements ICardIssueService
                     }
                     openReq.setCurrency("USD");
 
-                    YeeVccApiResponse<YeeVccModels.OpenCardTaskData> response = yeeVccClient.openCard(openReq);
+                    YeeVccApiResponse<YeeVccModels.OpenCardTaskData> response = yeeVccAdapter.openCard(openReq);
                     if (!response.isSuccess() || response.getData() == null)
                     {
                         log.error("上游开卡失败, itemId={}, holderId={}, cardIndex={}/{}, reason={}",
@@ -288,7 +288,7 @@ public class CardIssueServiceImpl implements ICardIssueService
 
             YeeVccRequests.QueryOpenCardResultRequest qReq = new YeeVccRequests.QueryOpenCardResultRequest();
             qReq.setTaskId(taskId);
-            YeeVccApiResponse<YeeVccModels.OpenCardTaskData> resp = yeeVccClient.queryOpenCardResult(qReq);
+            YeeVccApiResponse<YeeVccModels.OpenCardTaskData> resp = yeeVccAdapter.queryOpenCardResult(qReq);
             if (!resp.isSuccess()) { continue; }
 
             YeeVccModels.OpenCardTaskData data = resp.getData();

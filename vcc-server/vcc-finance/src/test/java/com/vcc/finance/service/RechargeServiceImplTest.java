@@ -7,7 +7,7 @@ import com.vcc.finance.domain.Recharge;
 import com.vcc.finance.mapper.RechargeMapper;
 import com.vcc.finance.service.impl.RechargeServiceImpl;
 import com.vcc.system.service.ISystemConfigService;
-import com.vcc.upstream.YeeVccClient;
+import com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
 import com.vcc.upstream.dto.YeeVccRequests;
@@ -44,7 +44,7 @@ class RechargeServiceImplTest
     private CardMapper cardMapper;
 
     @Mock
-    private YeeVccClient yeeVccClient;
+    private ChannelAwareYeeVccAdapter yeeVccAdapter;
 
     @Mock
     private IUserAccountService userAccountService;
@@ -62,7 +62,7 @@ class RechargeServiceImplTest
         // given: 风控放行、卡片归属正确且上游返回成功
         Card card = mockRechargePrerequisites(100L, new BigDecimal("0.00"));
         when(userAccountService.deductBalance(100L, "USD", TestUtils.amount("100.00"))).thenReturn(true);
-        when(yeeVccClient.recharge(any(YeeVccRequests.RechargeRequest.class))).thenReturn(successRechargeResponse("upstream-001"));
+        when(yeeVccAdapter.recharge(any(YeeVccRequests.RechargeRequest.class))).thenReturn(successRechargeResponse("upstream-001"));
         ArgumentCaptor<Recharge> rechargeCaptor = ArgumentCaptor.forClass(Recharge.class);
         ArgumentCaptor<YeeVccRequests.RechargeRequest> requestCaptor = ArgumentCaptor.forClass(YeeVccRequests.RechargeRequest.class);
 
@@ -70,7 +70,7 @@ class RechargeServiceImplTest
         Recharge recharge = rechargeService.submitRecharge(100L, card.getId(), TestUtils.amount("100.00"), "USD", null);
 
         // then: 本地保持 pending，且上游请求金额扣除了手续费
-        verify(yeeVccClient).recharge(requestCaptor.capture());
+        verify(yeeVccAdapter).recharge(requestCaptor.capture());
         verify(rechargeMapper).insertRecharge(rechargeCaptor.capture());
         assertThat(recharge.getStatus()).isEqualTo(Recharge.STATUS_PENDING);
         assertThat(recharge.getUpstreamOrderNo()).isEqualTo("upstream-001");
@@ -150,7 +150,7 @@ class RechargeServiceImplTest
         Recharge lockedRecharge = TestUtils.buildRecharge(1L, 100L, 200L, "RCH001", TestUtils.amount("100.00"), Recharge.STATUS_PENDING);
         when(rechargeMapper.selectRechargeByOrderNo("RCH001")).thenReturn(recharge);
         when(rechargeMapper.selectRechargeForUpdateById(1L)).thenReturn(lockedRecharge);
-        when(yeeVccClient.queryRechargeResult(any(YeeVccRequests.QueryRechargeResultRequest.class))).thenReturn(queryResponse("SUCCESS", null));
+        when(yeeVccAdapter.queryRechargeResult(any(YeeVccRequests.QueryRechargeResultRequest.class))).thenReturn(queryResponse("SUCCESS", null));
         when(rechargeMapper.updateRechargeStatus(eq(1L), eq(Recharge.STATUS_SUCCESS), eq(Recharge.STATUS_PENDING), isNull(), any()))
                 .thenReturn(1);
 
@@ -161,7 +161,7 @@ class RechargeServiceImplTest
         // then: 仅首次发生状态流转，余额不会重复补偿
         assertThat(firstResult.getStatus()).isEqualTo(Recharge.STATUS_SUCCESS);
         assertThat(secondResult.getStatus()).isEqualTo(Recharge.STATUS_SUCCESS);
-        verify(yeeVccClient).queryRechargeResult(any(YeeVccRequests.QueryRechargeResultRequest.class));
+        verify(yeeVccAdapter).queryRechargeResult(any(YeeVccRequests.QueryRechargeResultRequest.class));
         verify(userAccountService, never()).addBalance(anyLong(), anyString(), any(BigDecimal.class));
     }
 
@@ -174,7 +174,7 @@ class RechargeServiceImplTest
         Recharge lockedRecharge = TestUtils.buildRecharge(2L, 100L, 200L, "RCH002", TestUtils.amount("80.00"), Recharge.STATUS_PENDING);
         when(rechargeMapper.selectRechargeByOrderNo("RCH002")).thenReturn(recharge);
         when(rechargeMapper.selectRechargeForUpdateById(2L)).thenReturn(lockedRecharge);
-        when(yeeVccClient.queryRechargeResult(any(YeeVccRequests.QueryRechargeResultRequest.class))).thenReturn(queryResponse("FAILED", "issuer reject"));
+        when(yeeVccAdapter.queryRechargeResult(any(YeeVccRequests.QueryRechargeResultRequest.class))).thenReturn(queryResponse("FAILED", "issuer reject"));
         when(rechargeMapper.updateRechargeStatus(eq(2L), eq(Recharge.STATUS_FAILED), eq(Recharge.STATUS_PENDING), eq("issuer reject"), any()))
                 .thenReturn(1);
 
@@ -200,7 +200,7 @@ class RechargeServiceImplTest
 
         // then: 直接返回现有终态，不再访问上游，也不再补偿余额
         assertThat(result.getStatus()).isEqualTo(Recharge.STATUS_FAILED);
-        verify(yeeVccClient, never()).queryRechargeResult(any(YeeVccRequests.QueryRechargeResultRequest.class));
+        verify(yeeVccAdapter, never()).queryRechargeResult(any(YeeVccRequests.QueryRechargeResultRequest.class));
         verify(userAccountService, never()).addBalance(anyLong(), anyString(), any(BigDecimal.class));
     }
 

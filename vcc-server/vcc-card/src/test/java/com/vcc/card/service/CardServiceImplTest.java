@@ -9,7 +9,7 @@ import com.vcc.card.service.impl.CardPersistService;
 import com.vcc.card.service.impl.CardServiceImpl;
 import com.vcc.common.TestUtils;
 import com.vcc.system.service.ISystemConfigService;
-import com.vcc.upstream.YeeVccClient;
+import com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
 import com.vcc.upstream.dto.YeeVccRequests;
@@ -42,7 +42,7 @@ class CardServiceImplTest
     private CardHolderMapper cardHolderMapper;
 
     @Mock
-    private YeeVccClient yeeVccClient;
+    private ChannelAwareYeeVccAdapter yeeVccAdapter;
 
     @Mock
     private ISystemConfigService systemConfigService;
@@ -63,7 +63,7 @@ class CardServiceImplTest
         // given: 当前用户持有一张激活卡
         Card card = TestUtils.buildCard(200L, 100L, Card.STATUS_ACTIVE);
         when(cardMapper.selectCardById(200L)).thenReturn(card);
-        when(yeeVccClient.freezeCard(any(YeeVccRequests.FreezeCardRequest.class))).thenReturn(successOperationResponse());
+        when(yeeVccAdapter.freezeCard(any(YeeVccRequests.FreezeCardRequest.class))).thenReturn(successOperationResponse());
         when(cardMapper.updateCard(any(Card.class))).thenReturn(1);
         ArgumentCaptor<Card> updateCaptor = ArgumentCaptor.forClass(Card.class);
 
@@ -88,7 +88,7 @@ class CardServiceImplTest
         assertThatThrownBy(() -> cardService.freezeCard(200L, 100L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("无权操作该卡片");
-        verify(yeeVccClient, never()).freezeCard(any(YeeVccRequests.FreezeCardRequest.class));
+        verify(yeeVccAdapter, never()).freezeCard(any(YeeVccRequests.FreezeCardRequest.class));
     }
 
     @Test
@@ -98,7 +98,7 @@ class CardServiceImplTest
         // given: 当前用户查询自己的卡三要素
         Card card = TestUtils.buildCard(200L, 100L, Card.STATUS_ACTIVE);
         when(cardMapper.selectCardById(200L)).thenReturn(card);
-        when(yeeVccClient.getCardKeyInfo(any(YeeVccRequests.GetCardKeyInfoRequest.class))).thenReturn(cardKeyInfoResponse());
+        when(yeeVccAdapter.getCardKeyInfo(any(YeeVccRequests.GetCardKeyInfoRequest.class))).thenReturn(cardKeyInfoResponse());
 
         // when: 查询卡三要素
         Map<String, String> secret = cardService.getCardKeyInfo(200L, 100L);
@@ -121,7 +121,7 @@ class CardServiceImplTest
         assertThatThrownBy(() -> cardService.getCardKeyInfo(200L, 100L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("无权操作该卡片");
-        verify(yeeVccClient, never()).getCardKeyInfo(any(YeeVccRequests.GetCardKeyInfoRequest.class));
+        verify(yeeVccAdapter, never()).getCardKeyInfo(any(YeeVccRequests.GetCardKeyInfoRequest.class));
     }
 
     @Test
@@ -137,7 +137,7 @@ class CardServiceImplTest
         assertThatThrownBy(() -> cardService.openCard(300L, "BIN-001", "USD", Card.TYPE_PREPAID, TestUtils.amount("50.00"), 100L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("无权使用该持卡人");
-        verify(yeeVccClient, never()).openCard(any(YeeVccRequests.OpenCardRequest.class));
+        verify(yeeVccAdapter, never()).openCard(any(YeeVccRequests.OpenCardRequest.class));
     }
 
     @Test
@@ -149,8 +149,8 @@ class CardServiceImplTest
         CardHolder holder = TestUtils.buildCardHolder(300L, 100L);
         Card persistedCard = TestUtils.buildCard(500L, 100L, Card.STATUS_ACTIVE);
         when(cardHolderMapper.selectCardHolderById(300L)).thenReturn(holder);
-        when(yeeVccClient.openCard(any(YeeVccRequests.OpenCardRequest.class))).thenReturn(openCardResponse(123L));
-        when(yeeVccClient.queryOpenCardResult(any(YeeVccRequests.QueryOpenCardResultRequest.class))).thenReturn(openCardQueryResponse());
+        when(yeeVccAdapter.openCard(any(YeeVccRequests.OpenCardRequest.class))).thenReturn(openCardResponse(123L));
+        when(yeeVccAdapter.queryOpenCardResult(any(YeeVccRequests.QueryOpenCardResultRequest.class))).thenReturn(openCardQueryResponse());
         when(cardPersistService.saveCardInTransaction(300L, 100L, "BIN-001", "USD", Card.TYPE_PREPAID, TestUtils.amount("50.00"), any(YeeVccModels.CardData.class)))
                 .thenReturn(persistedCard);
         ArgumentCaptor<YeeVccModels.CardData> cardDataCaptor = ArgumentCaptor.forClass(YeeVccModels.CardData.class);

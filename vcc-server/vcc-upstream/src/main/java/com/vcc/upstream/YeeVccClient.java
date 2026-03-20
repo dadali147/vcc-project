@@ -386,6 +386,43 @@ public class YeeVccClient
         throw new YeeVccException("YeeVCC 请求重试后仍失败");
     }
 
+    /**
+     * 验证 YeeVCC 平台响应签名。
+     *
+     * <h3>响应验签协议说明</h3>
+     * <p>
+     * <b>请求侧签名</b>使用 canonical request 拼串（见 {@link #buildCanonicalRequest}），包含
+     * HTTP method、path、queryString、requestNo、timestamp、nonce、body SHA256 等字段，
+     * 属于"请求方主动构造签名串"的模式。
+     * </p>
+     * <p>
+     * <b>响应侧验签</b>则不同——平台在响应头中返回签名（通过 {@code x-yop-signature} 或
+     * {@code Authorization} 头传递），签名内容为<b>响应体（response body）原文</b>，
+     * 不涉及额外的 canonical 拼串规则。
+     * </p>
+     *
+     * <h3>协议依据</h3>
+     * <ul>
+     *   <li>YeeVCC/YOP 平台响应签名标准做法：平台使用自身私钥对 response body 做
+     *       {@code SHA256withRSA} 签名，调用方使用平台公钥验证。</li>
+     *   <li>项目内无独立的响应 canonical 规则文档，且本项目 Review 文档
+     *       ({@code docs/review-agent-b-upstream.md}) 中确认请求和响应的签名模式不对称
+     *       是已知设计。</li>
+     *   <li>当前实现与 YOP 系列 SDK 的响应验签行为一致：直接对 body 原文验签。</li>
+     * </ul>
+     *
+     * <h3>安全说明</h3>
+     * <ul>
+     *   <li>验签功能由 {@code yee-vcc.verify-response-signature} 配置控制，默认关闭。</li>
+     *   <li>启用后，若响应头缺少签名且 {@code fail-on-missing-signature=true}，将抛出异常。</li>
+     *   <li>验签失败（签名不匹配）会直接抛出 {@link YeeVccException}，阻止不可信响应进入业务层。</li>
+     * </ul>
+     *
+     * @param headers      HTTP 响应头
+     * @param responseBody HTTP 响应体原文
+     * @return true 如果验签通过；false 如果验签未启用或签名缺失（且配置允许缺失）
+     * @throws YeeVccException 验签失败、签名缺失（strict 模式）、公钥未配置
+     */
     private boolean verifyResponseSignature(HttpHeaders headers, String responseBody)
     {
         if (!config.isVerifyResponseSignature())
@@ -405,10 +442,13 @@ public class YeeVccClient
         {
             throw new YeeVccException("YeeVCC 平台公钥未配置，无法验签");
         }
+        // 响应验签：直接对 response body 原文验签（非 canonical 拼串）
+        // 这与请求签名不同——请求签名使用 canonical request 串，响应签名仅签 body 原文
         boolean verified = Rsa2048SignatureUtils.verify(StringUtils.defaultString(responseBody), signature,
                 config.getPlatformPublicKey());
         if (!verified)
         {
+            log.error("YeeVCC 响应验签失败, signatureHeader={}", signature);
             throw new YeeVccException("YeeVCC 响应验签失败", null, responseBody);
         }
         return true;

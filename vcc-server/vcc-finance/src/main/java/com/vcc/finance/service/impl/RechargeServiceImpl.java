@@ -16,7 +16,7 @@ import com.vcc.finance.domain.Recharge;
 import com.vcc.finance.mapper.RechargeMapper;
 import com.vcc.finance.service.IRechargeService;
 import com.vcc.system.service.ISystemConfigService;
-import com.vcc.upstream.YeeVccClient;
+import com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
 import com.vcc.upstream.dto.YeeVccRequests;
@@ -37,7 +37,7 @@ public class RechargeServiceImpl implements IRechargeService
     private CardMapper cardMapper;
 
     @Autowired
-    private YeeVccClient yeeVccClient;
+    private ChannelAwareYeeVccAdapter yeeVccAdapter;
 
     @Autowired
     private IUserAccountService userAccountService;
@@ -174,7 +174,7 @@ public class RechargeServiceImpl implements IRechargeService
 
         try
         {
-            YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccClient.recharge(request);
+            YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccAdapter.recharge(request);
             if (response.isSuccess())
             {
                 // VCC-008: 保持 PENDING 状态，等待回调或查询确认
@@ -264,7 +264,7 @@ public class RechargeServiceImpl implements IRechargeService
 
             YeeVccRequests.QueryRechargeResultRequest request = new YeeVccRequests.QueryRechargeResultRequest();
             request.setOrderId(orderNo);
-            YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccClient.queryRechargeResult(request);
+            YeeVccApiResponse<YeeVccModels.OperationData> response = yeeVccAdapter.queryRechargeResult(request);
             if (response.isSuccess() && response.getData() != null)
             {
                 String status = response.getData().getStatus();

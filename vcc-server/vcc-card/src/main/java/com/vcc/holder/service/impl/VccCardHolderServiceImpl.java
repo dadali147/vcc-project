@@ -8,7 +8,7 @@ import com.vcc.holder.dto.CardHolderStatusRequest;
 import com.vcc.holder.dto.CardHolderUpdateRequest;
 import com.vcc.holder.mapper.VccCardHolderMapper;
 import com.vcc.holder.service.VccCardHolderService;
-import com.vcc.upstream.YeeVccClient;
+import com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
 import com.vcc.upstream.dto.YeeVccRequests;
@@ -26,12 +26,12 @@ public class VccCardHolderServiceImpl implements VccCardHolderService
     private static final Logger log = LoggerFactory.getLogger(VccCardHolderServiceImpl.class);
 
     private final VccCardHolderMapper holderMapper;
-    private final YeeVccClient yeeVccClient;
+    private final ChannelAwareYeeVccAdapter yeeVccAdapter;
 
-    public VccCardHolderServiceImpl(VccCardHolderMapper holderMapper, YeeVccClient yeeVccClient)
+    public VccCardHolderServiceImpl(VccCardHolderMapper holderMapper, ChannelAwareYeeVccAdapter yeeVccAdapter)
     {
         this.holderMapper = holderMapper;
-        this.yeeVccClient = yeeVccClient;
+        this.yeeVccAdapter = yeeVccAdapter;
     }
 
     @Override
@@ -49,7 +49,7 @@ public class VccCardHolderServiceImpl implements VccCardHolderService
         upstreamRequest.setPostCode(request.postCode());
         upstreamRequest.setPhone(request.mobile());
 
-        YeeVccApiResponse<YeeVccModels.CardHolderData> response = yeeVccClient.addCardHolder(upstreamRequest);
+        YeeVccApiResponse<YeeVccModels.CardHolderData> response = yeeVccAdapter.addCardHolder(upstreamRequest);
         if (!response.isSuccess() || response.getData() == null)
         {
             throw new ServiceException("创建上游持卡人失败: " + response.getMessage());

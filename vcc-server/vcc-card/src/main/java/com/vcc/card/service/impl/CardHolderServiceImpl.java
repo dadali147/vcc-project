@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.vcc.card.domain.CardHolder;
 import com.vcc.card.mapper.CardHolderMapper;
 import com.vcc.card.service.ICardHolderService;
-import com.vcc.upstream.YeeVccClient;
+import com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter;
 import com.vcc.upstream.dto.YeeVccApiResponse;
 import com.vcc.upstream.dto.YeeVccModels;
 import com.vcc.upstream.dto.YeeVccRequests;
@@ -26,7 +26,7 @@ public class CardHolderServiceImpl implements ICardHolderService
     private CardHolderMapper cardHolderMapper;
 
     @Autowired
-    private YeeVccClient yeeVccClient;
+    private ChannelAwareYeeVccAdapter yeeVccAdapter;
 
     @Override
     public CardHolder selectCardHolderById(Long id)
@@ -54,7 +54,7 @@ public class CardHolderServiceImpl implements ICardHolderService
         request.setPostCode(cardHolder.getPostCode());
         request.setPhone(cardHolder.getMobile());
 
-        YeeVccApiResponse<YeeVccModels.CardHolderData> response = yeeVccClient.addCardHolder(request);
+        YeeVccApiResponse<YeeVccModels.CardHolderData> response = yeeVccAdapter.addCardHolder(request);
         if (!response.isSuccess())
         {
             throw new RuntimeException("上游创建持卡人失败: " + response.getMessage());
