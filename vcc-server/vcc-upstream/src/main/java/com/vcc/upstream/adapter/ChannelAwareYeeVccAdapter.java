@@ -201,6 +201,34 @@ public class ChannelAwareYeeVccAdapter
     }
 
     // -----------------------------------------------------------------------
+    // 账户操作
+    // -----------------------------------------------------------------------
+
+    public YeeVccApiResponse<YeeVccModels.AccountData> createAccount(
+            YeeVccRequests.CreateAccountRequest request)
+    {
+        return getYeeVccClient().createAccount(request);
+    }
+
+    public YeeVccApiResponse<YeeVccModels.OperationData> accountTransferIn(
+            YeeVccRequests.AccountTransferRequest request)
+    {
+        return getYeeVccClient().accountTransferIn(request);
+    }
+
+    public YeeVccApiResponse<YeeVccModels.OperationData> accountTransferOut(
+            YeeVccRequests.AccountTransferRequest request)
+    {
+        return getYeeVccClient().accountTransferOut(request);
+    }
+
+    public YeeVccApiResponse<YeeVccModels.PageData<YeeVccModels.AccountData>> getAccountInfo(
+            YeeVccRequests.GetAccountInfoRequest request)
+    {
+        return getYeeVccClient().getAccountInfo(request);
+    }
+
+    // -----------------------------------------------------------------------
     // BIN 查询
     // -----------------------------------------------------------------------
 

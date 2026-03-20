@@ -9,6 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter;
+import com.vcc.upstream.dto.YeeVccApiResponse;
+import com.vcc.upstream.dto.YeeVccModels;
+import com.vcc.upstream.dto.YeeVccRequests;
 import com.vcc.user.domain.UserAccount;
 import com.vcc.user.mapper.UserAccountMapper;
 import com.vcc.user.service.IUserAccountService;
@@ -23,6 +27,9 @@ public class UserAccountServiceImpl implements IUserAccountService
 
     @Autowired
     private UserAccountMapper userAccountMapper;
+
+    @Autowired
+    private ChannelAwareYeeVccAdapter channelAdapter;
 
     @Override
     public UserAccount selectUserAccountById(Long id)
@@ -137,5 +144,65 @@ public class UserAccountServiceImpl implements IUserAccountService
         log.info("管理员调整余额, userId={}, currency={}, amount={}, reason={}, operatorId={}",
                 userId, currency, amount, reason, operatorId);
         return true;
+    }
+
+    // -----------------------------------------------------------------------
+    // 上游账户接口（通过 ChannelAwareYeeVccAdapter 调用 YeeVCC）
+    // -----------------------------------------------------------------------
+
+    @Override
+    public YeeVccApiResponse<YeeVccModels.AccountData> createUpstreamAccount(Long merchantId, String currency)
+    {
+        // B2B 设计：userId = merchantId，此处 customerId 取 merchantId 的字符串形式
+        YeeVccRequests.CreateAccountRequest request = new YeeVccRequests.CreateAccountRequest();
+        request.setCustomerId(String.valueOf(merchantId));
+        request.setCurrency(currency);
+        log.info("创建上游账户, merchantId={}, currency={}", merchantId, currency);
+        return channelAdapter.createAccount(request);
+    }
+
+    @Override
+    public YeeVccApiResponse<YeeVccModels.OperationData> upstreamTransferIn(
+            String accountNo, BigDecimal amount, String currency, String deductCurrency, String orderId)
+    {
+        YeeVccRequests.AccountTransferRequest request = new YeeVccRequests.AccountTransferRequest();
+        request.setAccountNo(accountNo);
+        request.setAmount(amount);
+        request.setCurrency(currency);
+        request.setDeductCurrency(deductCurrency);
+        request.setOrderId(orderId);
+        log.info("账户充值(转入), accountNo={}, amount={}, currency={}, deductCurrency={}, orderId={}",
+                accountNo, amount, currency, deductCurrency, orderId);
+        return channelAdapter.accountTransferIn(request);
+    }
+
+    @Override
+    public YeeVccApiResponse<YeeVccModels.OperationData> upstreamTransferOut(
+            String accountNo, BigDecimal amount, String currency, String deductCurrency, String orderId)
+    {
+        YeeVccRequests.AccountTransferRequest request = new YeeVccRequests.AccountTransferRequest();
+        request.setAccountNo(accountNo);
+        request.setAmount(amount);
+        request.setCurrency(currency);
+        request.setDeductCurrency(deductCurrency);
+        request.setOrderId(orderId);
+        log.info("账户提现(转出), accountNo={}, amount={}, currency={}, deductCurrency={}, orderId={}",
+                accountNo, amount, currency, deductCurrency, orderId);
+        return channelAdapter.accountTransferOut(request);
+    }
+
+    @Override
+    public YeeVccApiResponse<YeeVccModels.PageData<YeeVccModels.AccountData>> getUpstreamAccountInfo(
+            Long merchantId, String accountNo)
+    {
+        // B2B 设计：userId = merchantId
+        YeeVccRequests.GetAccountInfoRequest request = new YeeVccRequests.GetAccountInfoRequest();
+        request.setCustomerId(String.valueOf(merchantId));
+        if (accountNo != null && !accountNo.isEmpty())
+        {
+            request.setAccountNo(accountNo);
+        }
+        log.info("查询上游账户信息, merchantId={}, accountNo={}", merchantId, accountNo);
+        return channelAdapter.getAccountInfo(request);
     }
 }
