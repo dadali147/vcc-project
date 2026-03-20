@@ -62,13 +62,15 @@ public class WebhookTransactionService
         txn.setCardId(card.getId());
         txn.setUserId(card.getUserId());
         txn.setTxnType(txnType);
-        txn.setAmount(getBigDecimal(data, "merchantAmount"));
-        txn.setCurrency(getString(data, "merchantCurrency"));
+        txn.setAmount(getBigDecimal(data, "billingAmount"));
+        txn.setCurrency(getString(data, "billingCurrency"));
         txn.setMerchantName(getString(data, "merchantName"));
-        txn.setMerchantMcc(getString(data, "merchantMcc"));
-        txn.setMerchantCountry(getString(data, "merchantCountry"));
-        txn.setStatus("SUCCESS".equalsIgnoreCase(status)
-                ? Transaction.STATUS_SUCCESS : Transaction.STATUS_FAILED);
+        txn.setMerchantMcc(getString(data, "mcc"));
+        String country = getString(data, "merchantCountry");
+        if (country == null || country.isEmpty()) country = getString(data, "cardAcceptorCountry");
+        txn.setMerchantCountry(country);
+        boolean isSuccess = "approved".equalsIgnoreCase(status) || "SUCCESS".equalsIgnoreCase(status);
+        txn.setStatus(isSuccess ? Transaction.STATUS_SUCCESS : Transaction.STATUS_FAILED);
         txn.setAuthCode(getString(data, "authCode"));
         txn.setFailReason(getString(data, "failReason"));
         transactionMapper.insertTransaction(txn);
