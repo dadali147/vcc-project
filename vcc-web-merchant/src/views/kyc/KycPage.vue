@@ -1,9 +1,8 @@
 <template>
   <div class="page">
     <h1>{{ $t('kyc.title') }}</h1>
-    
+
     <div class="kyc-container">
-      <!-- KYC Status Card -->
       <div class="status-card" :class="kycStatus.toLowerCase()">
         <div class="status-icon">
           <span v-if="kycStatus === 'PENDING'">⏳</span>
@@ -19,36 +18,61 @@
         </div>
       </div>
 
-      <!-- Upload Section -->
       <div v-if="kycStatus !== 'APPROVED'" class="upload-section">
         <h3>{{ $t('kyc.uploadDocuments') }}</h3>
-        <div class="upload-grid">
-          <div class="upload-item">
-            <label>{{ $t('kyc.idFront') }}</label>
-            <div class="upload-area">
-              <input type="file" accept="image/*" @change="handleFileUpload">
-              <span>📸 {{ $t('kyc.dragOrClick') }}</span>
-            </div>
+        <el-form :model="form" :rules="rules" ref="formRef">
+          <div class="upload-grid">
+            <el-form-item label="身份证正面" prop="idFront">
+              <el-upload
+                class="upload-area"
+                :auto-upload="false"
+                :show-file-list="false"
+                :on-change="(file) => handleFileChange(file, 'idFront')"
+                accept="image/*"
+              >
+                <div v-if="!form.idFront" class="upload-placeholder">
+                  <span>📸 点击上传</span>
+                </div>
+                <img v-else :src="form.idFront" class="preview-image" />
+              </el-upload>
+            </el-form-item>
+
+            <el-form-item label="身份证背面" prop="idBack">
+              <el-upload
+                class="upload-area"
+                :auto-upload="false"
+                :show-file-list="false"
+                :on-change="(file) => handleFileChange(file, 'idBack')"
+                accept="image/*"
+              >
+                <div v-if="!form.idBack" class="upload-placeholder">
+                  <span>📸 点击上传</span>
+                </div>
+                <img v-else :src="form.idBack" class="preview-image" />
+              </el-upload>
+            </el-form-item>
+
+            <el-form-item label="手持身份证照片" prop="faceSelfie">
+              <el-upload
+                class="upload-area"
+                :auto-upload="false"
+                :show-file-list="false"
+                :on-change="(file) => handleFileChange(file, 'faceSelfie')"
+                accept="image/*"
+              >
+                <div v-if="!form.faceSelfie" class="upload-placeholder">
+                  <span>📸 点击上传</span>
+                </div>
+                <img v-else :src="form.faceSelfie" class="preview-image" />
+              </el-upload>
+            </el-form-item>
           </div>
-          <div class="upload-item">
-            <label>{{ $t('kyc.idBack') }}</label>
-            <div class="upload-area">
-              <input type="file" accept="image/*" @change="handleFileUpload">
-              <span>📸 {{ $t('kyc.dragOrClick') }}</span>
-            </div>
-          </div>
-          <div class="upload-item">
-            <label>{{ $t('kyc.faceSelfie') }}</label>
-            <div class="upload-area">
-              <input type="file" accept="image/*" @change="handleFileUpload">
-              <span>📸 {{ $t('kyc.dragOrClick') }}</span>
-            </div>
-          </div>
-        </div>
-        <button class="submit-button">{{ $t('kyc.submitForReview') }}</button>
+        </el-form>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting" class="submit-button">
+          {{ $t('kyc.submitForReview') }}
+        </el-button>
       </div>
 
-      <!-- Document Review Section -->
       <div v-if="submittedDocuments.length" class="review-section">
         <h3>{{ $t('kyc.submittedDocuments') }}</h3>
         <div class="documents-list">
@@ -58,7 +82,7 @@
             </div>
             <div class="document-info">
               <p class="document-name">{{ doc.name }}</p>
-              <p class="document-date">{{ formatDate(doc.uploadedAt) }}</p>
+              <p class="document-date">{{ doc.uploadedAt }}</p>
               <span class="document-status" :class="doc.status.toLowerCase()">
                 {{ doc.status }}
               </span>
@@ -71,35 +95,92 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { formatDate } from '@/utils/common'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { kycApi } from '@/api'
 
-const kycStatus = ref('PENDING') // PENDING, APPROVED, REJECTED
+const submitting = ref(false)
+const formRef = ref(null)
+const kycStatus = ref('NOT_SUBMITTED')
 const rejectionReason = ref('')
+const submittedDocuments = ref([])
 
-const submittedDocuments = ref([
-  {
-    id: '1',
-    name: 'ID Front',
-    url: '/placeholder.png',
-    uploadedAt: new Date(),
-    status: 'PENDING'
-  }
-])
+const form = reactive({
+  idFront: '',
+  idBack: '',
+  faceSelfie: ''
+})
+
+const rules = {
+  idFront: [{ required: true, message: '请上传身份证正面', trigger: 'change' }],
+  idBack: [{ required: true, message: '请上传身份证背面', trigger: 'change' }],
+  faceSelfie: [{ required: true, message: '请上传手持身份证照片', trigger: 'change' }]
+}
 
 const kycStatusLabel = computed(() => {
   const labels = {
-    'PENDING': 'Pending Review',
-    'APPROVED': 'Approved',
-    'REJECTED': 'Rejected'
+    'NOT_SUBMITTED': '未提交',
+    'PENDING': '审核中',
+    'APPROVED': '已通过',
+    'REJECTED': '已拒绝'
   }
-  return labels[kycStatus.value] || 'Unknown'
+  return labels[kycStatus.value] || '未知'
 })
 
-function handleFileUpload(event) {
-  console.log('File uploaded:', event.target.files[0])
-  // Handle file upload logic
+const handleFileChange = (file, field) => {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    form[field] = e.target.result
+  }
+  reader.readAsDataURL(file.raw)
 }
+
+const handleSubmit = async () => {
+  if (!formRef.value) return
+
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    submitting.value = true
+    try {
+      const formData = new FormData()
+
+      for (const [key, value] of Object.entries(form)) {
+        if (value) {
+          const blob = await fetch(value).then(r => r.blob())
+          formData.append(key, blob, `${key}.jpg`)
+        }
+      }
+
+      await kycApi.uploadDocument(formData)
+      await kycApi.submit()
+
+      ElMessage.success('提交成功，等待审核')
+      loadKycStatus()
+    } catch (err) {
+      ElMessage.error(err.response?.data?.message || '提交失败')
+    } finally {
+      submitting.value = false
+    }
+  })
+}
+
+const loadKycStatus = async () => {
+  try {
+    const res = await kycApi.getStatus()
+    kycStatus.value = res.status || 'NOT_SUBMITTED'
+    rejectionReason.value = res.rejectionReason || ''
+
+    const docs = await kycApi.getDocuments()
+    submittedDocuments.value = docs.data || []
+  } catch (err) {
+    console.error('Failed to load KYC status:', err)
+  }
+}
+
+onMounted(() => {
+  loadKycStatus()
+})
 </script>
 
 <style scoped>
@@ -124,6 +205,11 @@ function handleFileUpload(event) {
   border-radius: 8px;
   margin-bottom: 32px;
   border-left: 4px solid;
+}
+
+.status-card.not_submitted {
+  background: #F3F4F6;
+  border-left-color: #6B7280;
 }
 
 .status-card.pending {
@@ -180,66 +266,44 @@ function handleFileUpload(event) {
 
 .upload-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin-bottom: 20px;
 }
 
-.upload-item label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 8px;
-}
-
 .upload-area {
+  width: 100%;
+  height: 200px;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  border: 2px dashed #d1d5db;
-  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  position: relative;
-  background: #f9fafb;
+  overflow: hidden;
 }
 
 .upload-area:hover {
-  border-color: #3B82F6;
-  background: #DBEAFE;
+  border-color: #2563eb;
+  background: #f9fafb;
 }
 
-.upload-area input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.upload-area span {
+.upload-placeholder {
   text-align: center;
   color: #6b7280;
-  font-size: 14px;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .submit-button {
   width: 100%;
-  padding: 10px 16px;
-  background: #3B82F6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.submit-button:hover {
-  background: #2563EB;
+  height: 44px;
+  font-size: 16px;
 }
 
 .review-section {
@@ -250,7 +314,7 @@ function handleFileUpload(event) {
 }
 
 .review-section h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 16px 0;
   color: #374151;
   font-size: 16px;
 }
@@ -323,5 +387,11 @@ function handleFileUpload(event) {
 .document-status.rejected {
   background: #FEE2E2;
   color: #991B1B;
+}
+
+@media (max-width: 768px) {
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

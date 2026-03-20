@@ -125,8 +125,24 @@ async function handleSubmit() {
     return
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(form.email)) {
+    error.value = '请输入有效的邮箱地址'
+    return
+  }
+
+  if (form.password.length < 6) {
+    error.value = '密码长度至少为 6 位'
+    return
+  }
+
   if (form.password !== form.confirmPassword) {
     error.value = t('auth.passwordMismatch')
+    return
+  }
+
+  if (!form.agreement) {
+    error.value = '请同意用户协议和隐私政策'
     return
   }
 

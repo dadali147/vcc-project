@@ -87,6 +87,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { authApi } from '@/api'
 
 const router = useRouter()
 
@@ -102,26 +103,49 @@ const error = ref('')
 const countdown = ref(0)
 let timer = null
 
-const sendCode = () => {
+const sendCode = async () => {
   if (!formData.value.email) {
     ElMessage.warning('请先输入邮箱地址')
     return
   }
-  
-  // 模拟发送验证码
-  ElMessage.success('验证码已发送至您的邮箱')
-  countdown.value = 60
-  timer = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(timer)
-    }
-  }, 1000)
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.value.email)) {
+    ElMessage.warning('请输入有效的邮箱地址')
+    return
+  }
+
+  try {
+    await authApi.sendResetCode(formData.value.email)
+    ElMessage.success('验证码已发送至您的邮箱')
+    countdown.value = 60
+    timer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(timer)
+      }
+    }, 1000)
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || '发送验证码失败')
+  }
 }
 
 async function handleReset() {
+  error.value = ''
+
   if (!formData.value.email || !formData.value.code || !formData.value.newPassword || !formData.value.confirmPassword) {
     error.value = '请填写所有必填项'
+    return
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.value.email)) {
+    error.value = '请输入有效的邮箱地址'
+    return
+  }
+
+  if (formData.value.newPassword.length < 6) {
+    error.value = '密码长度至少为 6 位'
     return
   }
 
@@ -131,12 +155,14 @@ async function handleReset() {
   }
 
   loading.value = true
-  error.value = ''
 
   try {
-    // 模拟 API 请求
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
+    await authApi.resetPassword({
+      email: formData.value.email,
+      code: formData.value.code,
+      newPassword: formData.value.newPassword
+    })
+
     ElMessage.success('密码重置成功，请使用新密码登录')
     router.push('/login')
   } catch (err) {

@@ -5,40 +5,40 @@
         <h1>{{ t('transactions.title') }}</h1>
         <p>{{ t('transactions.pageDescription') }}</p>
       </div>
-      <button class="primary-button">{{ t('transactions.export') }}</button>
+      <button class="primary-button" @click="handleExport">{{ t('transactions.export') }}</button>
     </div>
 
     <section class="panel">
       <div class="panel-header">
         <h2>{{ t('common.filter') }}</h2>
-        <button class="link-button">{{ t('common.reset') }}</button>
+        <button class="link-button" @click="resetFilters">{{ t('common.reset') }}</button>
       </div>
       <div class="filter-grid">
         <div class="form-group">
           <label>{{ t('transactions.card') }}</label>
-          <input type="text" :placeholder="t('transactions.cardPlaceholder')" />
+          <input v-model="filters.cardNumber" type="text" :placeholder="t('transactions.cardPlaceholder')" @input="handleSearch" />
         </div>
         <div class="form-group">
           <label>{{ t('transactions.typeFilter') }}</label>
-          <select>
-            <option>{{ t('common.all') }}</option>
-            <option>{{ t('transactions.typeRecharge') }}</option>
-            <option>{{ t('transactions.typeConsumption') }}</option>
-            <option>{{ t('transactions.typeRefund') }}</option>
+          <select v-model="filters.type" @change="loadTransactions">
+            <option value="">{{ t('common.all') }}</option>
+            <option value="recharge">{{ t('transactions.typeRecharge') }}</option>
+            <option value="consumption">{{ t('transactions.typeConsumption') }}</option>
+            <option value="refund">{{ t('transactions.typeRefund') }}</option>
           </select>
         </div>
         <div class="form-group">
           <label>{{ t('transactions.status') }}</label>
-          <select>
-            <option>{{ t('common.all') }}</option>
-            <option>{{ t('transactions.statusSuccess') }}</option>
-            <option>{{ t('transactions.statusPending') }}</option>
-            <option>{{ t('transactions.statusFailed') }}</option>
+          <select v-model="filters.status" @change="loadTransactions">
+            <option value="">{{ t('common.all') }}</option>
+            <option value="success">{{ t('transactions.statusSuccess') }}</option>
+            <option value="pending">{{ t('transactions.statusPending') }}</option>
+            <option value="failed">{{ t('transactions.statusFailed') }}</option>
           </select>
         </div>
         <div class="form-group">
           <label>{{ t('transactions.dateRange') }}</label>
-          <input type="text" :placeholder="t('common.dateRangePlaceholder')" />
+          <input v-model="filters.dateRange" type="text" :placeholder="t('common.dateRangePlaceholder')" />
         </div>
       </div>
     </section>
@@ -46,9 +46,10 @@
     <section class="panel">
       <div class="panel-header">
         <h2>{{ t('transactions.list') }}</h2>
-        <span class="meta">3</span>
+        <span class="meta">{{ pagination.total }}</span>
       </div>
-      <div class="table-wrapper">
+      <div v-if="loading" class="loading-state">加载中...</div>
+      <div v-else-if="transactions.length" class="table-wrapper">
         <table>
           <thead>
             <tr>
@@ -62,19 +63,26 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in rows" :key="item.id">
+            <tr v-for="item in transactions" :key="item.id">
               <td>{{ item.id }}</td>
-              <td>{{ item.card }}</td>
-              <td>{{ item.type }}</td>
-              <td>{{ item.amount }}</td>
+              <td>{{ item.cardNumber }}</td>
+              <td>{{ getTypeLabel(item.type) }}</td>
+              <td :class="{ 'amount-positive': item.amount > 0, 'amount-negative': item.amount < 0 }">
+                {{ formatAmount(item.amount) }}
+              </td>
               <td>{{ item.merchant }}</td>
-              <td><span class="status-pill">{{ item.status }}</span></td>
-              <td>{{ item.date }}</td>
+              <td><span class="status-pill" :class="item.status">{{ getStatusLabel(item.status) }}</span></td>
+              <td>{{ item.createdAt }}</td>
             </tr>
           </tbody>
         </table>
+        <div class="pagination">
+          <button :disabled="pagination.page === 1" @click="changePage(pagination.page - 1)">上一页</button>
+          <span>第 {{ pagination.page }} / {{ Math.ceil(pagination.total / pagination.pageSize) }} 页</span>
+          <button :disabled="pagination.page >= Math.ceil(pagination.total / pagination.pageSize)" @click="changePage(pagination.page + 1)">下一页</button>
+        </div>
       </div>
-      <div class="empty-state">
+      <div v-else class="empty-state">
         <strong>{{ t('transactions.emptyTitle') }}</strong>
         <p>{{ t('transactions.noTransactions') }}</p>
       </div>
@@ -83,38 +91,122 @@
 </template>
 
 <script setup>
+import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElMessage } from 'element-plus'
+import { transactionApi } from '@/api'
+
 const { t } = useI18n()
 
-const rows = [
-  {
-    id: 'TXN-0019281',
-    card: '5583 **** 2091',
-    type: t('transactions.typeConsumption'),
-    amount: '-$320.00',
-    merchant: 'Meta Ads',
-    status: t('transactions.statusSuccess'),
-    date: '2026-03-20 10:12'
-  },
-  {
-    id: 'TXN-0019274',
-    card: '4219 **** 6430',
-    type: t('transactions.typeRecharge'),
-    amount: '+$1,000.00',
-    merchant: 'Wallet Top-up',
-    status: t('transactions.statusSuccess'),
-    date: '2026-03-20 09:41'
-  },
-  {
-    id: 'TXN-0019208',
-    card: '5583 **** 2091',
-    type: t('transactions.typeRefund'),
-    amount: '+$48.90',
-    merchant: 'Canva',
-    status: t('transactions.statusPending'),
-    date: '2026-03-19 16:30'
+const loading = ref(false)
+const transactions = ref([])
+
+const filters = reactive({
+  cardNumber: '',
+  type: '',
+  status: '',
+  dateRange: ''
+})
+
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0
+})
+
+let searchTimer = null
+
+const handleSearch = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    pagination.page = 1
+    loadTransactions()
+  }, 500)
+}
+
+const resetFilters = () => {
+  filters.cardNumber = ''
+  filters.type = ''
+  filters.status = ''
+  filters.dateRange = ''
+  pagination.page = 1
+  loadTransactions()
+}
+
+const loadTransactions = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      cardNumber: filters.cardNumber,
+      type: filters.type,
+      status: filters.status
+    }
+    const res = await transactionApi.list(params)
+    transactions.value = res.data || []
+    pagination.total = res.total || 0
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || '加载失败')
+  } finally {
+    loading.value = false
   }
-]
+}
+
+const changePage = (page) => {
+  pagination.page = page
+  loadTransactions()
+}
+
+const handleExport = async () => {
+  try {
+    const params = {
+      cardNumber: filters.cardNumber,
+      type: filters.type,
+      status: filters.status
+    }
+    const blob = await transactionApi.export(params)
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `transactions_${Date.now()}.xlsx`
+    link.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || '导出失败')
+  }
+}
+
+const getTypeLabel = (type) => {
+  const labels = {
+    recharge: t('transactions.typeRecharge'),
+    consumption: t('transactions.typeConsumption'),
+    refund: t('transactions.typeRefund')
+  }
+  return labels[type] || type
+}
+
+const getStatusLabel = (status) => {
+  const labels = {
+    success: t('transactions.statusSuccess'),
+    pending: t('transactions.statusPending'),
+    failed: t('transactions.statusFailed')
+  }
+  return labels[status] || status
+}
+
+const formatAmount = (amount) => {
+  const prefix = amount > 0 ? '+' : ''
+  return prefix + new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount || 0)
+}
+
+onMounted(() => {
+  loadTransactions()
+})
 </script>
 
 <style scoped>
@@ -130,12 +222,20 @@ const rows = [
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 14px 12px; border-bottom: 1px solid #f3f4f6; text-align: left; }
 th { color: #6b7280; font-weight: 600; }
-.status-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; background: #eff6ff; color: #1d4ed8; font-size: 12px; font-weight: 600; }
-.empty-state { margin-top: 20px; border: 1px dashed #d1d5db; border-radius: 12px; padding: 24px; text-align: center; color: #6b7280; }
+.amount-positive { color: #059669; font-weight: 600; }
+.amount-negative { color: #dc2626; font-weight: 600; }
+.status-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.status-pill.success { background: #d1fae5; color: #065f46; }
+.status-pill.pending { background: #fef3c7; color: #92400e; }
+.status-pill.failed { background: #fee2e2; color: #991b1b; }
+.empty-state, .loading-state { margin-top: 20px; border: 1px dashed #d1d5db; border-radius: 12px; padding: 24px; text-align: center; color: #6b7280; }
 .primary-button, .link-button { border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
 .primary-button { background: #2563eb; color: white; padding: 0 16px; height: 40px; }
 .link-button { background: transparent; color: #2563eb; }
 .meta { background: #f3f4f6; border-radius: 999px; padding: 4px 10px; color: #6b7280; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #f3f4f6; }
+.pagination button { padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 8px; background: white; cursor: pointer; }
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
 @media (max-width: 900px) {
   .filter-grid { grid-template-columns: 1fr; }
   .page-header, .panel-header { flex-direction: column; align-items: flex-start; }

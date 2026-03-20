@@ -3,42 +3,42 @@
     <h1>{{ $t('downloads.title') }}</h1>
 
     <div class="downloads-container">
-      <!-- Export Tabs -->
       <el-tabs v-model="activeTab" class="export-tabs">
-        <!-- Transaction Export -->
         <el-tab-pane label="交易明细导出" name="transactions">
           <div class="export-section">
-            <div class="export-form">
-              <div class="form-group">
-                <label>{{ $t('downloads.dateRange') }}</label>
-                <div class="date-range">
-                  <input 
-                    v-model="transactionFilters.startDate" 
-                    type="date"
-                    class="date-input"
-                  />
-                  <span class="date-separator">-</span>
-                  <input 
-                    v-model="transactionFilters.endDate" 
-                    type="date"
-                    class="date-input"
-                  />
-                </div>
-              </div>
+            <el-form :model="transactionFilters" :rules="transactionRules" ref="transactionFormRef">
+              <div class="export-form">
+                <el-form-item label="日期范围" prop="dateRange">
+                  <div class="date-range">
+                    <el-date-picker
+                      v-model="transactionFilters.startDate"
+                      type="date"
+                      placeholder="开始日期"
+                      style="width: 100%"
+                    />
+                    <span class="date-separator">-</span>
+                    <el-date-picker
+                      v-model="transactionFilters.endDate"
+                      type="date"
+                      placeholder="结束日期"
+                      style="width: 100%"
+                    />
+                  </div>
+                </el-form-item>
 
-              <div class="form-group">
-                <label>{{ $t('downloads.exportFormat') }}</label>
-                <select v-model="transactionFilters.format" class="select-input">
-                  <option value="excel">Excel</option>
-                  <option value="csv">CSV</option>
-                </select>
-              </div>
+                <el-form-item label="导出格式" prop="format">
+                  <el-select v-model="transactionFilters.format" style="width: 100%">
+                    <el-option label="Excel" value="excel" />
+                    <el-option label="CSV" value="csv" />
+                  </el-select>
+                </el-form-item>
 
-              <button class="export-button" @click="exportTransactions">
-                <span v-if="!exporting">📥 {{ $t('downloads.export') }}</span>
-                <span v-else>⏳ {{ $t('downloads.downloading') }}</span>
-              </button>
-            </div>
+                <el-button type="primary" @click="exportTransactions" :loading="exporting" class="export-button">
+                  <span v-if="!exporting">📥 {{ $t('downloads.export') }}</span>
+                  <span v-else>⏳ {{ $t('downloads.downloading') }}</span>
+                </el-button>
+              </div>
+            </el-form>
 
             <div class="export-info">
               <p>• 支持导出过去 12 个月的交易数据</p>
@@ -48,40 +48,41 @@
           </div>
         </el-tab-pane>
 
-        <!-- Recharge Export -->
         <el-tab-pane label="充值明细导出" name="recharge">
           <div class="export-section">
-            <div class="export-form">
-              <div class="form-group">
-                <label>{{ $t('downloads.dateRange') }}</label>
-                <div class="date-range">
-                  <input 
-                    v-model="rechargeFilters.startDate" 
-                    type="date"
-                    class="date-input"
-                  />
-                  <span class="date-separator">-</span>
-                  <input 
-                    v-model="rechargeFilters.endDate" 
-                    type="date"
-                    class="date-input"
-                  />
-                </div>
-              </div>
+            <el-form :model="rechargeFilters" ref="rechargeFormRef">
+              <div class="export-form">
+                <el-form-item label="日期范围">
+                  <div class="date-range">
+                    <el-date-picker
+                      v-model="rechargeFilters.startDate"
+                      type="date"
+                      placeholder="开始日期"
+                      style="width: 100%"
+                    />
+                    <span class="date-separator">-</span>
+                    <el-date-picker
+                      v-model="rechargeFilters.endDate"
+                      type="date"
+                      placeholder="结束日期"
+                      style="width: 100%"
+                    />
+                  </div>
+                </el-form-item>
 
-              <div class="form-group">
-                <label>{{ $t('downloads.exportFormat') }}</label>
-                <select v-model="rechargeFilters.format" class="select-input">
-                  <option value="excel">Excel</option>
-                  <option value="csv">CSV</option>
-                </select>
-              </div>
+                <el-form-item label="导出格式">
+                  <el-select v-model="rechargeFilters.format" style="width: 100%">
+                    <el-option label="Excel" value="excel" />
+                    <el-option label="CSV" value="csv" />
+                  </el-select>
+                </el-form-item>
 
-              <button class="export-button" @click="exportRecharge">
-                <span v-if="!exporting">📥 {{ $t('downloads.export') }}</span>
-                <span v-else>⏳ {{ $t('downloads.downloading') }}</span>
-              </button>
-            </div>
+                <el-button type="primary" @click="exportRecharge" :loading="exporting" class="export-button">
+                  <span v-if="!exporting">📥 {{ $t('downloads.export') }}</span>
+                  <span v-else>⏳ {{ $t('downloads.downloading') }}</span>
+                </el-button>
+              </div>
+            </el-form>
 
             <div class="export-info">
               <p>• 包含所有充值记录（卡号、金额、时间、状态）</p>
@@ -91,32 +92,32 @@
           </div>
         </el-tab-pane>
 
-        <!-- Monthly Statement Export -->
         <el-tab-pane label="月对账表导出" name="statement">
           <div class="export-section">
-            <div class="export-form">
-              <div class="form-group">
-                <label>选择月份</label>
-                <input 
-                  v-model="statementFilters.month" 
-                  type="month"
-                  class="date-input"
-                />
-              </div>
+            <el-form :model="statementFilters" ref="statementFormRef">
+              <div class="export-form">
+                <el-form-item label="选择月份">
+                  <el-date-picker
+                    v-model="statementFilters.month"
+                    type="month"
+                    placeholder="选择月份"
+                    style="width: 100%"
+                  />
+                </el-form-item>
 
-              <div class="form-group">
-                <label>{{ $t('downloads.exportFormat') }}</label>
-                <select v-model="statementFilters.format" class="select-input">
-                  <option value="excel">Excel</option>
-                  <option value="pdf">PDF</option>
-                </select>
-              </div>
+                <el-form-item label="导出格式">
+                  <el-select v-model="statementFilters.format" style="width: 100%">
+                    <el-option label="Excel" value="excel" />
+                    <el-option label="PDF" value="pdf" />
+                  </el-select>
+                </el-form-item>
 
-              <button class="export-button" @click="exportStatement">
-                <span v-if="!exporting">📥 {{ $t('downloads.export') }}</span>
-                <span v-else>⏳ {{ $t('downloads.downloading') }}</span>
-              </button>
-            </div>
+                <el-button type="primary" @click="exportStatement" :loading="exporting" class="export-button">
+                  <span v-if="!exporting">📥 {{ $t('downloads.export') }}</span>
+                  <span v-else>⏳ {{ $t('downloads.downloading') }}</span>
+                </el-button>
+              </div>
+            </el-form>
 
             <div class="export-info">
               <p>• 生成完整的月度对账表</p>
@@ -127,117 +128,160 @@
         </el-tab-pane>
       </el-tabs>
 
-      <!-- Download History -->
       <div class="download-history">
         <h3>下载历史</h3>
-        <table class="history-table">
-          <thead>
-            <tr>
-              <th>文件名</th>
-              <th>文件类型</th>
-              <th>下载时间</th>
-              <th>文件大小</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in downloadHistory" :key="item.id">
-              <td>{{ item.filename }}</td>
-              <td><span class="badge">{{ item.type }}</span></td>
-              <td>{{ formatDate(item.downloadTime, 'YYYY-MM-DD HH:mm') }}</td>
-              <td>{{ formatFileSize(item.fileSize) }}</td>
-              <td>
-                <a href="#" class="action-link">重新下载</a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <el-table :data="downloadHistory" style="width: 100%">
+          <el-table-column prop="fileName" label="文件名" />
+          <el-table-column prop="type" label="类型" width="120" />
+          <el-table-column prop="createdAt" label="生成时间" width="180" />
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="{ row }">
+              <span class="badge">{{ row.status }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="downloadFile(row)">下载</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
-import { formatDate } from '@/utils/common'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { downloadApi } from '@/api'
 
 const activeTab = ref('transactions')
 const exporting = ref(false)
+const transactionFormRef = ref(null)
+const rechargeFormRef = ref(null)
+const statementFormRef = ref(null)
 
-const transactionFilters = ref({
-  startDate: '2024-01-01',
-  endDate: new Date().toISOString().split('T')[0],
+const transactionFilters = reactive({
+  startDate: '',
+  endDate: '',
   format: 'excel'
 })
 
-const rechargeFilters = ref({
-  startDate: '2024-01-01',
-  endDate: new Date().toISOString().split('T')[0],
+const rechargeFilters = reactive({
+  startDate: '',
+  endDate: '',
   format: 'excel'
 })
 
-const statementFilters = ref({
-  month: new Date().toISOString().slice(0, 7),
+const statementFilters = reactive({
+  month: '',
   format: 'excel'
 })
 
-const downloadHistory = ref([
-  {
-    id: '1',
-    filename: '2024年3月交易明细.xlsx',
-    type: 'Excel',
-    downloadTime: new Date(Date.now() - 3600000),
-    fileSize: 512000
-  },
-  {
-    id: '2',
-    filename: '2024年2月充值明细.csv',
-    type: 'CSV',
-    downloadTime: new Date(Date.now() - 86400000),
-    fileSize: 256000
-  }
-])
-
-function formatFileSize(bytes) {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+const transactionRules = {
+  dateRange: [
+    { required: true, message: '请选择日期范围', trigger: 'change' }
+  ]
 }
 
-async function exportTransactions() {
+const downloadHistory = ref([])
+
+const exportTransactions = async () => {
+  if (!transactionFilters.startDate || !transactionFilters.endDate) {
+    ElMessage.warning('请选择日期范围')
+    return
+  }
+
   exporting.value = true
   try {
-    // Simulate file download
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    console.log('Exporting transactions:', transactionFilters.value)
-    // In real implementation, call API and trigger download
+    const params = {
+      startDate: transactionFilters.startDate,
+      endDate: transactionFilters.endDate,
+      format: transactionFilters.format
+    }
+    const blob = await downloadApi.exportTransactions(params)
+    downloadBlob(blob, `transactions_${Date.now()}.${transactionFilters.format === 'excel' ? 'xlsx' : 'csv'}`)
+    ElMessage.success('导出成功')
+    loadDownloadHistory()
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || '导出失败')
   } finally {
     exporting.value = false
   }
 }
 
-async function exportRecharge() {
+const exportRecharge = async () => {
+  if (!rechargeFilters.startDate || !rechargeFilters.endDate) {
+    ElMessage.warning('请选择日期范围')
+    return
+  }
+
   exporting.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    console.log('Exporting recharge:', rechargeFilters.value)
+    const params = {
+      startDate: rechargeFilters.startDate,
+      endDate: rechargeFilters.endDate,
+      format: rechargeFilters.format
+    }
+    const blob = await downloadApi.exportRecharge(params)
+    downloadBlob(blob, `recharge_${Date.now()}.${rechargeFilters.format === 'excel' ? 'xlsx' : 'csv'}`)
+    ElMessage.success('导出成功')
+    loadDownloadHistory()
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || '导出失败')
   } finally {
     exporting.value = false
   }
 }
 
-async function exportStatement() {
+const exportStatement = async () => {
+  if (!statementFilters.month) {
+    ElMessage.warning('请选择月份')
+    return
+  }
+
   exporting.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    console.log('Exporting statement:', statementFilters.value)
+    const params = {
+      month: statementFilters.month,
+      format: statementFilters.format
+    }
+    const blob = await downloadApi.exportStatement(params)
+    downloadBlob(blob, `statement_${Date.now()}.${statementFilters.format}`)
+    ElMessage.success('导出成功')
+    loadDownloadHistory()
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || '导出失败')
   } finally {
     exporting.value = false
   }
 }
+
+const downloadBlob = (blob, filename) => {
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  window.URL.revokeObjectURL(url)
+}
+
+const downloadFile = (row) => {
+  ElMessage.info('下载功能开发中')
+}
+
+const loadDownloadHistory = async () => {
+  try {
+    const res = await downloadApi.getHistory({ page: 1, pageSize: 10 })
+    downloadHistory.value = res.data || []
+  } catch (err) {
+    console.error('Failed to load download history:', err)
+  }
+}
+
+onMounted(() => {
+  loadDownloadHistory()
+})
 </script>
 
 <style scoped>
@@ -251,13 +295,14 @@ async function exportStatement() {
 }
 
 .downloads-container {
+  max-width: 1000px;
   background: white;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border-radius: 12px;
   padding: 24px;
+  border: 1px solid #e5e7eb;
 }
 
-:deep(.export-tabs) {
+.export-tabs {
   margin-bottom: 32px;
 }
 
@@ -267,24 +312,10 @@ async function exportStatement() {
 
 .export-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr 1fr auto;
   gap: 16px;
+  align-items: end;
   margin-bottom: 20px;
-  padding: 20px;
-  background: #f9fafb;
-  border-radius: 6px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 8px;
 }
 
 .date-range {
@@ -293,50 +324,21 @@ async function exportStatement() {
   gap: 8px;
 }
 
-.date-input,
-.select-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.date-input:focus,
-.select-input:focus {
-  outline: none;
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
 .date-separator {
   color: #6b7280;
   font-weight: 500;
 }
 
 .export-button {
-  padding: 10px 16px;
-  background: #3B82F6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  align-self: flex-end;
-}
-
-.export-button:hover {
-  background: #2563EB;
-  transform: translateY(-1px);
+  height: 40px;
+  padding: 0 24px;
 }
 
 .export-info {
-  padding: 12px 16px;
-  background: #DBEAFE;
+  background: #EFF6FF;
+  border-left: 3px solid #3B82F6;
+  padding: 16px;
   border-radius: 6px;
-  border-left: 4px solid #3B82F6;
 }
 
 .export-info p {
@@ -357,36 +359,6 @@ async function exportStatement() {
   font-size: 16px;
 }
 
-.history-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.history-table thead {
-  background: #f9fafb;
-}
-
-.history-table th {
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 12px;
-  font-weight: 600;
-  color: #374151;
-  text-transform: uppercase;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.history-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-  color: #111827;
-}
-
-.history-table tbody tr:hover {
-  background: #f9fafb;
-}
-
 .badge {
   display: inline-block;
   padding: 4px 8px;
@@ -397,14 +369,9 @@ async function exportStatement() {
   font-weight: 500;
 }
 
-.action-link {
-  color: #3B82F6;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.action-link:hover {
-  color: #2563EB;
-  text-decoration: underline;
+@media (max-width: 768px) {
+  .export-form {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

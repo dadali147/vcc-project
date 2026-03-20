@@ -4,20 +4,13 @@ import client from './client'
  * Authentication APIs
  */
 export const authApi = {
-  // User login
   login: (credentials) => client.post('/login', credentials),
-  
-  // User registration
   register: (userData) => client.post('/auth/register', userData),
-  
-  // Logout
   logout: () => client.post('/auth/logout'),
-  
-  // Get current user info
   getCurrentUser: () => client.get('/auth/profile'),
-  
-  // Refresh token
   refreshToken: () => client.post('/auth/refresh'),
+  sendResetCode: (email) => client.post('/auth/send-reset-code', { email }),
+  resetPassword: (data) => client.post('/auth/reset-password', data),
 }
 
 /**
@@ -93,17 +86,32 @@ export const transactionApi = {
  * User Profile APIs
  */
 export const profileApi = {
-  // Get profile
   get: () => client.get('/profile'),
-  
-  // Update profile
   update: (data) => client.put('/profile', data),
-  
-  // Change password
   changePassword: (data) => client.post('/profile/change-password', data),
-  
-  // Update notification preferences
   updateNotifications: (data) => client.put('/profile/notifications', data),
+}
+
+/**
+ * KYC APIs
+ */
+export const kycApi = {
+  getStatus: () => client.get('/kyc/status'),
+  uploadDocument: (data) => client.post('/kyc/documents', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  submit: () => client.post('/kyc/submit'),
+  getDocuments: () => client.get('/kyc/documents'),
+}
+
+/**
+ * Download APIs
+ */
+export const downloadApi = {
+  exportTransactions: (params) => client.get('/downloads/transactions', { params, responseType: 'blob' }),
+  exportRecharge: (params) => client.get('/downloads/recharge', { params, responseType: 'blob' }),
+  exportStatement: (params) => client.get('/downloads/statement', { params, responseType: 'blob' }),
+  getHistory: (params) => client.get('/downloads/history', { params }),
 }
 
 export default {
@@ -112,4 +120,6 @@ export default {
   cardApi,
   transactionApi,
   profileApi,
+  kycApi,
+  downloadApi,
 }

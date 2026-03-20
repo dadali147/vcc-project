@@ -80,13 +80,25 @@ const loading = ref(false)
 const error = ref('')
 
 async function handleLogin() {
+  error.value = ''
+
   if (!credentials.value.email || !credentials.value.password) {
     error.value = '请填写所有必填项'
     return
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(credentials.value.email)) {
+    error.value = '请输入有效的邮箱地址'
+    return
+  }
+
+  if (credentials.value.password.length < 6) {
+    error.value = '密码长度至少为 6 位'
+    return
+  }
+
   loading.value = true
-  error.value = ''
 
   try {
     await authStore.login({
