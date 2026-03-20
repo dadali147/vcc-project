@@ -101,20 +101,23 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #F9FAFB;
 }
 
 .login-container {
   width: 100%;
-  max-width: 400px;
-  padding: 16px;
+  max-width: 420px;
+  padding: 24px;
 }
 
 .login-card {
-  background: white;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
   padding: 40px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E5E7EB;
 }
 
 .login-header {
@@ -130,13 +133,14 @@ async function handleLogin() {
 }
 
 .login-header h1 {
-  font-size: 24px;
-  margin-bottom: 8px;
-  color: #111827;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #111111;
 }
 
 .subtitle {
-  color: #6b7280;
+  color: #6B7280;
   font-size: 14px;
   margin: 0;
 }
@@ -162,16 +166,17 @@ async function handleLogin() {
 
 .form-group input {
   padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
   font-size: 14px;
   transition: border-color 0.2s, box-shadow 0.2s;
+  background: #ffffff;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #F97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 .form-options {
@@ -191,32 +196,34 @@ async function handleLogin() {
 
 .checkbox input {
   cursor: pointer;
+  accent-color: #F97316;
 }
 
 .forgot-password {
-  color: #3B82F6;
+  color: #F97316;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .forgot-password:hover {
-  color: #2563EB;
+  color: #EA6B0E;
 }
 
 .login-button {
-  padding: 10px 16px;
-  background: #3B82F6;
+  padding: 11px 16px;
+  background: #F97316;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
+  width: 100%;
 }
 
 .login-button:hover:not(:disabled) {
-  background: #2563EB;
+  background: #EA6B0E;
   transform: translateY(-1px);
 }
 
@@ -228,12 +235,12 @@ async function handleLogin() {
 .login-footer {
   text-align: center;
   font-size: 14px;
-  color: #6b7280;
+  color: #6B7280;
   margin-bottom: 16px;
 }
 
 .login-footer a {
-  color: #3B82F6;
+  color: #F97316;
   text-decoration: none;
 }
 
@@ -245,7 +252,7 @@ async function handleLogin() {
   padding: 12px 16px;
   background: #FEE2E2;
   color: #991B1B;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   border: 1px solid #FECACA;
 }
@@ -257,10 +264,6 @@ async function handleLogin() {
 
   .login-header h1 {
     font-size: 20px;
-  }
-
-  .logo {
-    font-size: 24px;
   }
 }
 </style>

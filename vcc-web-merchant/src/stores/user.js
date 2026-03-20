@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import i18n from '@/i18n'
 
 export const useUserStore = defineStore('user', () => {
   const language = ref(localStorage.getItem('language') || 'zh')
@@ -10,6 +11,7 @@ export const useUserStore = defineStore('user', () => {
   function setLanguage(lang) {
     language.value = lang
     localStorage.setItem('language', lang)
+    i18n.global.locale.value = lang
   }
 
   function setTheme(newTheme) {

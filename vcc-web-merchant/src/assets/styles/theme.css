@@ -1,9 +1,18 @@
 /* CSS Custom Properties (Theme Variables) */
 :root {
-  /* Primary Colors */
-  --primary: #3B82F6;
-  --primary-dark: #2563EB;
-  --primary-light: #DBEAFE;
+  /* kimoox Design System */
+  --color-primary: #F97316;
+  --color-primary-dark: #EA6B0E;
+  --color-primary-light: #FFF7ED;
+  --color-bg: #F9FAFB;
+  --color-text: #111111;
+  --color-text-secondary: #6B7280;
+  --color-border: #E5E7EB;
+
+  /* Primary Colors (legacy) */
+  --primary: #F97316;
+  --primary-dark: #EA6B0E;
+  --primary-light: #FFF7ED;
 
   /* Semantic Colors */
   --success: #10B981;

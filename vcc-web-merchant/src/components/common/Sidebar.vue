@@ -85,8 +85,8 @@ const isActive = (path) => {
 <style scoped>
 .sidebar {
   width: 240px;
-  background: #111827;
-  color: white;
+  background: #ffffff;
+  border-right: 1px solid #F3F4F6;
   padding: 16px 0;
   display: flex;
   flex-direction: column;
@@ -96,14 +96,14 @@ const isActive = (path) => {
 }
 
 .sidebar.collapsed {
-  width: 70px;
+  width: 64px;
 }
 
 .sidebar-nav {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   padding: 0 8px;
 }
 
@@ -112,27 +112,29 @@ const isActive = (path) => {
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  color: #9ca3af;
+  color: #6B7280;
   text-decoration: none;
-  border-radius: 6px;
-  transition: all 0.2s;
+  border-radius: 8px;
+  transition: background-color 0.2s, color 0.2s;
   white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .nav-item:hover {
-  background: #1f2937;
-  color: white;
+  background: #FFF7ED;
+  color: #F97316;
 }
 
 .nav-item.active {
-  background: #1f2937;
-  color: white;
-  border-left: 3px solid #3B82F6;
+  background: #FFF7ED;
+  color: #F97316;
 }
 
 .nav-icon {
-  font-size: 18px;
-  min-width: 24px;
+  font-size: 16px;
+  min-width: 20px;
+  text-align: center;
 }
 
 .nav-label {
@@ -145,23 +147,26 @@ const isActive = (path) => {
 
 .sidebar-toggle {
   position: absolute;
-  right: 0;
+  right: 8px;
   bottom: 16px;
   width: 32px;
   height: 32px;
-  border: 1px solid #374151;
-  background: #1f2937;
-  color: white;
-  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  background: #ffffff;
+  color: #6B7280;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  font-size: 12px;
 }
 
 .sidebar-toggle:hover {
-  background: #374151;
+  background: #FFF7ED;
+  color: #F97316;
+  border-color: #FDBA74;
 }
 
 @media (max-width: 768px) {
@@ -172,6 +177,7 @@ const isActive = (path) => {
     height: calc(100vh - 64px);
     z-index: 20;
     transition: left 0.3s ease;
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08);
   }
 
   .sidebar.show {
@@ -185,7 +191,7 @@ const isActive = (path) => {
 
 /* Scrollbar */
 .sidebar::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .sidebar::-webkit-scrollbar-track {
@@ -193,11 +199,11 @@ const isActive = (path) => {
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background: #374151;
-  border-radius: 3px;
+  background: #E5E7EB;
+  border-radius: 2px;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: #D1D5DB;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar">
     <div class="navbar-left">
-      <img src="@/assets/logo/kimoox-logo-text.png" alt="kimoox" class="logo-img" />
+      <img src="@/assets/logo/kimoox-logo-text.svg" alt="kimoox" class="logo-img" />
     </div>
     <div class="navbar-right">
       <div class="navbar-menu">
