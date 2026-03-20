@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vcc.common.core.controller.BaseController;
 import com.vcc.common.core.domain.AjaxResult;
 import com.vcc.common.core.page.TableDataInfo;
+import com.vcc.system.constant.SystemConfigConstants;
 import com.vcc.system.domain.SystemConfig;
 import com.vcc.system.service.ISystemConfigService;
 
@@ -55,6 +56,17 @@ public class SystemConfigController extends BaseController
     @PostMapping("/set")
     public AjaxResult setValue(@RequestParam String configKey, @RequestParam String configValue)
     {
+        // 白名单校验
+        if (!SystemConfigConstants.isAllowedKey(configKey))
+        {
+            return AjaxResult.error(400, "不允许修改该配置项");
+        }
+        // value 格式校验
+        String validateMsg = SystemConfigConstants.validateValue(configKey, configValue);
+        if (validateMsg != null)
+        {
+            return AjaxResult.error(400, validateMsg);
+        }
         return toAjax(systemConfigService.set(configKey, configValue));
     }
 
@@ -62,6 +74,17 @@ public class SystemConfigController extends BaseController
     @PostMapping
     public AjaxResult add(@RequestBody SystemConfig systemConfig)
     {
+        // 白名单校验
+        if (!SystemConfigConstants.isAllowedKey(systemConfig.getConfigKey()))
+        {
+            return AjaxResult.error(400, "不允许修改该配置项");
+        }
+        // value 格式校验
+        String validateMsg = SystemConfigConstants.validateValue(systemConfig.getConfigKey(), systemConfig.getConfigValue());
+        if (validateMsg != null)
+        {
+            return AjaxResult.error(400, validateMsg);
+        }
         return toAjax(systemConfigService.insertSystemConfig(systemConfig));
     }
 
@@ -69,6 +92,17 @@ public class SystemConfigController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestBody SystemConfig systemConfig)
     {
+        // 白名单校验
+        if (!SystemConfigConstants.isAllowedKey(systemConfig.getConfigKey()))
+        {
+            return AjaxResult.error(400, "不允许修改该配置项");
+        }
+        // value 格式校验
+        String validateMsg = SystemConfigConstants.validateValue(systemConfig.getConfigKey(), systemConfig.getConfigValue());
+        if (validateMsg != null)
+        {
+            return AjaxResult.error(400, validateMsg);
+        }
         return toAjax(systemConfigService.updateSystemConfig(systemConfig));
     }
 
@@ -76,6 +110,16 @@ public class SystemConfigController extends BaseController
     @DeleteMapping("/{id}")
     public AjaxResult remove(@PathVariable Long id)
     {
+        // 删除前查询 configKey，校验白名单
+        SystemConfig existing = systemConfigService.selectSystemConfigById(id);
+        if (existing == null)
+        {
+            return AjaxResult.error(400, "配置项不存在");
+        }
+        if (!SystemConfigConstants.isAllowedKey(existing.getConfigKey()))
+        {
+            return AjaxResult.error(400, "不允许修改该配置项");
+        }
         return toAjax(systemConfigService.deleteSystemConfigById(id));
     }
 }

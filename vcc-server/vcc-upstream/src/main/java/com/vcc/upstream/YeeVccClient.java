@@ -22,7 +22,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
@@ -46,8 +45,12 @@ import java.util.function.Supplier;
 
 /**
  * YeeVCC 上游客户端。
+ * <p>
+ * 注意：此类不再是 Spring Bean（已移除 @Component），生命周期由
+ * {@link com.vcc.upstream.adapter.ChannelAwareYeeVccAdapter} 管理并缓存。
+ * 这样做是因为每个渠道有独立的配置（appKey、密钥等），不适合作为单例 Bean 注入，
+ * 而应由适配器根据 channelCode 动态创建和缓存。
  */
-@Component
 public class YeeVccClient
 {
     private static final Logger log = LoggerFactory.getLogger(YeeVccClient.class);

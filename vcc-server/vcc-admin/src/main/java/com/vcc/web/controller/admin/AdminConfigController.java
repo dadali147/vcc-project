@@ -15,6 +15,7 @@ import com.vcc.common.core.controller.BaseController;
 import com.vcc.common.core.domain.AjaxResult;
 import com.vcc.common.core.page.TableDataInfo;
 import com.vcc.common.enums.BusinessType;
+import com.vcc.system.constant.SystemConfigConstants;
 import com.vcc.system.domain.SysConfig;
 import com.vcc.system.service.ISysConfigService;
 
@@ -60,7 +61,18 @@ public class AdminConfigController extends BaseController
     @PutMapping("/{configKey}")
     public AjaxResult updateByKey(@PathVariable String configKey, @RequestBody Map<String, String> params)
     {
+        // 白名单校验
+        if (!SystemConfigConstants.isAllowedKey(configKey))
+        {
+            return AjaxResult.error(400, "不允许修改该配置项");
+        }
         String configValue = params.get("configValue");
+        // value 格式校验
+        String validateMsg = SystemConfigConstants.validateValue(configKey, configValue);
+        if (validateMsg != null)
+        {
+            return AjaxResult.error(400, validateMsg);
+        }
         SysConfig config = new SysConfig();
         config.setConfigKey(configKey);
         config.setConfigValue(configValue);
