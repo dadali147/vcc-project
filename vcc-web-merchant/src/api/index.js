@@ -5,7 +5,7 @@ import client from './client'
  */
 export const authApi = {
   // User login
-  login: (credentials) => client.post('/auth/login', credentials),
+  login: (credentials) => client.post('/login', credentials),
   
   // User registration
   register: (userData) => client.post('/auth/register', userData),
