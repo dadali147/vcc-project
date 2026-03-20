@@ -51,15 +51,19 @@ const stats = ref({
 })
 const recentData = ref([])
 
-onMounted(async () => {
+const fetchStats = async () => {
   try {
     const res = await client.get('/admin/dashboard/stats')
     if (res.data) {
       stats.value = res.data.stats || stats.value
       recentData.value = res.data.recentData || []
     }
-  } catch(e) { /* ignore */ }
-})
+  } catch(e) {
+    console.error('Failed to fetch dashboard stats:', e)
+  }
+}
+
+onMounted(fetchStats)
 </script>
 
 <style scoped>
