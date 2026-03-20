@@ -1,7 +1,7 @@
 <template>
   <div class="navbar">
     <div class="breadcrumb">
-      <img src="@/assets/logo/kimoox-logo-text.svg" alt="kimoox" class="logo-img" />
+      <img src="@/assets/logo/kimoox-logo-text.png" alt="kimoox" class="logo-img" />
     </div>
     <div class="right-menu">
       <el-dropdown @command="handleCommand">
