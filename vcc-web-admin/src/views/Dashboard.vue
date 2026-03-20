@@ -65,59 +65,95 @@ onMounted(async () => {
 <style scoped>
 .dashboard-container {
   padding: 24px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  min-height: 100%;
 }
 
 .stat-card {
   border: 1px solid #E5E7EB;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  padding: 24px;
-  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 28px;
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #F97316 0%, #EA580C 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.stat-card:hover::before {
+  opacity: 1;
 }
 
 .stat-label {
   color: #6B7280;
   font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #111111;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #111827;
   line-height: 1;
+  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .stat-value--alert {
-  color: #F97316;
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .recent-card {
-  margin-top: 20px;
+  margin-top: 24px;
   border: 1px solid #E5E7EB;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   background: #fff;
   overflow: hidden;
 }
 
 .recent-card-header {
-  padding: 16px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #111111;
-  border-bottom: 1px solid #F3F4F6;
+  padding: 20px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  border-bottom: 2px solid #F3F4F6;
+  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
 }
 
 .recent-list-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid #F9FAFB;
   font-size: 14px;
-  transition: background-color 0.15s;
+  transition: all 0.2s ease;
 }
 
 .recent-list-item:last-child {
@@ -125,21 +161,28 @@ onMounted(async () => {
 }
 
 .recent-list-item:hover {
-  background-color: #F9FAFB;
+  background: linear-gradient(90deg, #FFF7ED 0%, #ffffff 100%);
+  transform: translateX(4px);
 }
 
 .recent-date {
   color: #374151;
-  font-weight: 500;
+  font-weight: 600;
   min-width: 100px;
 }
 
 .recent-meta {
   color: #6B7280;
+  font-weight: 500;
+}
+
+.recent-meta strong {
+  color: #F97316;
+  font-weight: 700;
 }
 
 .recent-empty {
-  padding: 24px;
+  padding: 32px;
   text-align: center;
   color: #9CA3AF;
   font-size: 14px;

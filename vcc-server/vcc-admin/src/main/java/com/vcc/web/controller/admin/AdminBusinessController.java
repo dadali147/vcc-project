@@ -26,8 +26,6 @@ import com.vcc.card.service.ICardService;
 import com.vcc.card.service.ITransactionService;
 import com.vcc.finance.domain.CardDebt;
 import com.vcc.finance.service.IDebtService;
-import com.vcc.risk.domain.RiskEvent;
-import com.vcc.risk.service.IRiskEventService;
 import com.vcc.user.service.IUserAccountService;
 
 /**
@@ -59,9 +57,6 @@ public class AdminBusinessController extends BaseController
 
     @Autowired
     private IUserAccountService userAccountService;
-
-    @Autowired
-    private IRiskEventService riskEventService;
 
     // ==================== 强力卡片干预（不受商户锁限制） ====================
 
@@ -325,10 +320,8 @@ public class AdminBusinessController extends BaseController
     }
 
     // ==================== 风控事件处理 ====================
-
-    /**
-     * 全量风控事件列表（分页）
-     */
+    // TODO: vcc-risk module not implemented yet
+    /*
     @PreAuthorize("@ss.hasRole('admin')")
     @GetMapping("/risk/list")
     public TableDataInfo listRiskEvents(RiskEvent riskEvent)
@@ -338,9 +331,6 @@ public class AdminBusinessController extends BaseController
         return getDataTable(list);
     }
 
-    /**
-     * 风控事件详情
-     */
     @PreAuthorize("@ss.hasRole('admin')")
     @GetMapping("/risk/{id}")
     public AjaxResult getRiskEventDetail(@PathVariable Long id)
@@ -348,12 +338,6 @@ public class AdminBusinessController extends BaseController
         return success(riskEventService.selectRiskEventById(id));
     }
 
-    /**
-     * 处理风控事件（解决/忽略）
-     *
-     * @param id     事件ID
-     * @param params 包含: status(RESOLVED/IGNORED), handleResult(处理结果描述)
-     */
     @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "高权操作-处理风控事件", businessType = BusinessType.UPDATE)
     @PutMapping("/risk/{id}/handle")
@@ -367,4 +351,5 @@ public class AdminBusinessController extends BaseController
         }
         return toAjax(riskEventService.handleRiskEvent(id, getUserId(), handleResult, status));
     }
+    */
 }

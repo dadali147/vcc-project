@@ -27,13 +27,16 @@ import Navbar from './Navbar.vue'
 .app-wrapper {
   height: 100vh;
   width: 100%;
+  background: #f9fafb;
 }
 .sidebar-container {
   height: 100%;
-  background-color: #fff;
-  border-right: 1px solid #F3F4F6;
+  background: #fff;
+  border-right: 2px solid #F3F4F6;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
 }
 .main-container {
   height: 100%;
+  background: #f9fafb;
 }
 </style>

@@ -95,7 +95,7 @@ class WebhookControllerTest
         void otp_validSignature_returnsOk()
         {
             // given
-            Map<String, Object> data = Map.of("cardId", "card-001", "otpCode", "123456");
+            Map<String, Object> data = Map.of("cardId", "card-001", "otp", "123456");
             String body = JSON.toJSONString(data);
             String timestamp = String.valueOf(System.currentTimeMillis() / 1000);
             String signature = computeHmacSignature(timestamp, body, WEBHOOK_SECRET);
@@ -105,10 +105,11 @@ class WebhookControllerTest
             when(webhookService.enqueueWebhook(anyString(), anyString(), any(), any())).thenReturn(true);
 
             // when
-            String result = webhookController.otp(data, "v1=" + signature, httpServletRequest);
+            Map<String, Object> result = webhookController.otp(data, "v1=" + signature, httpServletRequest);
 
             // then
-            assertThat(result).isEqualTo("ok");
+            assertThat(result).containsEntry("method", 2);
+            assertThat(result).containsKey("destination");
             verify(webhookService).enqueueWebhook(eq("OTP"), eq(body), eq("v1=" + signature), eq(data));
         }
     }

@@ -1,20 +1,56 @@
 <template>
-  <el-menu
-    :default-active="activeMenu"
-    router
-    class="sidebar-menu"
-  >
-    <el-menu-item index="/dashboard">仪表盘</el-menu-item>
-    <el-menu-item index="/users">用户管理</el-menu-item>
-    <el-menu-item index="/kyc">KYC 审核</el-menu-item>
-    <el-menu-item index="/cards">卡管理</el-menu-item>
-    <el-menu-item index="/card-bins">BIN 管理</el-menu-item>
-    <el-menu-item index="/transactions">交易记录</el-menu-item>
-    <el-menu-item index="/fee-config">费率配置</el-menu-item>
-    <el-menu-item index="/risk-config">风控配置</el-menu-item>
-    <el-menu-item index="/logs">系统日志</el-menu-item>
-    <el-menu-item index="/settings">系统设置</el-menu-item>
-  </el-menu>
+  <div class="sidebar-wrapper">
+    <div class="sidebar-logo">
+      <img src="@/assets/logo/kimoox-icon.svg" alt="kimoox" class="logo-icon" />
+      <span class="logo-text">kimoox</span>
+    </div>
+    <el-menu
+      :default-active="activeMenu"
+      router
+      class="sidebar-menu"
+    >
+      <el-menu-item index="/dashboard">
+        <span class="menu-icon">📊</span>
+        <span>Dashboard</span>
+      </el-menu-item>
+      <el-menu-item index="/users">
+        <span class="menu-icon">👥</span>
+        <span>Users</span>
+      </el-menu-item>
+      <el-menu-item index="/kyc">
+        <span class="menu-icon">✓</span>
+        <span>KYC Review</span>
+      </el-menu-item>
+      <el-menu-item index="/cards">
+        <span class="menu-icon">💳</span>
+        <span>Cards</span>
+      </el-menu-item>
+      <el-menu-item index="/card-bins">
+        <span class="menu-icon">🔢</span>
+        <span>BIN Config</span>
+      </el-menu-item>
+      <el-menu-item index="/transactions">
+        <span class="menu-icon">💰</span>
+        <span>Transactions</span>
+      </el-menu-item>
+      <el-menu-item index="/fee-config">
+        <span class="menu-icon">⚙️</span>
+        <span>Fee Config</span>
+      </el-menu-item>
+      <el-menu-item index="/risk-config">
+        <span class="menu-icon">🛡️</span>
+        <span>Risk Config</span>
+      </el-menu-item>
+      <el-menu-item index="/logs">
+        <span class="menu-icon">📝</span>
+        <span>System Logs</span>
+      </el-menu-item>
+      <el-menu-item index="/settings">
+        <span class="menu-icon">⚙️</span>
+        <span>Settings</span>
+      </el-menu-item>
+    </el-menu>
+  </div>
 </template>
 
 <script setup>
@@ -26,31 +62,78 @@ const activeMenu = computed(() => route.path)
 </script>
 
 <style scoped>
-.sidebar-menu {
+.sidebar-wrapper {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px;
+  border-bottom: 1px solid #F3F4F6;
+  background: #fff;
+}
+
+.logo-icon {
+  height: 36px;
+  width: 36px;
+  object-fit: contain;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.5px;
+}
+
+.sidebar-menu {
+  flex: 1;
   border-right: none;
-  background-color: #fff;
-  padding: 8px 12px;
+  background: transparent;
+  padding: 12px;
 }
 
 .sidebar-menu :deep(.el-menu-item) {
-  border-radius: 8px;
-  margin-bottom: 2px;
+  border-radius: 10px;
+  margin-bottom: 4px;
   color: #6B7280;
   font-size: 14px;
-  height: 44px;
-  line-height: 44px;
-  transition: background-color 0.15s, color 0.15s;
+  font-weight: 500;
+  height: 48px;
+  line-height: 48px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.menu-icon {
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
 }
 
 .sidebar-menu :deep(.el-menu-item:hover) {
-  background-color: #FFF7ED;
+  background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
   color: #F97316;
+  transform: translateX(4px);
 }
 
 .sidebar-menu :deep(.el-menu-item.is-active) {
-  background-color: #FFF7ED;
-  color: #F97316;
-  font-weight: 500;
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.sidebar-menu :deep(.el-menu-item.is-active .menu-icon) {
+  filter: brightness(0) invert(1);
 }
 </style>

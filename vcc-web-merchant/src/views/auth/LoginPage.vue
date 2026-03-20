@@ -3,7 +3,7 @@
     <div class="login-container">
       <div class="login-card">
         <div class="login-header">
-          <img src="@/assets/logo/kimoox-logo-stacked.svg" alt="kimoox" class="logo-img" />
+          <img src="@/assets/logo/kimoox-logo-text.svg" alt="kimoox" class="logo-img" />
           <h1>{{ $t('common.login') }}</h1>
           <p class="subtitle">{{ $t('auth.portalSubtitle', 'Virtual Card Merchant Portal') }}</p>
         </div>
@@ -101,55 +101,79 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #F9FAFB;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: drift 20s linear infinite;
+}
+
+@keyframes drift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(50px, 50px); }
 }
 
 .login-container {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   padding: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .login-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 12px;
-  padding: 40px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E5E7EB;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 48px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
 }
 
 .logo-img {
-  height: 64px;
+  height: 48px;
   width: auto;
   object-fit: contain;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
 }
 
 .login-header h1 {
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 6px;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
   color: #111111;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
   color: #6B7280;
-  font-size: 14px;
+  font-size: 15px;
   margin: 0;
+  font-weight: 500;
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 20px;
+  margin-bottom: 28px;
 }
 
 .form-group {
@@ -159,24 +183,26 @@ async function handleLogin() {
 
 .form-group label {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: #374151;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .form-group input {
-  padding: 10px 12px;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 12px 16px;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s ease;
   background: #ffffff;
+  font-weight: 500;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: #F97316;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+  transform: translateY(-1px);
 }
 
 .form-options {
@@ -184,17 +210,22 @@ async function handleLogin() {
   justify-content: space-between;
   align-items: center;
   font-size: 14px;
+  margin-top: -4px;
 }
 
 .checkbox {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  color: #374151;
+  color: #4B5563;
+  font-weight: 500;
+  user-select: none;
 }
 
 .checkbox input {
+  width: 18px;
+  height: 18px;
   cursor: pointer;
   accent-color: #F97316;
 }
@@ -202,34 +233,44 @@ async function handleLogin() {
 .forgot-password {
   color: #F97316;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: all 0.2s;
+  font-weight: 600;
 }
 
 .forgot-password:hover {
   color: #EA6B0E;
+  text-decoration: underline;
 }
 
 .login-button {
-  padding: 11px 16px;
-  background: #F97316;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #F97316 0%, #EA6B0E 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: all 0.3s ease;
   width: 100%;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  letter-spacing: 0.3px;
 }
 
 .login-button:hover:not(:disabled) {
-  background: #EA6B0E;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #EA6B0E 0%, #DC5F0A 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+}
+
+.login-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .login-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .login-footer {
@@ -237,33 +278,43 @@ async function handleLogin() {
   font-size: 14px;
   color: #6B7280;
   margin-bottom: 16px;
+  font-weight: 500;
 }
 
 .login-footer a {
   color: #F97316;
   text-decoration: none;
+  font-weight: 700;
+  transition: color 0.2s;
 }
 
 .login-footer a:hover {
+  color: #EA6B0E;
   text-decoration: underline;
 }
 
 .error-message {
-  padding: 12px 16px;
+  padding: 14px 18px;
   background: #FEE2E2;
   color: #991B1B;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   border: 1px solid #FECACA;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(153, 27, 27, 0.1);
 }
 
 @media (max-width: 480px) {
   .login-card {
-    padding: 24px;
+    padding: 32px 24px;
   }
 
   .login-header h1 {
-    font-size: 20px;
+    font-size: 24px;
+  }
+
+  .logo-img {
+    height: 40px;
   }
 }
 </style>

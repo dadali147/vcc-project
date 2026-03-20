@@ -11,9 +11,15 @@ const messages = {
   vi
 }
 
+const getInitialLocale = () => {
+  const saved = localStorage.getItem('language')
+  if (saved && messages[saved]) return saved
+  return 'zh'
+}
+
 const i18n = createI18n({
   legacy: false,
-  locale: localStorage.getItem('language') || 'zh',
+  locale: getInitialLocale(),
   fallbackLocale: 'en',
   messages
 })

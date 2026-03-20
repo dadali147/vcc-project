@@ -3,19 +3,23 @@
     <div class="login-card">
       <div class="login-header">
         <img src="@/assets/logo/kimoox-logo-stacked.svg" alt="kimoox" class="login-logo" />
-        <p class="login-subtitle">管理后台</p>
+        <h1 class="login-title">kimoox Admin</h1>
+        <p class="login-subtitle">Virtual Card Control Platform</p>
       </div>
       <el-form :model="form" :rules="rules" ref="formRef" label-position="top">
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item label="Email" prop="email">
           <el-input v-model="form.email" placeholder="admin@example.com" size="large" />
         </el-form-item>
-        <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" placeholder="请输入密码" size="large" @keyup.enter="handleLogin" show-password />
+        <el-form-item label="Password" prop="password">
+          <el-input v-model="form.password" type="password" placeholder="Enter password" size="large" @keyup.enter="handleLogin" show-password />
         </el-form-item>
-        <el-form-item style="margin-top: 8px">
-          <el-button class="login-btn" :loading="loading" @click="handleLogin" size="large" style="width: 100%">登录</el-button>
+        <el-form-item style="margin-top: 24px">
+          <el-button class="login-btn" :loading="loading" @click="handleLogin" size="large" style="width: 100%">Sign In</el-button>
         </el-form-item>
       </el-form>
+    </div>
+    <div class="login-footer">
+      <p>Powered by kimoox Technology</p>
     </div>
   </div>
 </template>
@@ -63,73 +67,137 @@ const handleLogin = async () => {
 <style scoped>
 .login-container {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #1e1e2e 0%, #2d1b4e 50%, #1a2744 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e293b 75%, #0f172a 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .login-card {
-  width: 420px;
-  padding: 40px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 440px;
+  padding: 48px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 24px;
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  position: relative;
+  z-index: 1;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .login-logo {
-  height: 56px;
+  height: 72px;
   width: auto;
   display: block;
-  margin: 0 auto 12px;
+  margin: 0 auto 16px;
   object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(249, 115, 22, 0.3));
+}
+
+.login-title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.5px;
 }
 
 .login-subtitle {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   color: #6B7280;
   font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .login-btn {
-  background-color: #F97316;
-  border-color: #F97316;
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  border: none;
   color: #fff;
   font-weight: 600;
-  border-radius: 8px;
-  transition: background-color 0.2s, border-color 0.2s;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
 .login-btn:hover {
-  background-color: #ea6c0a;
-  border-color: #ea6c0a;
+  background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
 }
 
 .login-btn:active {
-  background-color: #c2560a;
-  border-color: #c2560a;
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.login-footer {
+  margin-top: 24px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  position: relative;
+  z-index: 1;
+}
+
+.login-footer p {
+  margin: 0;
 }
 
 :deep(.el-input__wrapper) {
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #F97316 inset;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1), 0 0 0 1px #F97316 inset;
 }
 
 :deep(.el-form-item__label) {
   font-size: 14px;
   color: #374151;
-  font-weight: 500;
+  font-weight: 600;
 }
 </style>

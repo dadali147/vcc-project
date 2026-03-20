@@ -3,7 +3,12 @@ import { ref } from 'vue'
 import i18n from '@/i18n'
 
 export const useUserStore = defineStore('user', () => {
-  const language = ref(localStorage.getItem('language') || 'zh')
+  const getInitialLanguage = () => {
+    const saved = localStorage.getItem('language')
+    return (saved && ['zh', 'zh_TW', 'en', 'vi'].includes(saved)) ? saved : 'zh'
+  }
+
+  const language = ref(getInitialLanguage())
   const theme = ref(localStorage.getItem('theme') || 'light')
   const sidebarCollapsed = ref(false)
 
