@@ -74,11 +74,12 @@ public class WebhookController
     /**
      * 3DS 验证码回调接口
      * VCC-002: 收到 OTP 回调后，将验证码保存并支持在商户端页面展示
+     * 返回格式：{"method": 2, "destination": "邮箱"} — YeeVcc 接口契约要求
      */
-    @PostMapping("/otp")
-    public String otp(@RequestBody Map<String, Object> data,
-                      @RequestHeader(value = "x-yop-signature", required = false) String signature,
-                      HttpServletRequest request)
+    @PostMapping(value = "/otp", produces = "application/json;charset=UTF-8")
+    public Map<String, Object> otp(@RequestBody Map<String, Object> data,
+                                   @RequestHeader(value = "x-yop-signature", required = false) String signature,
+                                   HttpServletRequest request)
     {
         String payload = JSON.toJSONString(data);
         log.info("收到3DS验证码回调: data={}", payload);
@@ -99,7 +100,26 @@ public class WebhookController
             throw new WebhookProcessingException("处理失败，请重试");
         }
 
-        return "ok";
+        return Map.of("method", 2, "destination", "otp@kimoox.com");
+    }
+
+    /**
+     * 第三方授权决策（YeeVcc 要求）
+     * 收到授权请求时，统一返回批准（authResult=A）
+     */
+    @PostMapping(value = "/auth-decision", produces = "application/json;charset=UTF-8")
+    public Map<String, Object> authDecision(@RequestBody Map<String, Object> data)
+    {
+        log.info("收到授权决策请求: cardId={}", data.get("cardId"));
+        return Map.of(
+            "requestId", data.getOrDefault("requestId", ""),
+            "cardId", data.getOrDefault("cardId", ""),
+            "customerId", data.getOrDefault("customerId", ""),
+            "merchantId", data.getOrDefault("merchantId", ""),
+            "authResult", "A",
+            "responseCode", "00",
+            "message", "Approved"
+        );
     }
 
     /**
