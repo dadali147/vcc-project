@@ -413,7 +413,7 @@ public class YeeVccClient
      *
      * <h3>安全说明</h3>
      * <ul>
-     *   <li>验签功能由 {@code yee-vcc.verify-response-signature} 配置控制，默认关闭。</li>
+     *   <li>验签功能由 {@code yeevcc.verify-response-signature} 配置控制，默认开启（true）。生产环境必须为 true，测试环境可关闭。</li>
      *   <li>启用后，若响应头缺少签名且 {@code fail-on-missing-signature=true}，将抛出异常。</li>
      *   <li>验签失败（签名不匹配）会直接抛出 {@link YeeVccException}，阻止不可信响应进入业务层。</li>
      * </ul>

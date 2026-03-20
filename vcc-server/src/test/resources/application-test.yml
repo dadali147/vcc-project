@@ -48,3 +48,6 @@ yeevcc:
   appKey: test-app
   privateKey: test-private-key
   platformPublicKey: test-public-key
+  # 测试环境关闭响应验签（生产环境必须为 true）
+  verifyResponseSignature: false
+  failOnMissingSignature: false

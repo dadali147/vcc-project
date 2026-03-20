@@ -33,7 +33,10 @@ public class YeeVccConfig
 
     private long retryIntervalMillis = 500L;
 
-    private boolean verifyResponseSignature;
+    /**
+     * 响应验签开关。生产环境必须为 true 以防止响应篡改；测试环境可关闭 (false)。
+     */
+    private boolean verifyResponseSignature = true;
 
     private boolean failOnMissingSignature;
 
