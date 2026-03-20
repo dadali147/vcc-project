@@ -292,8 +292,8 @@ public class WebhookController
      */
     private String resolveWebhookType(Map<String, Object> data)
     {
-        // 包含 otpCode 字段 → OTP 验证码通知（文档定义: OTP）
-        if (data.containsKey("otpCode"))
+        // 包含 otp 字段 → OTP 验证码通知（文档定义: OTP）
+        if (data.containsKey("otp"))
         {
             return "OTP";
         }

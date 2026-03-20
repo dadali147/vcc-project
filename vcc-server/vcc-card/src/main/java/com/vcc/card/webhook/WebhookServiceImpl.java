@@ -140,17 +140,17 @@ public class WebhookServiceImpl implements WebhookService
         log.info("处理 3DS OTP Webhook: {}", data);
 
         String cardId = getStringValue(data, "cardId");
-        String otpCode = getStringValue(data, "otpCode");
+        String otp = getStringValue(data, "otp");
 
-        if (cardId == null || otpCode == null)
+        if (cardId == null || otp == null)
         {
-            log.error("OTP Webhook 缺少必要字段: cardId={}, otpCode={}", cardId, otpCode);
-            throw new WebhookProcessingException("OTP回调缺少必要字段 cardId 或 otpCode");
+            log.error("OTP Webhook 缺少必要字段: cardId={}, otp={}", cardId, otp);
+            throw new WebhookProcessingException("OTP回调缺少必要字段 cardId 或 otp");
         }
 
         // 保存 OTP 到 Redis，TTL 10 分钟
         String redisKey = OTP_REDIS_KEY_PREFIX + cardId;
-        redisCache.setCacheObject(redisKey, otpCode, OTP_TTL_MINUTES, TimeUnit.MINUTES);
+        redisCache.setCacheObject(redisKey, otp, OTP_TTL_MINUTES, TimeUnit.MINUTES);
 
         log.info("OTP 验证码已保存到 Redis: key={}, ttl={}min", redisKey, OTP_TTL_MINUTES);
     }
@@ -279,8 +279,11 @@ public class WebhookServiceImpl implements WebhookService
         {
             case "OTP":       // 文档定义值（接口契约文档 §3.1）
             case "3DS_OTP":   // 兼容旧写法（待上游确认后移除）
-                // OTP: cardId + otpCode 作为业务唯一键
-                bizKey = getStringValue(data, "cardId") + ":" + getStringValue(data, "otpCode");
+                // 使用 requestId 作为幂等 key（上游确认字段），fallback 到 cardId+otp
+                String requestId = getStringValue(data, "requestId");
+                String otpCardId = getStringValue(data, "cardId");
+                String otpCode = getStringValue(data, "otp");
+                bizKey = requestId != null ? requestId : (otpCardId + ":" + otpCode);
                 break;
             case "TRANSACTION":
             case "AUTH_TRANSACTION":
