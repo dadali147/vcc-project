@@ -3,9 +3,6 @@
     :default-active="activeMenu"
     router
     class="sidebar-menu"
-    background-color="#304156"
-    text-color="#bfcbd9"
-    active-text-color="#409EFF"
   >
     <el-menu-item index="/dashboard">仪表盘</el-menu-item>
     <el-menu-item index="/users">用户管理</el-menu-item>
@@ -32,5 +29,28 @@ const activeMenu = computed(() => route.path)
 .sidebar-menu {
   height: 100%;
   border-right: none;
+  background-color: #fff;
+  padding: 8px 12px;
+}
+
+.sidebar-menu :deep(.el-menu-item) {
+  border-radius: 8px;
+  margin-bottom: 2px;
+  color: #6B7280;
+  font-size: 14px;
+  height: 44px;
+  line-height: 44px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.sidebar-menu :deep(.el-menu-item:hover) {
+  background-color: #FFF7ED;
+  color: #F97316;
+}
+
+.sidebar-menu :deep(.el-menu-item.is-active) {
+  background-color: #FFF7ED;
+  color: #F97316;
+  font-weight: 500;
 }
 </style>

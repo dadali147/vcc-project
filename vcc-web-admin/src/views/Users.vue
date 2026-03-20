@@ -5,7 +5,7 @@
       <el-button class="filter-item" type="primary" @click="handleFilter">搜索</el-button>
     </div>
 
-    <el-table :data="list" v-loading="loading" border style="width: 100%; margin-top: 20px;">
+    <el-table :data="list" v-loading="loading" border style="width: 100%; margin-top: 16px;">
       <el-table-column prop="id" label="用户 ID" width="180" />
       <el-table-column prop="email" label="邮箱" />
       <el-table-column prop="createdAt" label="注册时间" />

@@ -1,7 +1,7 @@
 <template>
   <div class="navbar">
     <div class="breadcrumb">
-      <img src="@/assets/logo/kimoox-logo-text.png" alt="kimoox" class="logo-img" />
+      <img src="@/assets/logo/kimoox-logo-text.svg" alt="kimoox" class="logo-img" />
     </div>
     <div class="right-menu">
       <el-dropdown @command="handleCommand">
@@ -36,31 +36,44 @@ const handleCommand = (command) => {
 
 <style scoped>
 .navbar {
-  height: 50px;
+  height: 64px;
   overflow: hidden;
   position: relative;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0,21,41,.08);
+  border-bottom: 1px solid #E5E7EB;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 24px;
 }
+
 .right-menu {
   cursor: pointer;
+  font-size: 14px;
+  color: #6B7280;
+  transition: color 0.2s;
+}
+
+.right-menu:hover .el-dropdown-link {
+  color: #111111;
+}
+
+.el-dropdown-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #374151;
+  font-size: 14px;
 }
 
 .breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #111;
 }
 
 .logo-img {
-  height: 28px;
+  height: 32px;
   width: auto;
   object-fit: contain;
 }

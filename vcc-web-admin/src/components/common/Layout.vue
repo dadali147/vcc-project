@@ -1,10 +1,10 @@
 <template>
   <el-container class="app-wrapper">
-    <el-aside width="200px" class="sidebar-container">
+    <el-aside width="240px" class="sidebar-container">
       <Sidebar />
     </el-aside>
     <el-container class="main-container">
-      <el-header height="50px" style="padding: 0">
+      <el-header height="64px" style="padding: 0">
         <Navbar />
       </el-header>
       <el-main>
@@ -30,7 +30,8 @@ import Navbar from './Navbar.vue'
 }
 .sidebar-container {
   height: 100%;
-  background-color: #304156;
+  background-color: #fff;
+  border-right: 1px solid #F3F4F6;
 }
 .main-container {
   height: 100%;
