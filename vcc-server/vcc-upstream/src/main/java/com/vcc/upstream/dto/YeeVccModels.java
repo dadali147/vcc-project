@@ -744,6 +744,55 @@ public final class YeeVccModels
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class AccountData
+    {
+        private String accountNo;
+        private String currency;
+        private BigDecimal balance;
+        private String status;
+
+        public String getAccountNo()
+        {
+            return accountNo;
+        }
+
+        public void setAccountNo(String accountNo)
+        {
+            this.accountNo = accountNo;
+        }
+
+        public String getCurrency()
+        {
+            return currency;
+        }
+
+        public void setCurrency(String currency)
+        {
+            this.currency = currency;
+        }
+
+        public BigDecimal getBalance()
+        {
+            return balance;
+        }
+
+        public void setBalance(BigDecimal balance)
+        {
+            this.balance = balance;
+        }
+
+        public String getStatus()
+        {
+            return status;
+        }
+
+        public void setStatus(String status)
+        {
+            this.status = status;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CardBinData
     {
         private String id;

@@ -13,6 +13,12 @@ public class YeeVccConfig
 {
     private boolean enabled;
 
+    /**
+     * Demo 模式（测试环境）。为 true 时走 HTTP 直调，跳过请求签名和响应验签。
+     * 对应 API 文档中的 EnvConfig.IS_PRODUCTION=false 场景。
+     */
+    private boolean demoMode;
+
     private String baseUrl;
 
     private String appKey;
@@ -56,6 +62,16 @@ public class YeeVccConfig
     public void setEnabled(boolean enabled)
     {
         this.enabled = enabled;
+    }
+
+    public boolean isDemoMode()
+    {
+        return demoMode;
+    }
+
+    public void setDemoMode(boolean demoMode)
+    {
+        this.demoMode = demoMode;
     }
 
     public String getBaseUrl()

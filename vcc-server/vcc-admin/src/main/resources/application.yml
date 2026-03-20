@@ -151,6 +151,8 @@ xss:
 
 yeevcc:
   enabled: ${YEEVCC_ENABLED:false}
+  # Demo 模式（测试环境）：HTTP 直调无需签名，baseUrl 指向 demo server
+  demoMode: ${YEEVCC_DEMO_MODE:false}
   baseUrl: ${YEEVCC_BASE_URL:https://apiqa.kun.global/yop-center}
   appKey: ${YEEVCC_APP_KEY:}
   customerId: ${YEEVCC_CUSTOMER_ID:}

@@ -55,7 +55,7 @@ public class YeeVccClient
 {
     private static final Logger log = LoggerFactory.getLogger(YeeVccClient.class);
 
-    private static final String PATH_ADD_CARD_HOLDER = "/rest/v1.0/vcc/user-account/create";
+    private static final String PATH_ADD_CARD_HOLDER = "/rest/v1.0/vcc/add-card-holder";
     private static final List<String> PATH_CARD_HOLDER_CANDIDATES = List.of(
             "/rest/v1.0/vcc/card-holders",
             "/rest/v1.0/vcc/card-holder"
@@ -75,6 +75,19 @@ public class YeeVccClient
     private static final String PATH_WITHDRAW = "/rest/v1.0/vcc/card-charge-out";
     private static final String PATH_TRANSACTIONS = "/rest/v1.0/vcc/transactions";
     private static final String PATH_CARD_BINS = "/rest/v1.0/vcc/card-bins";
+
+    // 账户接口
+    private static final String PATH_CREATE_ACCOUNT = "/rest/v1.0/vcc/user-account/create";
+    private static final String PATH_ACCOUNT_TRANSFER_IN = "/rest/v1.0/vcc/user-account/transfer-in";
+    private static final String PATH_ACCOUNT_TRANSFER_OUT = "/rest/v1.0/vcc/user-account/transfer-out";
+    private static final String PATH_ACCOUNT_INFO = "/rest/v1.0/vcc/user-account/list";
+
+    // 卡片查询/设置接口
+    private static final String PATH_CARD_INFO = "/rest/v1.0/vcc/card-info";
+    private static final String PATH_CARD_BALANCE = "/rest/v1.0/vcc/card-balance";
+    private static final String PATH_CARD_REMARK = "/rest/v1.0/vcc/card-remark";
+    private static final String PATH_CARD_LIMIT = "/rest/v1.0/vcc/card-limit";
+    private static final String PATH_USER_INFO = "/rest/v1.0/vcc/user-info";
 
     private final YeeVccConfig config;
     private final ObjectMapper objectMapper;
@@ -196,6 +209,83 @@ public class YeeVccClient
                 node -> mapPageData(node, YeeVccModels.CardBinData.class, "records", "list", "items", "cardBins"));
     }
 
+    // ==================== 账户接口 ====================
+
+    public YeeVccApiResponse<YeeVccModels.AccountData> createAccount(YeeVccRequests.CreateAccountRequest request)
+    {
+        YeeVccRequests.CreateAccountRequest safeRequest = requireRequest(request, "createAccount");
+        fillCustomerId(safeRequest::getCustomerId, safeRequest::setCustomerId);
+        return execute(HttpMethod.POST, PATH_CREATE_ACCOUNT, safeRequest,
+                node -> mapNode(node, YeeVccModels.AccountData.class));
+    }
+
+    public YeeVccApiResponse<YeeVccModels.OperationData> accountTransferIn(
+            YeeVccRequests.AccountTransferRequest request)
+    {
+        YeeVccRequests.AccountTransferRequest safeRequest = requireRequest(request, "accountTransferIn");
+        return execute(HttpMethod.POST, PATH_ACCOUNT_TRANSFER_IN, safeRequest,
+                node -> mapNode(node, YeeVccModels.OperationData.class));
+    }
+
+    public YeeVccApiResponse<YeeVccModels.OperationData> accountTransferOut(
+            YeeVccRequests.AccountTransferRequest request)
+    {
+        YeeVccRequests.AccountTransferRequest safeRequest = requireRequest(request, "accountTransferOut");
+        return execute(HttpMethod.POST, PATH_ACCOUNT_TRANSFER_OUT, safeRequest,
+                node -> mapNode(node, YeeVccModels.OperationData.class));
+    }
+
+    public YeeVccApiResponse<YeeVccModels.PageData<YeeVccModels.AccountData>> getAccountInfo(
+            YeeVccRequests.GetAccountInfoRequest request)
+    {
+        YeeVccRequests.GetAccountInfoRequest safeRequest = requireRequest(request, "getAccountInfo");
+        fillCustomerId(safeRequest::getCustomerId, safeRequest::setCustomerId);
+        return execute(HttpMethod.GET, PATH_ACCOUNT_INFO, safeRequest,
+                node -> mapPageData(node, YeeVccModels.AccountData.class, "records", "list", "items"));
+    }
+
+    // ==================== 卡片查询/设置接口 ====================
+
+    public YeeVccApiResponse<YeeVccModels.CardData> getCardInfo(YeeVccRequests.GetCardInfoRequest request)
+    {
+        YeeVccRequests.GetCardInfoRequest safeRequest = requireRequest(request, "getCardInfo");
+        return execute(HttpMethod.GET, PATH_CARD_INFO, safeRequest,
+                node -> mapNode(node, YeeVccModels.CardData.class));
+    }
+
+    public YeeVccApiResponse<YeeVccModels.OperationData> getCardBalance(
+            YeeVccRequests.GetCardBalanceRequest request)
+    {
+        YeeVccRequests.GetCardBalanceRequest safeRequest = requireRequest(request, "getCardBalance");
+        return execute(HttpMethod.POST, PATH_CARD_BALANCE, safeRequest,
+                node -> mapNode(node, YeeVccModels.OperationData.class));
+    }
+
+    public YeeVccApiResponse<YeeVccModels.OperationData> setCardRemark(
+            YeeVccRequests.SetCardRemarkRequest request)
+    {
+        YeeVccRequests.SetCardRemarkRequest safeRequest = requireRequest(request, "setCardRemark");
+        return execute(HttpMethod.POST, PATH_CARD_REMARK, safeRequest,
+                node -> mapNode(node, YeeVccModels.OperationData.class));
+    }
+
+    public YeeVccApiResponse<YeeVccModels.OperationData> setCardLimit(
+            YeeVccRequests.SetCardLimitRequest request)
+    {
+        YeeVccRequests.SetCardLimitRequest safeRequest = requireRequest(request, "setCardLimit");
+        return execute(HttpMethod.POST, PATH_CARD_LIMIT, safeRequest,
+                node -> mapNode(node, YeeVccModels.OperationData.class));
+    }
+
+    public YeeVccApiResponse<YeeVccModels.CardHolderData> getUserInfo(
+            YeeVccRequests.GetUserInfoRequest request)
+    {
+        YeeVccRequests.GetUserInfoRequest safeRequest = requireRequest(request, "getUserInfo");
+        fillCustomerId(safeRequest::getCustomerId, safeRequest::setCustomerId);
+        return execute(HttpMethod.GET, PATH_USER_INFO, safeRequest,
+                node -> mapNode(node, YeeVccModels.CardHolderData.class));
+    }
+
     private <T extends YeeVccBaseRequest> T requireRequest(T request, String operation)
     {
         if (request == null)
@@ -269,6 +359,22 @@ public class YeeVccClient
 
     private HttpHeaders buildHeaders(HttpMethod method, String path, String queryString, String body, String requestNo)
     {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Demo 模式（测试环境）：HTTP 直调，不发送签名头
+        if (config.isDemoMode())
+        {
+            log.debug("YeeVCC demo mode, skipping request signature headers");
+            if (StringUtils.isNotBlank(config.getAppKey()))
+            {
+                headers.set(config.getHeaders().getAppKey(), config.getAppKey());
+            }
+            headers.set(config.getHeaders().getRequestId(), requestNo);
+            return headers;
+        }
+
         String timestamp = OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         String nonce = UUID.randomUUID().toString().replace("-", "");
         String canonical = buildCanonicalRequest(method, path, queryString, body, requestNo, timestamp, nonce);
@@ -281,9 +387,6 @@ public class YeeVccClient
         
         String signature = Rsa2048SignatureUtils.sign(canonical, config.getPrivateKey());
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set(config.getHeaders().getAppKey(), config.getAppKey());
         headers.set(config.getHeaders().getRequestId(), requestNo);
         headers.set(config.getHeaders().getTimestamp(), timestamp);
@@ -428,7 +531,7 @@ public class YeeVccClient
      */
     private boolean verifyResponseSignature(HttpHeaders headers, String responseBody)
     {
-        if (!config.isVerifyResponseSignature())
+        if (config.isDemoMode() || !config.isVerifyResponseSignature())
         {
             return false;
         }
@@ -710,6 +813,15 @@ public class YeeVccClient
         if (!config.isEnabled())
         {
             throw new YeeVccException("YeeVCC 客户端未启用");
+        }
+        if (config.isDemoMode())
+        {
+            // Demo 模式只需 baseUrl，无需签名密钥
+            if (StringUtils.isBlank(config.getBaseUrl()))
+            {
+                throw new YeeVccException("YeeVCC demo 模式需要配置 baseUrl");
+            }
+            return;
         }
         if (StringUtils.isAnyBlank(config.getBaseUrl(), config.getAppKey(), config.getPrivateKey()))
         {

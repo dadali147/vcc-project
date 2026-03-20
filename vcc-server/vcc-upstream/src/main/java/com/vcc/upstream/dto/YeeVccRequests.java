@@ -605,4 +605,249 @@ public final class YeeVccRequests
             this.customerId = customerId;
         }
     }
+
+    // ==================== 账户接口 Request ====================
+
+    public static class CreateAccountRequest extends YeeVccBaseRequest
+    {
+        private String customerId;
+        private String currency;
+        private String remark;
+
+        public String getCustomerId()
+        {
+            return customerId;
+        }
+
+        public void setCustomerId(String customerId)
+        {
+            this.customerId = customerId;
+        }
+
+        public String getCurrency()
+        {
+            return currency;
+        }
+
+        public void setCurrency(String currency)
+        {
+            this.currency = currency;
+        }
+
+        public String getRemark()
+        {
+            return remark;
+        }
+
+        public void setRemark(String remark)
+        {
+            this.remark = remark;
+        }
+    }
+
+    public static class AccountTransferRequest extends YeeVccBaseRequest
+    {
+        private String accountNo;
+        private BigDecimal amount;
+        private String currency;
+        private String deductCurrency;
+        private String orderId;
+
+        public String getAccountNo()
+        {
+            return accountNo;
+        }
+
+        public void setAccountNo(String accountNo)
+        {
+            this.accountNo = accountNo;
+        }
+
+        public BigDecimal getAmount()
+        {
+            return amount;
+        }
+
+        public void setAmount(BigDecimal amount)
+        {
+            this.amount = amount;
+        }
+
+        public String getCurrency()
+        {
+            return currency;
+        }
+
+        public void setCurrency(String currency)
+        {
+            this.currency = currency;
+        }
+
+        public String getDeductCurrency()
+        {
+            return deductCurrency;
+        }
+
+        public void setDeductCurrency(String deductCurrency)
+        {
+            this.deductCurrency = deductCurrency;
+        }
+
+        public String getOrderId()
+        {
+            return orderId;
+        }
+
+        public void setOrderId(String orderId)
+        {
+            this.orderId = orderId;
+        }
+    }
+
+    public static class GetAccountInfoRequest extends YeeVccBaseRequest
+    {
+        private String customerId;
+        private String accountNo;
+        private Long current = 1L;
+        private Long size = 20L;
+
+        public String getCustomerId()
+        {
+            return customerId;
+        }
+
+        public void setCustomerId(String customerId)
+        {
+            this.customerId = customerId;
+        }
+
+        public String getAccountNo()
+        {
+            return accountNo;
+        }
+
+        public void setAccountNo(String accountNo)
+        {
+            this.accountNo = accountNo;
+        }
+
+        public Long getCurrent()
+        {
+            return current;
+        }
+
+        public void setCurrent(Long current)
+        {
+            this.current = current;
+        }
+
+        public Long getSize()
+        {
+            return size;
+        }
+
+        public void setSize(Long size)
+        {
+            this.size = size;
+        }
+    }
+
+    // ==================== 卡片查询/设置 Request ====================
+
+    public static class GetCardInfoRequest extends YeeVccBaseRequest
+    {
+        private String cardId;
+
+        public String getCardId()
+        {
+            return cardId;
+        }
+
+        public void setCardId(String cardId)
+        {
+            this.cardId = cardId;
+        }
+    }
+
+    public static class GetCardBalanceRequest extends YeeVccBaseRequest
+    {
+        private String cardId;
+
+        public String getCardId()
+        {
+            return cardId;
+        }
+
+        public void setCardId(String cardId)
+        {
+            this.cardId = cardId;
+        }
+    }
+
+    public static class SetCardRemarkRequest extends YeeVccBaseRequest
+    {
+        private String cardId;
+        private String remark;
+
+        public String getCardId()
+        {
+            return cardId;
+        }
+
+        public void setCardId(String cardId)
+        {
+            this.cardId = cardId;
+        }
+
+        public String getRemark()
+        {
+            return remark;
+        }
+
+        public void setRemark(String remark)
+        {
+            this.remark = remark;
+        }
+    }
+
+    public static class SetCardLimitRequest extends YeeVccBaseRequest
+    {
+        private String cardId;
+        private BigDecimal amount;
+
+        public String getCardId()
+        {
+            return cardId;
+        }
+
+        public void setCardId(String cardId)
+        {
+            this.cardId = cardId;
+        }
+
+        public BigDecimal getAmount()
+        {
+            return amount;
+        }
+
+        public void setAmount(BigDecimal amount)
+        {
+            this.amount = amount;
+        }
+    }
+
+    public static class GetUserInfoRequest extends YeeVccBaseRequest
+    {
+        private String customerId;
+
+        public String getCustomerId()
+        {
+            return customerId;
+        }
+
+        public void setCustomerId(String customerId)
+        {
+            this.customerId = customerId;
+        }
+    }
 }
