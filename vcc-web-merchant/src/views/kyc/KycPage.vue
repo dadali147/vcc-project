@@ -81,7 +81,7 @@ const submittedDocuments = ref([
   {
     id: '1',
     name: 'ID Front',
-    url: 'https://via.placeholder.com/300x200?text=ID+Front',
+    url: '/placeholder.png',
     uploadedAt: new Date(),
     status: 'PENDING'
   }

@@ -5,7 +5,7 @@
         <div class="login-header">
           <div class="logo">VCC</div>
           <h1>{{ $t('common.login') }}</h1>
-          <p class="subtitle">Virtual Card Merchant Portal</p>
+          <p class="subtitle">{{ $t('auth.portalSubtitle', 'Virtual Card Merchant Portal') }}</p>
         </div>
 
         <form @submit.prevent="handleLogin" class="login-form">
@@ -14,7 +14,7 @@
             <input 
               v-model="credentials.email" 
               type="email" 
-              placeholder="user@example.com"
+              :placeholder="$t('auth.email')"
               required
             />
           </div>
@@ -24,7 +24,7 @@
             <input 
               v-model="credentials.password" 
               type="password" 
-              placeholder="••••••••"
+              :placeholder="$t('auth.password')"
               required
             />
           </div>

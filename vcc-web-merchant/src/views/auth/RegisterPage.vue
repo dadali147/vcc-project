@@ -20,7 +20,7 @@
             </div>
             <div class="form-group">
               <label>{{ t('auth.email') }}</label>
-              <input v-model="form.email" type="email" placeholder="merchant@example.com" />
+              <input v-model="form.email" type="email" :placeholder="$t('auth.email')" />
             </div>
             <div class="form-group">
               <label>{{ t('auth.phone') }}</label>
@@ -28,11 +28,11 @@
             </div>
             <div class="form-group">
               <label>{{ t('auth.password') }}</label>
-              <input v-model="form.password" type="password" placeholder="••••••••" />
+              <input v-model="form.password" type="password" :placeholder="$t('auth.password')" />
             </div>
             <div class="form-group">
               <label>{{ t('auth.confirmPassword') }}</label>
-              <input v-model="form.confirmPassword" type="password" placeholder="••••••••" />
+              <input v-model="form.confirmPassword" type="password" :placeholder="$t('auth.password')" />
             </div>
           </div>
 
@@ -51,10 +51,10 @@
               <label>{{ t('auth.expectedMonthlySpend') }}</label>
               <select v-model="form.expectedMonthlySpend">
                 <option value="">{{ t('auth.selectExpectedMonthlySpend') }}</option>
-                <option value="lt10k">&lt; 10,000 USD</option>
-                <option value="10k-50k">10,000 - 50,000 USD</option>
-                <option value="50k-100k">50,000 - 100,000 USD</option>
-                <option value="gt100k">&gt; 100,000 USD</option>
+                <option value="lt10k">{{ $t('auth.spendLt10k', '< 10,000 USD') }}</option>
+                <option value="10k-50k">{{ $t('auth.spend10k50k', '10,000 - 50,000 USD') }}</option>
+                <option value="50k-100k">{{ $t('auth.spend50k100k', '50,000 - 100,000 USD') }}</option>
+                <option value="gt100k">{{ $t('auth.spendGt100k', '> 100,000 USD') }}</option>
               </select>
             </div>
           </div>

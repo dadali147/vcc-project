@@ -18,8 +18,8 @@
             <label>{{ t('cardApplication.cardholder') }}</label>
             <select>
               <option>{{ t('cardApplication.selectCardholder') }}</option>
-              <option>Luna Zhang</option>
-              <option>Jason Chen</option>
+              <option>{{ $t('cardApplication.exampleHolder1', 'Luna Zhang') }}</option>
+              <option>{{ $t('cardApplication.exampleHolder2', 'Jason Chen') }}</option>
             </select>
           </div>
           <div class="form-group">
@@ -39,11 +39,11 @@
           </div>
           <div class="form-group">
             <label>{{ t('cardApplication.cardDailyLimit') }}</label>
-            <input type="number" placeholder="5000" />
+            <input type="number" :placeholder="$t('cardApplication.cardDailyLimitPlaceholder', '5000')" />
           </div>
           <div class="form-group">
             <label>{{ t('cardApplication.cardMonthlyLimit') }}</label>
-            <input type="number" placeholder="50000" />
+            <input type="number" :placeholder="$t('cardApplication.cardMonthlyLimitPlaceholder', '50000')" />
           </div>
           <div class="form-group">
             <label>{{ t('cardApplication.purpose') }}</label>

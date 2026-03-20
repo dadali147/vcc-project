@@ -8,11 +8,11 @@
         <input 
           v-model="searchText" 
           type="text"
-          placeholder="搜索卡号或持卡人..."
+          :placeholder="$t('sharedCardLimits.searchPlaceholder')"
           class="search-input"
         />
         <select v-model="selectedCard" class="filter-select">
-          <option value="">全部卡片</option>
+          <option value="">{{ $t('sharedCardLimits.allCards') }}</option>
           <option value="card1">****1234</option>
           <option value="card2">****5678</option>
         </select>
@@ -45,10 +45,10 @@
               <div class="progress-fill" :style="{ width: (card.usedAmount / card.limitAmount * 100) + '%' }"></div>
             </div>
             <p class="progress-label">
-              使用率: {{ Math.round(card.usedAmount / card.limitAmount * 100) }}%
+              {{ $t('sharedCardLimits.usageRate') }}: {{ Math.round(card.usedAmount / card.limitAmount * 100) }}%
             </p>
             <button class="view-button" @click="viewCardHistory(card.id)">
-              查看调整历史
+              {{ $t('sharedCardLimits.viewHistory') }}
             </button>
           </div>
         </div>
@@ -62,11 +62,11 @@
             <tr>
               <th>{{ $t('sharedCardLimits.adjustTime') }}</th>
               <th>{{ $t('sharedCardLimits.card') }}</th>
-              <th>原限额</th>
-              <th>新限额</th>
-              <th>调整金额</th>
+              <th>{{ $t('sharedCardLimits.oldLimit') }}</th>
+              <th>{{ $t('sharedCardLimits.newLimit') }}</th>
+              <th>{{ $t('sharedCardLimits.adjustAmount') }}</th>
               <th>{{ $t('sharedCardLimits.adjustPerson') }}</th>
-              <th>备注</th>
+              <th>{{ $t('sharedCardLimits.remark') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -87,11 +87,11 @@
 
         <!-- Pagination -->
         <div class="pagination">
-          <span class="total">共 {{ adjustmentHistory.length }} 条记录</span>
+          <span class="total">{{ $t('sharedCardLimits.totalRecords', { total: adjustmentHistory.length }) }}</span>
           <div class="page-buttons">
-            <button :disabled="currentPage === 1">&lt; 上一页</button>
-            <span class="page-info">第 {{ currentPage }} 页 / {{ totalPages }} 页</span>
-            <button :disabled="currentPage === totalPages">下一页 &gt;</button>
+            <button :disabled="currentPage === 1">{{ $t('sharedCardLimits.prevPage') }}</button>
+            <span class="page-info">{{ $t('sharedCardLimits.pageInfo', { current: currentPage, total: totalPages }) }}</span>
+            <button :disabled="currentPage === totalPages">{{ $t('sharedCardLimits.nextPage') }}</button>
           </div>
         </div>
       </div>
