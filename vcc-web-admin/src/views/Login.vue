@@ -3,7 +3,8 @@
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
-          <span>VCC 管理后台登录</span>
+          <img src="@/assets/logo/kimoox-logo.png" alt="kimoox" class="login-logo" />
+          <span>管理后台</span>
         </div>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
@@ -72,6 +73,14 @@ const handleLogin = async () => {
 .login-card {
   width: 400px;
 }
+.login-logo {
+  height: 48px;
+  width: auto;
+  display: block;
+  margin: 0 auto 8px;
+  object-fit: contain;
+}
+
 .card-header {
   text-align: center;
   font-size: 18px;

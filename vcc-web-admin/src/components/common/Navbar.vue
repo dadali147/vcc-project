@@ -1,6 +1,9 @@
 <template>
   <div class="navbar">
-    <div class="breadcrumb">VCC 管理后台</div>
+    <div class="breadcrumb">
+      <img src="@/assets/logo/kimoox-logo.png" alt="kimoox" class="logo-img" />
+      <span>管理后台</span>
+    </div>
     <div class="right-menu">
       <el-dropdown @command="handleCommand">
         <span class="el-dropdown-link">
@@ -46,5 +49,20 @@ const handleCommand = (command) => {
 }
 .right-menu {
   cursor: pointer;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+}
+
+.logo-img {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
 }
 </style>

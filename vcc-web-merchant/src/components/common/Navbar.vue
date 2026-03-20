@@ -1,8 +1,8 @@
 <template>
   <nav class="navbar">
     <div class="navbar-left">
-      <div class="logo">VCC</div>
-      <h1 class="app-title">Virtual Card Portal</h1>
+      <img src="@/assets/logo/kimoox-logo.png" alt="kimoox" class="logo-img" />
+      <h1 class="app-title">kimoox</h1>
     </div>
     <div class="navbar-right">
       <div class="navbar-menu">
@@ -92,10 +92,10 @@ function logout() {
   gap: 16px;
 }
 
-.logo {
-  font-size: 20px;
-  font-weight: 700;
-  color: #3B82F6;
+.logo-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
 }
 
 .app-title {

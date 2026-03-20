@@ -3,7 +3,7 @@
     <div class="login-container">
       <div class="login-card">
         <div class="login-header">
-          <div class="logo">VCC</div>
+          <img src="@/assets/logo/kimoox-logo.png" alt="kimoox" class="logo-img" />
           <h1>{{ $t('common.login') }}</h1>
           <p class="subtitle">{{ $t('auth.portalSubtitle', 'Virtual Card Merchant Portal') }}</p>
         </div>
@@ -122,10 +122,10 @@ async function handleLogin() {
   margin-bottom: 32px;
 }
 
-.logo {
-  font-size: 32px;
-  font-weight: 700;
-  color: #3B82F6;
+.logo-img {
+  height: 64px;
+  width: auto;
+  object-fit: contain;
   margin-bottom: 16px;
 }
 
