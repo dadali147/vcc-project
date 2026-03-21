@@ -1,13 +1,13 @@
 /**
  * 商户端 - 持卡人管理 E2E 测试
  * 覆盖: C-001~C-005, C-008~C-009
- * 测试账号: test@test.com / password123
+ * 测试账号: ry@163.com / admin123
  */
 import { test, expect } from '@playwright/test';
 
 async function loginAsMerchant(page) {
   const res = await page.request.post('/login', {
-    data: { email: 'test@test.com', password: 'password123' },
+    data: { email: 'ry@163.com', password: 'admin123' },
   });
   const body = await res.json();
   const token = body?.data?.token;

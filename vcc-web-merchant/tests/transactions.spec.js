@@ -1,13 +1,13 @@
 /**
  * 商户端 - 交易记录 E2E 测试
  * 覆盖: H-001, H-004, H-005
- * 测试账号: test@test.com / password123
+ * 测试账号: ry@163.com / admin123
  */
 import { test, expect } from '@playwright/test';
 
 async function loginAsMerchant(page) {
   const res = await page.request.post('/login', {
-    data: { email: 'test@test.com', password: 'password123' },
+    data: { email: 'ry@163.com', password: 'admin123' },
   });
   const body = await res.json();
   const token = body?.data?.token;

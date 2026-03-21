@@ -9,7 +9,7 @@ test.describe('商户端登录', () => {
 
   test('密码长度校验', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', 'test@example.com');
+    await page.fill('input[type="email"]', 'ry@163.com');
     await page.fill('input[type="password"]', 'short'); // 5位，触发校验
     await page.click('button[type="submit"]');
     // 前端校验拦截，显示提示

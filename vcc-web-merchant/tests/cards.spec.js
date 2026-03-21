@@ -1,13 +1,13 @@
 /**
  * 商户端 - 卡片管理 E2E 测试
  * 覆盖: D-001, D-007, D-008, E-003, E-011, K-006
- * 测试账号: test@test.com / password123
+ * 测试账号: ry@163.com / admin123
  */
 import { test, expect } from '@playwright/test';
 
 async function loginAsMerchant(page) {
   const res = await page.request.post('/login', {
-    data: { email: 'test@test.com', password: 'password123' },
+    data: { email: 'ry@163.com', password: 'admin123' },
   });
   const body = await res.json();
   const token = body?.data?.token;

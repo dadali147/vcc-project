@@ -1,14 +1,14 @@
 /**
  * 商户端 - KYC 认证 E2E 测试
  * 覆盖: B-007~B-011, B-012~B-013
- * 测试账号: test@test.com / password123
+ * 测试账号: ry@163.com / admin123
  */
 import { test, expect } from '@playwright/test';
 import path from 'path';
 
 async function loginAsMerchant(page) {
   const res = await page.request.post('/login', {
-    data: { email: 'test@test.com', password: 'password123' },
+    data: { email: 'ry@163.com', password: 'admin123' },
   });
   const body = await res.json();
   const token = body?.data?.token;

@@ -1,14 +1,14 @@
 /**
  * 商户端 - 仪表盘 E2E 测试
  * 覆盖: 仪表盘统计卡片、快捷入口跳转
- * 测试账号: test@test.com / password123
+ * 测试账号: ry@163.com / admin123
  */
 import { test, expect } from '@playwright/test';
 
 // 登录 helper：通过 API 获取 token 后注入 localStorage
 async function loginAsMerchant(page) {
   const res = await page.request.post('/login', {
-    data: { email: 'test@test.com', password: 'password123' },
+    data: { email: 'ry@163.com', password: 'admin123' },
   });
   const body = await res.json();
   const token = body?.data?.token;
