@@ -76,15 +76,24 @@ public class WebhookRechargeHandlerImpl implements WebhookRechargeHandler
             return false;
         }
 
-        // 仅处理待处理状态（幂等保护）
+        // 快速幂等检查（无锁，减少不必要的锁竞争）
         if (recharge.getStatus() != Recharge.STATUS_PENDING)
         {
             log.warn("充值记录已处理，跳过: orderNo={}, currentStatus={}", orderNo, recharge.getStatus());
             return true;
         }
 
+        // BUG-002 fix: SELECT FOR UPDATE 行级锁，确保并发补偿幂等性
+        // 防止两个线程同时通过快速检查后双重补偿用户余额
+        Recharge locked = rechargeMapper.selectRechargeForUpdateById(recharge.getId());
+        if (locked == null || locked.getStatus() != Recharge.STATUS_PENDING)
+        {
+            log.warn("充值记录已被并发处理，跳过: orderNo={}", orderNo);
+            return true;
+        }
+
         int updated = rechargeMapper.updateRechargeStatus(
-                recharge.getId(),
+                locked.getId(),
                 Recharge.STATUS_FAILED,
                 Recharge.STATUS_PENDING,
                 failReason,
@@ -92,10 +101,10 @@ public class WebhookRechargeHandlerImpl implements WebhookRechargeHandler
 
         if (updated > 0)
         {
-            // 补偿用户余额
-            BigDecimal compensateAmount = recharge.getAmount();
-            String currency = recharge.getCurrency();
-            Long userId = recharge.getUserId();
+            // 补偿用户余额（使用锁定后的记录，确保数据一致性）
+            BigDecimal compensateAmount = locked.getAmount();
+            String currency = locked.getCurrency();
+            Long userId = locked.getUserId();
 
             if (userId != null && compensateAmount != null && compensateAmount.compareTo(BigDecimal.ZERO) > 0)
             {
