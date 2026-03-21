@@ -22,7 +22,6 @@ import com.vcc.system.service.ISysOperLogService;
 /**
  * 操作日志记录
  * 
- * @author ruoyi
  */
 @RestController
 @RequestMapping("/monitor/operlog")

@@ -170,7 +170,6 @@ const adjustmentHistory = ref([
 const totalPages = computed(() => Math.ceil(adjustmentHistory.value.length / 10))
 
 function viewCardHistory(cardId) {
-  console.log('Viewing history for card:', cardId)
 }
 </script>
 

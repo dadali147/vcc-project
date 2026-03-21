@@ -6,7 +6,6 @@ import com.vcc.common.utils.ServletUtils;
 /**
  * 表格数据处理
  * 
- * @author ruoyi
  */
 public class TableSupport
 {

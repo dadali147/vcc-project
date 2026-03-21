@@ -12,7 +12,6 @@ import com.vcc.common.enums.DesensitizedType;
 /**
  * 数据脱敏注解
  *
- * @author ruoyi
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

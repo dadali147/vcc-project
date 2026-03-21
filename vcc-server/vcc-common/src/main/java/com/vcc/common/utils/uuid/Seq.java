@@ -4,9 +4,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.vcc.common.utils.DateUtils;
 import com.vcc.common.utils.StringUtils;
 
-/**
- * @author ruoyi 序列生成类
- */
 public class Seq
 {
     // 通用序列类型

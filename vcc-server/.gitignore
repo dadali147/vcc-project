@@ -1,47 +1,21 @@
-######################################################################
-# Build Tools
-
-.gradle
-/build/
-!gradle/wrapper/gradle-wrapper.jar
-
+# 编译输出
 target/
-!.mvn/wrapper/maven-wrapper.jar
-
-######################################################################
-# IDE
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### JRebel ###
-rebel.xml
-
-### NetBeans ###
-nbproject/private/
-build/*
-nbbuild/
+build/
 dist/
-nbdist/
-.nb-gradle/
 
-######################################################################
-# Others
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 日志
 *.log
-*.xml.versionsBackup
-*.swp
+logs/
 
-!*/build/*.java
-!*/build/*.html
-!*/build/*.xml
+# 本地配置
+application-local.yml
+application-dev.yml
+
+# 其他
+.DS_Store
+*.swp

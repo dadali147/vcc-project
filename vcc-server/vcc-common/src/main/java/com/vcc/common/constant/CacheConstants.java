@@ -3,7 +3,6 @@ package com.vcc.common.constant;
 /**
  * 缓存的key 常量
  * 
- * @author ruoyi
  */
 public class CacheConstants
 {

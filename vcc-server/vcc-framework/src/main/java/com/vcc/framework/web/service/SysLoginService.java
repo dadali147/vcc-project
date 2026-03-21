@@ -31,7 +31,6 @@ import com.vcc.system.service.ISysUserService;
 /**
  * 登录校验方法
  * 
- * @author ruoyi
  */
 @Component
 public class SysLoginService

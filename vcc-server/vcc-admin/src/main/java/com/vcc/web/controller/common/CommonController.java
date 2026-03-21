@@ -23,7 +23,6 @@ import com.vcc.framework.config.ServerConfig;
 /**
  * 通用请求处理
  * 
- * @author ruoyi
  */
 @RestController
 @RequestMapping("/common")

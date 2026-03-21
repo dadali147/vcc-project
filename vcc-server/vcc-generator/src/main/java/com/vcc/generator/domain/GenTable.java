@@ -11,7 +11,6 @@ import com.vcc.common.utils.StringUtils;
 /**
  * 业务表 gen_table
  * 
- * @author ruoyi
  */
 public class GenTable extends BaseEntity
 {

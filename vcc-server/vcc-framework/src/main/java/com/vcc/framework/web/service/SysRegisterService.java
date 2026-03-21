@@ -22,7 +22,6 @@ import com.vcc.system.service.ISysUserService;
 /**
  * 注册校验方法
  * 
- * @author ruoyi
  */
 @Component
 public class SysRegisterService

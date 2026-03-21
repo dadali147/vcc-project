@@ -16,7 +16,6 @@ import com.vcc.common.utils.StringUtils;
 /**
  * 图片处理工具类
  *
- * @author ruoyi
  */
 public class ImageUtils
 {

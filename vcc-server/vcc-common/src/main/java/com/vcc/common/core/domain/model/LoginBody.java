@@ -3,7 +3,6 @@ package com.vcc.common.core.domain.model;
 /**
  * 用户登录对象
  * 
- * @author ruoyi
  */
 public class LoginBody
 {

@@ -6,7 +6,6 @@ import com.vcc.common.utils.StringUtils;
 /**
  * 基础异常
  * 
- * @author ruoyi
  */
 public class BaseException extends RuntimeException
 {

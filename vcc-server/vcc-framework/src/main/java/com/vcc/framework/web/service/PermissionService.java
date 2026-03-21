@@ -11,9 +11,7 @@ import com.vcc.common.utils.StringUtils;
 import com.vcc.framework.security.context.PermissionContextHolder;
 
 /**
- * RuoYi首创 自定义权限实现，ss取自SpringSecurity首字母
- * 
- * @author ruoyi
+ * 自定义权限实现，ss取自SpringSecurity首字母
  */
 @Service("ss")
 public class PermissionService

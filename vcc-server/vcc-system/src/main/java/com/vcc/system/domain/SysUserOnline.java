@@ -3,7 +3,6 @@ package com.vcc.system.domain;
 /**
  * 当前在线会话
  * 
- * @author ruoyi
  */
 public class SysUserOnline
 {

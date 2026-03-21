@@ -41,7 +41,6 @@ const getList = async () => {
   }
 }
 
-const handleToggleStatus = (row) => { console.log('toggle', row) }
 
 onMounted(getList)
 </script>
