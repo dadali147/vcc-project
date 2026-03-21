@@ -141,8 +141,13 @@ async function handleSubmit() {
     return
   }
 
-  if (!form.agreement) {
-    error.value = '请同意用户协议和隐私政策'
+  if (!form.businessType) {
+    error.value = '请选择业务类型'
+    return
+  }
+
+  if (!form.expectedMonthlySpend) {
+    error.value = '请选择预期月消费额'
     return
   }
 

@@ -144,7 +144,10 @@ const form = reactive({
 })
 
 const rules = {
-  name: [{ required: true, message: '请输入持卡人姓名', trigger: 'blur' }],
+  name: [
+    { required: true, message: '请输入持卡人姓名', trigger: 'blur' },
+    { min: 2, max: 50, message: '姓名长度在 2 到 50 个字符', trigger: 'blur' }
+  ],
   email: [
     { required: true, message: '请输入邮箱地址', trigger: 'blur' },
     { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
@@ -155,7 +158,7 @@ const rules = {
   ],
   idNumber: [
     { required: true, message: '请输入身份证号', trigger: 'blur' },
-    { pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: '请输入有效的身份证号', trigger: 'blur' }
+    { pattern: /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/, message: '请输入有效的18位身份证号', trigger: 'blur' }
   ]
 }
 
@@ -256,8 +259,27 @@ const handleDelete = async (id) => {
   }
 }
 
-const handleExport = () => {
-  ElMessage.info('导出功能开发中')
+const handleExport = async () => {
+  try {
+    const params = {
+      keyword: filters.keyword,
+      status: filters.status
+    }
+
+    const blob = await cardholderApi.list({ ...params, export: true })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `cardholders_${new Date().getTime()}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    ElMessage.success('导出成功')
+  } catch (err) {
+    ElMessage.error('导出失败')
+  }
 }
 
 const resetForm = () => {

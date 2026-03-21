@@ -208,8 +208,28 @@ const handleCancel = async (id) => {
   }
 }
 
-const handleExport = () => {
-  ElMessage.info('导出功能开发中')
+const handleExport = async () => {
+  try {
+    const params = {
+      keyword: filters.keyword,
+      cardType: filters.cardType,
+      status: filters.status
+    }
+
+    const blob = await cardApi.list({ ...params, export: true })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `cards_${new Date().getTime()}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    ElMessage.success('导出成功')
+  } catch (err) {
+    ElMessage.error('导出失败')
+  }
 }
 
 const getCardTypeLabel = (type) => {

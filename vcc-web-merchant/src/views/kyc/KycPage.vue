@@ -139,7 +139,15 @@ const handleSubmit = async () => {
   if (!formRef.value) return
 
   await formRef.value.validate(async (valid) => {
-    if (!valid) return
+    if (!valid) {
+      ElMessage.warning('请上传所有必需的文件')
+      return
+    }
+
+    if (kycStatus.value === 'PENDING') {
+      ElMessage.warning('审核中，不可重复提交')
+      return
+    }
 
     submitting.value = true
     try {

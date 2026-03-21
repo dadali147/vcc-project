@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container">
+  <div class="dashboard-container" v-loading="loading">
     <el-row :gutter="20">
       <el-col :span="6">
         <div class="stat-card">
@@ -27,6 +27,33 @@
       </el-col>
     </el-row>
 
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :span="6">
+        <div class="stat-card">
+          <div class="stat-label">待审核充值</div>
+          <div class="stat-value stat-value--alert">{{ stats.pendingRecharge }}</div>
+        </div>
+      </el-col>
+      <el-col :span="6">
+        <div class="stat-card">
+          <div class="stat-label">今日新增用户</div>
+          <div class="stat-value">{{ stats.todayNewUsers }}</div>
+        </div>
+      </el-col>
+      <el-col :span="6">
+        <div class="stat-card">
+          <div class="stat-label">今日交易笔数</div>
+          <div class="stat-value">{{ stats.todayTxCount }}</div>
+        </div>
+      </el-col>
+      <el-col :span="6">
+        <div class="stat-card">
+          <div class="stat-label">活跃卡片数</div>
+          <div class="stat-value">{{ stats.activeCards }}</div>
+        </div>
+      </el-col>
+    </el-row>
+
     <div class="recent-card">
       <div class="recent-card-header">近 7 天数据</div>
       <div v-for="item in recentData" :key="item.date" class="recent-list-item">
@@ -41,25 +68,33 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import client from '@/api/client'
 
+const loading = ref(false)
 const stats = ref({
   totalUsers: 0,
   totalCards: 0,
   todayVolume: 0,
-  pendingKyc: 0
+  pendingKyc: 0,
+  pendingRecharge: 0,
+  todayNewUsers: 0,
+  todayTxCount: 0,
+  activeCards: 0
 })
 const recentData = ref([])
 
 const fetchStats = async () => {
+  loading.value = true
   try {
     const res = await client.get('/admin/dashboard/stats')
-    if (res.data) {
-      stats.value = res.data.stats || stats.value
-      recentData.value = res.data.recentData || []
-    }
+    const d = res.data || res
+    stats.value = { ...stats.value, ...(d.stats || d) }
+    recentData.value = d.recentData || []
   } catch(e) {
-    console.error('Failed to fetch dashboard stats:', e)
+    ElMessage.error('获取统计数据失败')
+  } finally {
+    loading.value = false
   }
 }
 

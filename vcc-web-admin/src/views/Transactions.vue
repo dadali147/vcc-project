@@ -18,29 +18,45 @@
     </div>
 
     <el-table :data="list" v-loading="loading" border style="width: 100%; margin-top: 20px;" @sort-change="handleSortChange">
-      <el-table-column prop="id" label="交易 ID" width="180" />
-      <el-table-column prop="cardNumber" label="卡号" width="180" />
-      <el-table-column prop="amount" label="金额" sortable="custom" />
-      <el-table-column prop="type" label="类型">
+      <el-table-column prop="id" label="交易 ID" width="120" />
+      <el-table-column prop="cardNumber" label="卡号" width="170" />
+      <el-table-column prop="merchantName" label="商户" min-width="120" show-overflow-tooltip />
+      <el-table-column prop="amount" label="金额" width="120" sortable="custom">
         <template #default="scope">
-          <el-tag v-if="scope.row.type === 'SALE'" type="danger">消费</el-tag>
-          <el-tag v-else-if="scope.row.type === 'REFUND'" type="success">退款</el-tag>
-          <el-tag v-else type="primary">充值</el-tag>
+          ${{ (scope.row.amount || 0).toFixed(2) }}
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="状态">
+      <el-table-column prop="currency" label="币种" width="70" />
+      <el-table-column prop="type" label="类型" width="80">
         <template #default="scope">
-          <el-tag v-if="scope.row.status === 'SUCCESS'" type="success">成功</el-tag>
-          <el-tag v-else-if="scope.row.status === 'FAILED'" type="danger">失败</el-tag>
-          <el-tag v-else type="warning">处理中</el-tag>
+          <el-tag v-if="scope.row.type === 'SALE'" type="danger" size="small">消费</el-tag>
+          <el-tag v-else-if="scope.row.type === 'REFUND'" type="success" size="small">退款</el-tag>
+          <el-tag v-else-if="scope.row.type === 'DEPOSIT'" type="primary" size="small">充值</el-tag>
+          <el-tag v-else type="info" size="small">{{ scope.row.type }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="merchant" label="商户" />
-      <el-table-column prop="createdAt" label="时间" sortable="custom" width="180" />
+      <el-table-column prop="status" label="状态" width="80">
+        <template #default="scope">
+          <el-tag v-if="scope.row.status === 'SUCCESS'" type="success" size="small">成功</el-tag>
+          <el-tag v-else-if="scope.row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
+          <el-tag v-else type="warning" size="small">处理中</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="description" label="描述" min-width="130" show-overflow-tooltip />
+      <el-table-column prop="createdAt" label="时间" sortable="custom" width="160" />
     </el-table>
 
     <div class="pagination-container" style="margin-top: 20px" v-if="total > 0">
-      <el-pagination background layout="total, prev, pager, next" :total="total" v-model:current-page="listQuery.page" :page-size="listQuery.limit" @current-change="getList" />
+      <el-pagination
+        background
+        layout="total, sizes, prev, pager, next"
+        :total="total"
+        v-model:current-page="listQuery.page"
+        v-model:page-size="listQuery.limit"
+        :page-sizes="[10, 20, 50, 100]"
+        @current-change="getList"
+        @size-change="handleFilter"
+      />
     </div>
   </div>
 </template>
@@ -64,8 +80,8 @@ const getList = async () => {
       params.startDate = dateRange.value[0].toISOString()
       params.endDate = dateRange.value[1].toISOString()
     }
-    const res = await client.get('/admin/transactions', { params })
-    list.value = res.data?.items || []
+    const res = await client.get('/admin/transaction/list', { params })
+    list.value = res.data?.items || res.data?.rows || []
     total.value = res.data?.total || 0
   } catch (e) {
     ElMessage.error('获取交易记录失败')
@@ -87,19 +103,28 @@ const handleSortChange = ({ prop, order }) => {
 
 const handleExport = async () => {
   try {
-    const params = { ...listQuery.value, export: true }
+    const params = { ...listQuery.value }
     if (dateRange.value && dateRange.value.length === 2) {
       params.startDate = dateRange.value[0].toISOString()
       params.endDate = dateRange.value[1].toISOString()
     }
-    const res = await client.get('/admin/transactions/export', { params, responseType: 'blob' })
-    const url = window.URL.createObjectURL(new Blob([res]))
+    // Use axios directly to bypass the response.data interceptor for blob downloads
+    const { default: axios } = await import('axios')
+    const authStore = (await import('@/stores/auth')).useAuthStore()
+    const response = await axios.get('/admin/transaction/export', {
+      params,
+      responseType: 'blob',
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     link.setAttribute('download', `transactions_${Date.now()}.csv`)
     document.body.appendChild(link)
     link.click()
     link.remove()
+    window.URL.revokeObjectURL(url)
     ElMessage.success('导出成功')
   } catch (e) {
     ElMessage.error('导出失败')

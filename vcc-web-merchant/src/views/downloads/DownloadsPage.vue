@@ -267,13 +267,17 @@ const downloadBlob = (blob, filename) => {
 }
 
 const downloadFile = (row) => {
-  ElMessage.info('下载功能开发中')
+  if (row.url) {
+    window.open(row.url, '_blank')
+  } else {
+    ElMessage.warning('文件不存在或已过期')
+  }
 }
 
 const loadDownloadHistory = async () => {
   try {
     const res = await downloadApi.getHistory({ page: 1, pageSize: 10 })
-    downloadHistory.value = res.data || []
+    downloadHistory.value = res.list || res.data || []
   } catch (err) {
     console.error('Failed to load download history:', err)
   }

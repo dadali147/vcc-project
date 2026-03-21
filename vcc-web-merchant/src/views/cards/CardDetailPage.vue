@@ -110,10 +110,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { cardApi } from '@/api'
 import { formatDate } from '@/utils/common'
 
+const route = useRoute()
 const activeTab = ref('transactions')
+const loading = ref(false)
 
 const tabs = [
   { id: 'transactions', label: '交易明细' },
@@ -121,54 +126,31 @@ const tabs = [
 ]
 
 const cardData = ref({
-  cardNumber: '****1234',
-  cardholder: 'John Doe',
-  cardType: '储值卡',
-  status: 'Active',
-  balance: 5230.50,
-  dailyLimit: 1000,
-  monthlyLimit: 10000,
-  transactions: [
-    {
-      id: '1',
-      date: new Date(Date.now() - 3600000),
-      merchant: 'Amazon',
-      amount: 99.99,
-      type: '消费',
-      status: '成功'
-    },
-    {
-      id: '2',
-      date: new Date(Date.now() - 7200000),
-      merchant: 'OpenAI',
-      amount: 20.00,
-      type: '消费',
-      status: '成功'
-    }
-  ],
-  operations: [
-    {
-      id: '1',
-      operationTime: new Date(Date.now() - 86400000),
-      operationType: '充值',
-      operator: 'User Self',
-      content: '充值 $1000 到卡内'
-    },
-    {
-      id: '2',
-      operationTime: new Date(Date.now() - 172800000),
-      operationType: '预算调整',
-      operator: 'Admin',
-      content: '月限额从 $5000 调整为 $10000'
-    },
-    {
-      id: '3',
-      operationTime: new Date(Date.now() - 259200000),
-      operationType: '开卡',
-      operator: 'System',
-      content: '卡片开卡成功，自动激活'
-    }
-  ]
+  cardNumber: '',
+  cardholder: '',
+  cardType: '',
+  status: '',
+  balance: 0,
+  dailyLimit: 0,
+  monthlyLimit: 0,
+  transactions: [],
+  operations: []
+})
+
+onMounted(async () => {
+  const cardId = route.params.id
+  if (!cardId) return
+
+  loading.value = true
+  try {
+    const data = await cardApi.get(cardId)
+    cardData.value = data
+  } catch (err) {
+    ElMessage.error('加载卡片详情失败')
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
