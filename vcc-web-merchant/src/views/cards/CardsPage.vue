@@ -46,7 +46,7 @@
         <h2>{{ t('cards.list') }}</h2>
         <span class="meta">{{ pagination.total }}</span>
       </div>
-      <div v-if="loading" class="loading-state">加载中...</div>
+      <div v-if="loading" class="loading-state">{{ t('common.loading') }}</div>
       <div v-else-if="cards.length" class="table-wrapper">
         <table>
           <thead>
@@ -80,9 +80,9 @@
           </tbody>
         </table>
         <div class="pagination">
-          <button :disabled="pagination.page === 1" @click="changePage(pagination.page - 1)">上一页</button>
-          <span>第 {{ pagination.page }} / {{ Math.ceil(pagination.total / pagination.pageSize) }} 页</span>
-          <button :disabled="pagination.page >= Math.ceil(pagination.total / pagination.pageSize)" @click="changePage(pagination.page + 1)">下一页</button>
+          <button :disabled="pagination.page === 1" @click="changePage(pagination.page - 1)">{{ t('common.prev') }}</button>
+          <span>{{ pagination.page }} / {{ Math.ceil(pagination.total / pagination.pageSize) || 1 }}</span>
+          <button :disabled="pagination.page >= Math.ceil(pagination.total / pagination.pageSize)" @click="changePage(pagination.page + 1)">{{ t('common.next') }}</button>
         </div>
       </div>
       <div v-else class="empty-state">
@@ -148,10 +148,10 @@ const loadCards = async () => {
       status: filters.status
     }
     const res = await cardApi.list(params)
-    cards.value = res.data || []
-    pagination.total = res.total || 0
+    cards.value = res.data?.items || res.data || []
+    pagination.total = res.data?.total || res.total || 0
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '加载失败')
+    ElMessage.error(err.response?.data?.message || t('common.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -164,18 +164,18 @@ const changePage = (page) => {
 
 const handleFreeze = async (id) => {
   try {
-    await ElMessageBox.confirm('确定要冻结该卡片吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('cards.confirmFreeze'), t('common.tip'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
 
     await cardApi.freeze(id)
-    ElMessage.success('冻结成功')
+    ElMessage.success(t('cards.freezeSuccess'))
     loadCards()
   } catch (err) {
     if (err !== 'cancel') {
-      ElMessage.error(err.response?.data?.message || '冻结失败')
+      ElMessage.error(err.response?.data?.message || t('common.operationFailed'))
     }
   }
 }
@@ -183,27 +183,27 @@ const handleFreeze = async (id) => {
 const handleUnfreeze = async (id) => {
   try {
     await cardApi.unfreeze(id)
-    ElMessage.success('解冻成功')
+    ElMessage.success(t('cards.unfreezeSuccess'))
     loadCards()
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '解冻失败')
+    ElMessage.error(err.response?.data?.message || t('common.operationFailed'))
   }
 }
 
 const handleCancel = async (id) => {
   try {
-    await ElMessageBox.confirm('确定要注销该卡片吗？此操作不可恢复。', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('cards.confirmCancel'), t('common.tip'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
 
     await cardApi.cancel(id)
-    ElMessage.success('注销成功')
+    ElMessage.success(t('cards.cancelSuccess'))
     loadCards()
   } catch (err) {
     if (err !== 'cancel') {
-      ElMessage.error(err.response?.data?.message || '注销失败')
+      ElMessage.error(err.response?.data?.message || t('common.operationFailed'))
     }
   }
 }
@@ -226,9 +226,9 @@ const handleExport = async () => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
 
-    ElMessage.success('导出成功')
+    ElMessage.success(t('downloads.exportSuccess'))
   } catch (err) {
-    ElMessage.error('导出失败')
+    ElMessage.error(t('downloads.exportFailed'))
   }
 }
 

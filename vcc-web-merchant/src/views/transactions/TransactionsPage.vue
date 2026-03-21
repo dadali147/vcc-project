@@ -48,7 +48,7 @@
         <h2>{{ t('transactions.list') }}</h2>
         <span class="meta">{{ pagination.total }}</span>
       </div>
-      <div v-if="loading" class="loading-state">加载中...</div>
+      <div v-if="loading" class="loading-state">{{ t('common.loading') }}</div>
       <div v-else-if="transactions.length" class="table-wrapper">
         <table>
           <thead>
@@ -77,9 +77,9 @@
           </tbody>
         </table>
         <div class="pagination">
-          <button :disabled="pagination.page === 1" @click="changePage(pagination.page - 1)">上一页</button>
-          <span>第 {{ pagination.page }} / {{ Math.ceil(pagination.total / pagination.pageSize) }} 页</span>
-          <button :disabled="pagination.page >= Math.ceil(pagination.total / pagination.pageSize)" @click="changePage(pagination.page + 1)">下一页</button>
+          <button :disabled="pagination.page === 1" @click="changePage(pagination.page - 1)">{{ t('common.prev') }}</button>
+          <span>{{ pagination.page }} / {{ Math.ceil(pagination.total / pagination.pageSize) || 1 }}</span>
+          <button :disabled="pagination.page >= Math.ceil(pagination.total / pagination.pageSize)" @click="changePage(pagination.page + 1)">{{ t('common.next') }}</button>
         </div>
       </div>
       <div v-else class="empty-state">
@@ -144,10 +144,10 @@ const loadTransactions = async () => {
       status: filters.status
     }
     const res = await transactionApi.list(params)
-    transactions.value = res.data || []
-    pagination.total = res.total || 0
+    transactions.value = res.data?.items || res.data || []
+    pagination.total = res.data?.total || res.total || 0
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '加载失败')
+    ElMessage.error(err.response?.data?.message || t('common.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -172,9 +172,9 @@ const handleExport = async () => {
     link.download = `transactions_${Date.now()}.xlsx`
     link.click()
     window.URL.revokeObjectURL(url)
-    ElMessage.success('导出成功')
+    ElMessage.success(t('downloads.exportSuccess'))
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '导出失败')
+    ElMessage.error(err.response?.data?.message || t('downloads.exportFailed'))
   }
 }
 

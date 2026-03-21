@@ -42,7 +42,7 @@
         <h2>{{ t('cardholders.list') }}</h2>
         <span class="meta">{{ pagination.total }}</span>
       </div>
-      <div v-if="loading" class="loading-state">加载中...</div>
+      <div v-if="loading" class="loading-state">{{ t('common.loading') }}</div>
       <div v-else-if="cardholders.length" class="table-wrapper">
         <table>
           <thead>
@@ -74,9 +74,9 @@
           </tbody>
         </table>
         <div class="pagination">
-          <button :disabled="pagination.page === 1" @click="changePage(pagination.page - 1)">上一页</button>
-          <span>第 {{ pagination.page }} / {{ Math.ceil(pagination.total / pagination.pageSize) }} 页</span>
-          <button :disabled="pagination.page >= Math.ceil(pagination.total / pagination.pageSize)" @click="changePage(pagination.page + 1)">下一页</button>
+          <button :disabled="pagination.page === 1" @click="changePage(pagination.page - 1)">{{ t('common.prev') }}</button>
+          <span>{{ pagination.page }} / {{ Math.ceil(pagination.total / pagination.pageSize) || 1 }}</span>
+          <button :disabled="pagination.page >= Math.ceil(pagination.total / pagination.pageSize)" @click="changePage(pagination.page + 1)">{{ t('common.next') }}</button>
         </div>
       </div>
       <div v-else class="empty-state">
@@ -86,24 +86,24 @@
       </div>
     </section>
 
-    <el-dialog v-model="showAddDialog" :title="editingId ? '编辑持卡人' : '新增持卡人'" width="600px">
+    <el-dialog v-model="showAddDialog" :title="editingId ? t('cardholders.edit') : t('cardholders.add')" width="600px">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="form.name" placeholder="请输入持卡人姓名" />
+        <el-form-item :label="t('cardholders.name')" prop="name">
+          <el-input v-model="form.name" :placeholder="t('cardholders.name')" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" placeholder="请输入邮箱地址" />
+        <el-form-item :label="t('cardholders.email')" prop="email">
+          <el-input v-model="form.email" :placeholder="t('auth.email')" />
         </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="form.phone" placeholder="请输入手机号" />
+        <el-form-item :label="t('cardholders.phone')" prop="phone">
+          <el-input v-model="form.phone" :placeholder="t('auth.phone')" />
         </el-form-item>
-        <el-form-item label="身份证号" prop="idNumber">
-          <el-input v-model="form.idNumber" placeholder="请输入身份证号" />
+        <el-form-item :label="t('cardholders.idNumber')" prop="idNumber">
+          <el-input v-model="form.idNumber" :placeholder="t('cardholders.idNumber')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
+        <el-button @click="showAddDialog = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting">{{ t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -190,10 +190,10 @@ const loadCardholders = async () => {
       status: filters.status
     }
     const res = await cardholderApi.list(params)
-    cardholders.value = res.data || []
-    pagination.total = res.total || 0
+    cardholders.value = res.data?.items || res.data || []
+    pagination.total = res.data?.total || res.total || 0
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '加载失败')
+    ElMessage.error(err.response?.data?.message || t('common.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -225,16 +225,16 @@ const handleSubmit = async () => {
     try {
       if (editingId.value) {
         await cardholderApi.update(editingId.value, form)
-        ElMessage.success('更新成功')
+        ElMessage.success(t('cardholders.updateSuccess'))
       } else {
         await cardholderApi.create(form)
-        ElMessage.success('创建成功')
+        ElMessage.success(t('cardholders.addSuccess'))
       }
       showAddDialog.value = false
       resetForm()
       loadCardholders()
     } catch (err) {
-      ElMessage.error(err.response?.data?.message || '操作失败')
+      ElMessage.error(err.response?.data?.message || t('common.operationFailed'))
     } finally {
       submitting.value = false
     }
@@ -243,18 +243,18 @@ const handleSubmit = async () => {
 
 const handleDelete = async (id) => {
   try {
-    await ElMessageBox.confirm('确定要删除该持卡人吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('cardholders.confirmDelete'), t('common.tip'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
 
     await cardholderApi.delete(id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('cardholders.deleteSuccess'))
     loadCardholders()
   } catch (err) {
     if (err !== 'cancel') {
-      ElMessage.error(err.response?.data?.message || '删除失败')
+      ElMessage.error(err.response?.data?.message || t('common.operationFailed'))
     }
   }
 }
@@ -276,9 +276,9 @@ const handleExport = async () => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
 
-    ElMessage.success('导出成功')
+    ElMessage.success(t('downloads.exportSuccess'))
   } catch (err) {
-    ElMessage.error('导出失败')
+    ElMessage.error(t('downloads.exportFailed'))
   }
 }
 

@@ -40,7 +40,10 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
     try {
       const response = await authApi.login(credentials)
-      setSession(response.token, response.user)
+      // Support both { token, user } and { data: { token, user } } response formats
+      const token = response.data?.token || response.token
+      const userInfo = response.data?.user || response.user
+      setSession(token, userInfo)
       initialized.value = true
       return response
     } catch (err) {
@@ -56,7 +59,10 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
     try {
       const response = await authApi.register(userData)
-      setSession(response.token, response.user)
+      // Support both { token, user } and { data: { token, user } } response formats
+      const token = response.data?.token || response.token
+      const userInfo = response.data?.user || response.user
+      setSession(token, userInfo)
       initialized.value = true
       return response
     } catch (err) {

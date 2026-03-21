@@ -4,7 +4,7 @@
 
     <div class="downloads-container">
       <el-tabs v-model="activeTab" class="export-tabs">
-        <el-tab-pane label="交易明细导出" name="transactions">
+        <el-tab-pane :label="$t('downloads.transactions')" name="transactions">
           <div class="export-section">
             <el-form :model="transactionFilters" :rules="transactionRules" ref="transactionFormRef">
               <div class="export-form">
@@ -48,7 +48,7 @@
           </div>
         </el-tab-pane>
 
-        <el-tab-pane label="充值明细导出" name="recharge">
+        <el-tab-pane :label="$t('downloads.recharge')" name="recharge">
           <div class="export-section">
             <el-form :model="rechargeFilters" ref="rechargeFormRef">
               <div class="export-form">
@@ -92,7 +92,7 @@
           </div>
         </el-tab-pane>
 
-        <el-tab-pane label="月对账表导出" name="statement">
+        <el-tab-pane :label="$t('downloads.statement')" name="statement">
           <div class="export-section">
             <el-form :model="statementFilters" ref="statementFormRef">
               <div class="export-form">
@@ -129,19 +129,19 @@
       </el-tabs>
 
       <div class="download-history">
-        <h3>下载历史</h3>
+        <h3>{{ $t('downloads.history') }}</h3>
         <el-table :data="downloadHistory" style="width: 100%">
-          <el-table-column prop="fileName" label="文件名" />
-          <el-table-column prop="type" label="类型" width="120" />
-          <el-table-column prop="createdAt" label="生成时间" width="180" />
-          <el-table-column prop="status" label="状态" width="100">
+          <el-table-column prop="fileName" :label="$t('downloads.fileName')" />
+          <el-table-column prop="type" :label="$t('downloads.type')" width="120" />
+          <el-table-column prop="createdAt" :label="$t('downloads.createdAt')" width="180" />
+          <el-table-column prop="status" :label="$t('transactions.status')" width="100">
             <template #default="{ row }">
               <span class="badge">{{ row.status }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="120">
+          <el-table-column :label="$t('common.actions')" width="120">
             <template #default="{ row }">
-              <el-button link type="primary" @click="downloadFile(row)">下载</el-button>
+              <el-button link type="primary" @click="downloadFile(row)">{{ $t('downloads.download') }}</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -152,8 +152,11 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { downloadApi } from '@/api'
+
+const { t } = useI18n()
 
 const activeTab = ref('transactions')
 const exporting = ref(false)
@@ -188,7 +191,7 @@ const downloadHistory = ref([])
 
 const exportTransactions = async () => {
   if (!transactionFilters.startDate || !transactionFilters.endDate) {
-    ElMessage.warning('请选择日期范围')
+    ElMessage.warning(t('downloads.selectDateRange'))
     return
   }
 
@@ -201,10 +204,10 @@ const exportTransactions = async () => {
     }
     const blob = await downloadApi.exportTransactions(params)
     downloadBlob(blob, `transactions_${Date.now()}.${transactionFilters.format === 'excel' ? 'xlsx' : 'csv'}`)
-    ElMessage.success('导出成功')
+    ElMessage.success(t('downloads.exportSuccess'))
     loadDownloadHistory()
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '导出失败')
+    ElMessage.error(err.response?.data?.message || t('downloads.exportFailed'))
   } finally {
     exporting.value = false
   }
@@ -212,7 +215,7 @@ const exportTransactions = async () => {
 
 const exportRecharge = async () => {
   if (!rechargeFilters.startDate || !rechargeFilters.endDate) {
-    ElMessage.warning('请选择日期范围')
+    ElMessage.warning(t('downloads.selectDateRange'))
     return
   }
 
@@ -225,10 +228,10 @@ const exportRecharge = async () => {
     }
     const blob = await downloadApi.exportRecharge(params)
     downloadBlob(blob, `recharge_${Date.now()}.${rechargeFilters.format === 'excel' ? 'xlsx' : 'csv'}`)
-    ElMessage.success('导出成功')
+    ElMessage.success(t('downloads.exportSuccess'))
     loadDownloadHistory()
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '导出失败')
+    ElMessage.error(err.response?.data?.message || t('downloads.exportFailed'))
   } finally {
     exporting.value = false
   }
@@ -236,7 +239,7 @@ const exportRecharge = async () => {
 
 const exportStatement = async () => {
   if (!statementFilters.month) {
-    ElMessage.warning('请选择月份')
+    ElMessage.warning(t('downloads.selectMonthRequired'))
     return
   }
 
@@ -248,10 +251,10 @@ const exportStatement = async () => {
     }
     const blob = await downloadApi.exportStatement(params)
     downloadBlob(blob, `statement_${Date.now()}.${statementFilters.format}`)
-    ElMessage.success('导出成功')
+    ElMessage.success(t('downloads.exportSuccess'))
     loadDownloadHistory()
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '导出失败')
+    ElMessage.error(err.response?.data?.message || t('downloads.exportFailed'))
   } finally {
     exporting.value = false
   }
@@ -270,14 +273,14 @@ const downloadFile = (row) => {
   if (row.url) {
     window.open(row.url, '_blank')
   } else {
-    ElMessage.warning('文件不存在或已过期')
+    ElMessage.warning(t('downloads.fileExpired'))
   }
 }
 
 const loadDownloadHistory = async () => {
   try {
     const res = await downloadApi.getHistory({ page: 1, pageSize: 10 })
-    downloadHistory.value = res.list || res.data || []
+    downloadHistory.value = res.data?.items || res.list || res.data || []
   } catch (err) {
     console.error('Failed to load download history:', err)
   }
