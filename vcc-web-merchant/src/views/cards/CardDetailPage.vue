@@ -3,7 +3,7 @@
     <div class="page-header">
       <div class="header-content">
         <h1>{{ $t('cards.cardDetails') }}</h1>
-        <p class="card-number">{{ cardData.cardNumber }}</p>
+        <p class="card-number">{{ cardData.cardNoMask }}</p>
       </div>
       <div class="header-actions">
         <button class="action-btn recharge">💳 {{ $t('cards.recharge') }}</button>
@@ -126,7 +126,7 @@ const tabs = [
 ]
 
 const cardData = ref({
-  cardNumber: '',
+  cardNoMask: '',
   cardholder: '',
   cardType: '',
   status: '',

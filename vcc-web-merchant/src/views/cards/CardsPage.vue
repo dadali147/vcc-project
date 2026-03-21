@@ -62,7 +62,7 @@
           </thead>
           <tbody>
             <tr v-for="item in cards" :key="item.id">
-              <td>{{ item.cardNumber }}</td>
+              <td>{{ item.cardNoMask }}</td>
               <td>{{ item.cardholder }}</td>
               <td>{{ getCardTypeLabel(item.cardType) }}</td>
               <td>{{ formatCurrency(item.balance) }}</td>

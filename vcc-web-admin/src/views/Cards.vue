@@ -16,7 +16,7 @@
 
     <el-table :data="list" v-loading="loading" border style="width: 100%; margin-top: 20px;">
       <el-table-column prop="id" label="卡 ID" width="80" />
-      <el-table-column prop="cardNumber" label="卡号" width="180" />
+      <el-table-column prop="cardNoMask" label="卡号" width="180" />
       <el-table-column prop="cardholderName" label="持卡人" width="110" />
       <el-table-column prop="merchantName" label="所属商户" min-width="130" show-overflow-tooltip />
       <el-table-column prop="cardType" label="卡类型" width="80">
@@ -73,7 +73,7 @@
     <el-dialog v-model="dialogVisible" title="卡片详情" width="660px">
       <el-descriptions v-if="currentCard" :column="2" border>
         <el-descriptions-item label="卡 ID">{{ currentCard.id }}</el-descriptions-item>
-        <el-descriptions-item label="卡号">{{ currentCard.cardNumber }}</el-descriptions-item>
+        <el-descriptions-item label="卡号">{{ currentCard.cardNoMask }}</el-descriptions-item>
         <el-descriptions-item label="持卡人">{{ currentCard.cardholderName }}</el-descriptions-item>
         <el-descriptions-item label="所属商户">{{ currentCard.merchantName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="卡类型">{{ currentCard.cardType === 'VIRTUAL' ? '虚拟卡' : '实体卡' }}</el-descriptions-item>
@@ -130,7 +130,7 @@ const handleView = (row) => {
 
 const handleFreeze = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认强制冻结卡片 ${row.cardNumber}？该操作将记录管理员操作日志。`, '强制冻结确认', { type: 'warning' })
+    await ElMessageBox.confirm(`确认强制冻结卡片 ${row.cardNoMask}？该操作将记录管理员操作日志。`, '强制冻结确认', { type: 'warning' })
     await client.put(`/admin/business/card/${row.id}/force-freeze`)
     ElMessage.success('冻结成功')
     getList()
@@ -141,7 +141,7 @@ const handleFreeze = async (row) => {
 
 const handleUnfreeze = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认解冻卡片 ${row.cardNumber}？`, '解冻确认', { type: 'warning' })
+    await ElMessageBox.confirm(`确认解冻卡片 ${row.cardNoMask}？`, '解冻确认', { type: 'warning' })
     await client.put(`/admin/business/card/${row.id}/force-unfreeze`)
     ElMessage.success('解冻成功')
     getList()
@@ -153,7 +153,7 @@ const handleUnfreeze = async (row) => {
 const handleCancel = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确认强制销卡 ${row.cardNumber}？此操作不可恢复，销卡后无法重新激活！`,
+      `确认强制销卡 ${row.cardNoMask}？此操作不可恢复，销卡后无法重新激活！`,
       '强制销卡警告',
       { type: 'error', confirmButtonText: '确认销卡', cancelButtonText: '取消' }
     )
