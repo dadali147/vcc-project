@@ -82,7 +82,10 @@ public class RechargeServiceImpl implements IRechargeService
         String rechargeEnabled = systemConfigService.get("risk.recharge.enabled");
         boolean riskEnabled = !"false".equalsIgnoreCase(rechargeEnabled);
 
-        // SELECT FOR UPDATE 锁定用户账户行，防止并发绕过日限额
+        // BUG-003 fix: SELECT FOR UPDATE 行级锁，防止并发绕过每日限额
+        // 锁定用户账户行，确保日充值总额检查与入库操作的原子性
+        // 同一用户的并发充值请求在此串行化，任意时刻只有一个请求持有锁
+        // 账户不存在时返回 null（不持有锁），后续 deductBalance 会返回 false 触发"余额不足"
         userAccountService.lockUserAccount(userId, currency);
 
         // 风控：单笔充值上限
