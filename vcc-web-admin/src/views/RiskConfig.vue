@@ -1,29 +1,43 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-button type="primary" @click="handleCreate">新增规则</el-button>
+      <el-input v-model="listQuery.keyword" placeholder="规则名称" style="width: 180px;" @keyup.enter="handleFilter" />
+      <el-select v-model="listQuery.type" placeholder="规则类型" clearable style="width: 150px; margin-left: 10px;">
+        <el-option label="单笔限额" value="SINGLE_LIMIT" />
+        <el-option label="日累计限额" value="DAILY_LIMIT" />
+        <el-option label="月累计限额" value="MONTHLY_LIMIT" />
+        <el-option label="频率限制" value="FREQUENCY_LIMIT" />
+      </el-select>
+      <el-select v-model="listQuery.status" placeholder="状态" clearable style="width: 110px; margin-left: 10px;">
+        <el-option label="启用" value="ACTIVE" />
+        <el-option label="禁用" value="INACTIVE" />
+      </el-select>
+      <el-button type="primary" @click="handleFilter" style="margin-left: 10px;">筛选</el-button>
+      <el-button type="success" @click="handleCreate" style="margin-left: 10px;">新增规则</el-button>
     </div>
 
-    <el-table :data="list" v-loading="loading" border style="width: 100%; margin-top: 20px;">
-      <el-table-column prop="name" label="规则名称" />
-      <el-table-column prop="type" label="类型">
+    <el-table :data="list" v-loading="loading" border style="width: 100%; margin-top: 16px;">
+      <el-table-column prop="id" label="ID" width="70" />
+      <el-table-column prop="name" label="规则名称" min-width="140" show-overflow-tooltip />
+      <el-table-column prop="type" label="类型" width="120">
         <template #default="scope">
-          {{ getRuleTypeLabel(scope.row.type) }}
+          <el-tag type="primary" size="small">{{ getRuleTypeLabel(scope.row.type) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="threshold" label="阈值" />
-      <el-table-column prop="cardType" label="卡类型">
+      <el-table-column prop="threshold" label="阈值" width="120" />
+      <el-table-column prop="cardType" label="卡类型" width="90">
         <template #default="scope">
           {{ scope.row.cardType === 'ALL' ? '全部' : scope.row.cardType === 'VIRTUAL' ? '虚拟卡' : '实体卡' }}
         </template>
       </el-table-column>
-      <el-table-column prop="priority" label="优先级" />
-      <el-table-column prop="status" label="状态">
+      <el-table-column prop="priority" label="优先级" width="80" />
+      <el-table-column prop="status" label="状态" width="80">
         <template #default="scope">
-          <el-tag v-if="scope.row.status === 'ACTIVE'" type="success">启用</el-tag>
-          <el-tag v-else type="info">禁用</el-tag>
+          <el-tag v-if="scope.row.status === 'ACTIVE'" type="success" size="small">启用</el-tag>
+          <el-tag v-else type="info" size="small">禁用</el-tag>
         </template>
       </el-table-column>
+      <el-table-column prop="updatedAt" label="更新时间" width="160" />
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="scope">
           <el-button size="small" type="primary" @click="handleEdit(scope.row)">编辑</el-button>
@@ -33,6 +47,19 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <div class="pagination-container" style="margin-top: 20px" v-if="total > 0">
+      <el-pagination
+        background
+        layout="total, sizes, prev, pager, next"
+        :total="total"
+        v-model:current-page="listQuery.page"
+        v-model:page-size="listQuery.limit"
+        :page-sizes="[10, 20, 50]"
+        @current-change="getList"
+        @size-change="handleFilter"
+      />
+    </div>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
       <el-form :model="temp" :rules="rules" ref="formRef" label-width="100px">
@@ -82,6 +109,8 @@ import client from '@/api/client'
 
 const loading = ref(false)
 const list = ref([])
+const total = ref(0)
+const listQuery = ref({ page: 1, limit: 20, keyword: '', type: '', status: '' })
 const dialogVisible = ref(false)
 const temp = ref({})
 const formRef = ref(null)
@@ -114,13 +143,19 @@ const getRuleTypeLabel = (type) => {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await client.get('/admin/risk-rules')
-    list.value = res.data?.items || []
+    const res = await client.get('/admin/risk-rules', { params: listQuery.value })
+    list.value = res.data?.items || res.data?.rows || (Array.isArray(res.data) ? res.data : [])
+    total.value = res.data?.total || list.value.length
   } catch (e) {
     ElMessage.error('获取风控规则失败')
   } finally {
     loading.value = false
   }
+}
+
+const handleFilter = () => {
+  listQuery.value.page = 1
+  getList()
 }
 
 const handleCreate = () => {
