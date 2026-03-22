@@ -398,7 +398,7 @@ public class SysUser extends BaseEntity
 
     public void setTwoFaBindTime(Date twoFaBindTime)
     {
-        this.twoFaBindTime = kycReviewTime;
+        this.twoFaBindTime = twoFaBindTime;
     }
 
     public String getTwoFaDevice()
