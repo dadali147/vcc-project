@@ -108,9 +108,20 @@ public class WebhookController
      * 收到授权请求时，统一返回批准（authResult=A）
      */
     @PostMapping(value = "/auth-decision", produces = "application/json;charset=UTF-8")
-    public Map<String, Object> authDecision(@RequestBody Map<String, Object> data)
+    public Map<String, Object> authDecision(@RequestBody Map<String, Object> data,
+                                            @RequestHeader(value = "X-Webhook-Signature", required = false) String signature,
+                                            HttpServletRequest request)
     {
+        String payload = JSON.toJSONString(data);
         log.info("收到授权决策请求: cardId={}", data.get("cardId"));
+
+        // VCC-011: 授权决策端点也必须验签，防止伪造授权
+        if (!verifyWebhookSignature(request, payload))
+        {
+            log.error("授权决策请求验签失败，返回 401");
+            throw new WebhookAuthenticationException("验签失败");
+        }
+
         return Map.of(
             "requestId", data.getOrDefault("requestId", ""),
             "cardId", data.getOrDefault("cardId", ""),

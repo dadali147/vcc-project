@@ -23,6 +23,9 @@ public class LimitHistory extends BaseEntity
 
     private Long cardId;
 
+    /** DDL 基线：持卡人ID */
+    private Long holderId;
+
     /** 限额类型：SINGLE/DAILY/MONTHLY */
     private String limitType;
 
@@ -30,11 +33,18 @@ public class LimitHistory extends BaseEntity
 
     private BigDecimal afterAmount;
 
+    /** DDL 基线：调整金额 */
+    private BigDecimal adjustAmount;
+
     /** 操作人ID */
     private Long operatorId;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date operateTime;
+
+    /** DDL 基线：调整时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date adjustTime;
 
     /** 操作原因 */
     private String reason;
@@ -48,6 +58,9 @@ public class LimitHistory extends BaseEntity
     public Long getCardId() { return cardId; }
     public void setCardId(Long cardId) { this.cardId = cardId; }
 
+    public Long getHolderId() { return holderId; }
+    public void setHolderId(Long holderId) { this.holderId = holderId; }
+
     public String getLimitType() { return limitType; }
     public void setLimitType(String limitType) { this.limitType = limitType; }
 
@@ -57,11 +70,17 @@ public class LimitHistory extends BaseEntity
     public BigDecimal getAfterAmount() { return afterAmount; }
     public void setAfterAmount(BigDecimal afterAmount) { this.afterAmount = afterAmount; }
 
+    public BigDecimal getAdjustAmount() { return adjustAmount; }
+    public void setAdjustAmount(BigDecimal adjustAmount) { this.adjustAmount = adjustAmount; }
+
     public Long getOperatorId() { return operatorId; }
     public void setOperatorId(Long operatorId) { this.operatorId = operatorId; }
 
     public Date getOperateTime() { return operateTime; }
     public void setOperateTime(Date operateTime) { this.operateTime = operateTime; }
+
+    public Date getAdjustTime() { return adjustTime; }
+    public void setAdjustTime(Date adjustTime) { this.adjustTime = adjustTime; }
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }

@@ -26,6 +26,8 @@ import com.vcc.card.service.ICardService;
 import com.vcc.card.service.ITransactionService;
 import com.vcc.finance.domain.CardDebt;
 import com.vcc.finance.service.IDebtService;
+import com.vcc.risk.domain.RiskEvent;
+import com.vcc.risk.service.IRiskEventService;
 import com.vcc.user.service.IUserAccountService;
 
 /**
@@ -320,8 +322,9 @@ public class AdminBusinessController extends BaseController
     }
 
     // ==================== 风控事件处理 ====================
-    // TODO: vcc-risk module not implemented yet
-    /*
+    @Autowired
+    private IRiskEventService riskEventService;
+
     @PreAuthorize("@ss.hasRole('admin')")
     @GetMapping("/risk/list")
     public TableDataInfo listRiskEvents(RiskEvent riskEvent)
@@ -345,11 +348,10 @@ public class AdminBusinessController extends BaseController
     {
         String status = params.get("status");
         String handleResult = params.get("handleResult");
-        if (status == null || (!RiskEvent.STATUS_RESOLVED.equals(status) && !RiskEvent.STATUS_IGNORED.equals(status)))
+        if (status == null || handleResult == null || handleResult.trim().isEmpty())
         {
-            return error("状态参数无效，仅支持 RESOLVED 或 IGNORED");
+            return error("参数不完整：需要 status 和 handleResult");
         }
         return toAjax(riskEventService.handleRiskEvent(id, getUserId(), handleResult, status));
     }
-    */
 }

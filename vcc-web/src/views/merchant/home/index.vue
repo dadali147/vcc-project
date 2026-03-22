@@ -81,10 +81,10 @@
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="状态" prop="status" width="80" align="center">
+            <el-table-column label="状态" prop="transactionStatus" width="80" align="center">
               <template #default="scope">
-                <el-tag :type="scope.row.status === '1' ? 'success' : scope.row.status === '2' ? 'danger' : 'info'" size="small">
-                  {{ scope.row.status === '1' ? '成功' : scope.row.status === '2' ? '失败' : '处理中' }}
+                <el-tag :type="scope.row.transactionStatus === 'SETTLED' ? 'success' : scope.row.transactionStatus === 'DECLINED' ? 'danger' : 'warning'" size="small">
+                  {{ scope.row.transactionStatus === 'SETTLED' ? '已清算' : scope.row.transactionStatus === 'DECLINED' ? '已拒绝' : '处理中' }}
                 </el-tag>
               </template>
             </el-table-column>

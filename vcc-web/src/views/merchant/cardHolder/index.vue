@@ -25,14 +25,18 @@
 
     <el-table :data="holderList" v-loading="loading" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="姓名" prop="holderName" width="120" />
+      <el-table-column label="姓名" width="120">
+        <template #default="scope">
+          {{ (scope.row.firstName || '') + ' ' + (scope.row.lastName || '') }}
+        </template>
+      </el-table-column>
       <el-table-column label="证件类型" prop="idType" width="100">
         <template #default="scope">
           {{ scope.row.idType === '1' ? '身份证' : scope.row.idType === '2' ? '护照' : '其他' }}
         </template>
       </el-table-column>
       <el-table-column label="证件号" prop="idNumber" width="180" show-overflow-tooltip />
-      <el-table-column label="手机号" prop="phone" width="140" />
+      <el-table-column label="手机号" prop="mobile" width="140" />
       <el-table-column label="邮箱" prop="email" width="180" show-overflow-tooltip />
       <el-table-column label="地址" prop="address" show-overflow-tooltip />
       <el-table-column label="创建时间" prop="createTime" width="170">
@@ -56,13 +60,13 @@
       <el-form :model="form" :rules="rules" ref="holderRef" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="姓名" prop="holderName">
-              <el-input v-model="form.holderName" placeholder="请输入姓名" />
+            <el-form-item label="名" prop="firstName">
+              <el-input v-model="form.firstName" placeholder="First Name" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="英文姓名" prop="holderNameEn">
-              <el-input v-model="form.holderNameEn" placeholder="请输入英文姓名" />
+            <el-form-item label="姓" prop="lastName">
+              <el-input v-model="form.lastName" placeholder="Last Name" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -84,8 +88,8 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="手机号" prop="phone">
-              <el-input v-model="form.phone" placeholder="请输入手机号" />
+            <el-form-item label="手机号" prop="mobile">
+              <el-input v-model="form.mobile" placeholder="请输入手机号" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -94,8 +98,32 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="地址" prop="address">
-          <el-input v-model="form.address" placeholder="请输入地址" />
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="国家" prop="country">
+              <el-input v-model="form.country" placeholder="请输入国家" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="城市" prop="city">
+              <el-input v-model="form.city" placeholder="请输入城市" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="州/省" prop="state">
+              <el-input v-model="form.state" placeholder="请输入州/省" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="邮编" prop="postCode">
+              <el-input v-model="form.postCode" placeholder="请输入邮编" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="详细地址" prop="address">
+          <el-input v-model="form.address" placeholder="请输入详细地址" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -129,10 +157,17 @@ const data = reactive({
     idNumber: undefined
   },
   rules: {
-    holderName: [{ required: true, message: "姓名不能为空", trigger: "blur" }],
+    firstName: [{ required: true, message: "名不能为空", trigger: "blur" }],
+    lastName: [{ required: true, message: "姓不能为空", trigger: "blur" }],
     idType: [{ required: true, message: "请选择证件类型", trigger: "change" }],
     idNumber: [{ required: true, message: "证件号不能为空", trigger: "blur" }],
-    phone: [{ required: true, message: "手机号不能为空", trigger: "blur" }, { pattern: /^\+?[1-9]\d{1,14}$/, message: "请输入正确的手机号（E.164格式，如 +8613800138000）", trigger: "blur" }]
+    mobile: [{ required: true, message: "手机号不能为空", trigger: "blur" }, { pattern: /^\+?[1-9]\d{1,14}$/, message: "请输入正确的手机号（E.164格式）", trigger: "blur" }],
+    email: [{ required: true, type: 'email', message: "请输入正确的邮箱", trigger: "blur" }],
+    country: [{ required: true, message: "国家不能为空", trigger: "blur" }],
+    address: [{ required: true, message: "地址不能为空", trigger: "blur" }],
+    city: [{ required: true, message: "城市不能为空", trigger: "blur" }],
+    state: [{ required: true, message: "州/省不能为空", trigger: "blur" }],
+    postCode: [{ required: true, message: "邮编不能为空", trigger: "blur" }]
   }
 })
 const { queryParams, form, rules } = toRefs(data)
@@ -160,12 +195,16 @@ function resetQuery() {
 function reset() {
   form.value = {
     holderId: undefined,
-    holderName: undefined,
-    holderNameEn: undefined,
+    firstName: undefined,
+    lastName: undefined,
     idType: '1',
     idNumber: undefined,
-    phone: undefined,
+    mobile: undefined,
     email: undefined,
+    country: undefined,
+    city: undefined,
+    state: undefined,
+    postCode: undefined,
     address: undefined
   }
   proxy.resetForm("holderRef")

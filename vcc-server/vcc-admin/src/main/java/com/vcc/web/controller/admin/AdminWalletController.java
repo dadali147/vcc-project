@@ -17,6 +17,7 @@ import com.vcc.common.core.domain.AjaxResult;
 import com.vcc.common.core.page.TableDataInfo;
 import com.vcc.common.enums.BusinessType;
 import com.vcc.user.domain.UserAccount;
+import java.util.Map;
 import com.vcc.user.service.IUserAccountService;
 
 /**
@@ -68,6 +69,18 @@ public class AdminWalletController extends BaseController
         BigDecimal amount = new BigDecimal(params.get("amount").toString());
         String reason = (String) params.get("reason");
 
+        if (amount.compareTo(BigDecimal.ZERO) == 0)
+        {
+            return error("调整金额不能为零");
+        }
+        if (reason == null || reason.trim().isEmpty())
+        {
+            return error("调账原因不能为空");
+        }
+        if (currency == null || currency.trim().isEmpty())
+        {
+            return error("币种不能为空");
+        }
         if (amount.compareTo(BigDecimal.ZERO) > 0)
         {
             // 增加余额
@@ -87,13 +100,17 @@ public class AdminWalletController extends BaseController
 
     /**
      * 查询动账明细（分页）
+     * 调用 IUserAccountService.selectAccountTransactions()
      */
     @PreAuthorize("@ss.hasRole('admin')")
     @GetMapping("/{userId}/transactions")
     public TableDataInfo transactions(@PathVariable Long userId)
     {
-        // TODO: Service层补全用户动账明细查询方法
         startPage();
-        return getDataTable(new java.util.ArrayList<>());
+        com.github.pagehelper.Page<?> page = com.github.pagehelper.PageHelper.getLocalPage();
+        int pageNum = page != null ? page.getPageNum() : 1;
+        int pageSize = page != null ? page.getPageSize() : 10;
+        List<Map<String, Object>> list = userAccountService.selectAccountTransactions(userId, pageNum, pageSize);
+        return getDataTable(list);
     }
 }

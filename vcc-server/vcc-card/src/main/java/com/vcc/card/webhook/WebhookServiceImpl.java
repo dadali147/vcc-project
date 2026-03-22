@@ -376,12 +376,18 @@ public class WebhookServiceImpl implements WebhookService
                 return Card.STATUS_FROZEN;
 
             // 文档定义值
+            // 文档定义值
             case "CLOSED":
-            // 文档定义值（业务流程文档 §2.3 状态流转）
-            case "SUSPENDED":
             // 防御性兼容（待上游确认）
             case "CANCELLED":
             case "CANCEL":
+                return Card.STATUS_CANCELLED;
+
+            // TODO-D-009: SUSPENDED(停用) 与 CLOSED(已销卡) 是不同状态（业务流程文档 §2.3），
+            // 需要在 Card 域对象中新增 STATUS_SUSPENDED 常量并映射到此分支，
+            // 不应复用 STATUS_CANCELLED。当前临时降级映射，待 Card 域对象补齐后修复。
+            case "SUSPENDED":
+                log.warn("SUSPENDED 状态临时映射为 CANCELLED，待 Card 域对象补齐 STATUS_SUSPENDED 后修复");
                 return Card.STATUS_CANCELLED;
 
             default:

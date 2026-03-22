@@ -35,6 +35,12 @@ public class CardIssueItem extends BaseEntity
 
     private String failReason;
 
+    /** DDL 基线：失败原因码 */
+    private String failReasonCode;
+
+    /** DDL 基线：标准化失败原因文案 */
+    private String failReasonText;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -61,4 +67,10 @@ public class CardIssueItem extends BaseEntity
 
     public String getFailReason() { return failReason; }
     public void setFailReason(String failReason) { this.failReason = failReason; }
+
+    public String getFailReasonCode() { return failReasonCode; }
+    public void setFailReasonCode(String failReasonCode) { this.failReasonCode = failReasonCode; }
+
+    public String getFailReasonText() { return failReasonText; }
+    public void setFailReasonText(String failReasonText) { this.failReasonText = failReasonText; }
 }

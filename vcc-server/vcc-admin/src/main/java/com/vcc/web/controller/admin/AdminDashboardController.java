@@ -56,6 +56,13 @@ public class AdminDashboardController extends BaseController
     /**
      * 首页聚合概览
      * 返回全局卡片统计、交易统计、入金统计的汇总信息
+     *
+     * TODO [E1-011]: 当前连续 4 次全表查询（cards/transactions/recharges/riskEvents），数据量增长后首页加载极慢。
+     * 应改为各 Service 中新增 SQL 聚合方法，如：
+     *   ICardService.selectCardOverview() → SELECT status, COUNT(*) GROUP BY
+     *   ITransactionService.selectTransactionOverview(startDate, endDate)
+     *   IRechargeService.selectRechargeOverview(startDate, endDate)
+     *   IRiskEventService.countByStatus(status)
      */
     @PreAuthorize("@ss.hasRole('admin')")
     @GetMapping("/overview")

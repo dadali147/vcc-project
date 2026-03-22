@@ -2,25 +2,67 @@
   <div class="register">
     <el-form ref="registerRef" :model="registerForm" :rules="registerRules" class="register-form">
       <h3 class="title">{{ title }}</h3>
-      <el-form-item prop="username">
-        <el-input 
-          v-model="registerForm.username" 
-          type="text" 
-          size="large" 
-          auto-complete="off" 
-          placeholder="账号"
+      <el-form-item prop="merchantName">
+        <el-input
+          v-model="registerForm.merchantName"
+          type="text"
+          size="large"
+          auto-complete="off"
+          placeholder="商户名称"
         >
           <template #prefix><svg-icon icon-class="user" class="el-input__icon input-icon" /></template>
         </el-input>
+      </el-form-item>
+      <el-form-item prop="contactName">
+        <el-input
+          v-model="registerForm.contactName"
+          type="text"
+          size="large"
+          auto-complete="off"
+          placeholder="联系人姓名"
+        >
+          <template #prefix><svg-icon icon-class="people" class="el-input__icon input-icon" /></template>
+        </el-input>
+      </el-form-item>
+      <el-form-item prop="email">
+        <el-input
+          v-model="registerForm.email"
+          type="text"
+          size="large"
+          auto-complete="off"
+          placeholder="邮箱（登录账号）"
+        >
+          <template #prefix><svg-icon icon-class="email" class="el-input__icon input-icon" /></template>
+        </el-input>
+      </el-form-item>
+      <el-form-item prop="emailCaptcha">
+        <el-input
+          size="large"
+          v-model="registerForm.emailCaptcha"
+          auto-complete="off"
+          placeholder="邮箱验证码"
+          style="width: 63%"
+          @keyup.enter="handleRegister"
+        >
+          <template #prefix><svg-icon icon-class="validCode" class="el-input__icon input-icon" /></template>
+        </el-input>
+        <el-button
+          size="large"
+          :disabled="captchaCooldown > 0"
+          @click="sendEmailCaptcha"
+          style="width: 34%; margin-left: 3%"
+        >
+          {{ captchaCooldown > 0 ? captchaCooldown + 's' : '发送验证码' }}
+        </el-button>
       </el-form-item>
       <el-form-item prop="password">
         <el-input
           v-model="registerForm.password"
           type="password"
-          size="large" 
+          size="large"
           auto-complete="off"
           placeholder="密码"
-          @keyup.enter="handleRegister"
+          show-password
         >
           <template #prefix><svg-icon icon-class="password" class="el-input__icon input-icon" /></template>
         </el-input>
@@ -29,33 +71,50 @@
         <el-input
           v-model="registerForm.confirmPassword"
           type="password"
-          size="large" 
+          size="large"
           auto-complete="off"
           placeholder="确认密码"
+          show-password
           @keyup.enter="handleRegister"
         >
           <template #prefix><svg-icon icon-class="password" class="el-input__icon input-icon" /></template>
         </el-input>
       </el-form-item>
-      <el-form-item prop="code" v-if="captchaEnabled">
+      <el-form-item prop="country">
+        <el-select v-model="registerForm.country" placeholder="国家（选填）" size="large" style="width: 100%">
+          <el-option label="中国" value="CN" />
+          <el-option label="中国香港" value="HK" />
+          <el-option label="中国台湾" value="TW" />
+          <el-option label="美国" value="US" />
+          <el-option label="英国" value="GB" />
+          <el-option label="新加坡" value="SG" />
+          <el-option label="日本" value="JP" />
+          <el-option label="韩国" value="KR" />
+        </el-select>
+      </el-form-item>
+      <el-form-item prop="inviteCode">
         <el-input
-          size="large" 
-          v-model="registerForm.code"
+          v-model="registerForm.inviteCode"
+          type="text"
+          size="large"
           auto-complete="off"
-          placeholder="验证码"
-          style="width: 63%"
-          @keyup.enter="handleRegister"
+          placeholder="邀请码（选填）"
         >
           <template #prefix><svg-icon icon-class="validCode" class="el-input__icon input-icon" /></template>
         </el-input>
-        <div class="register-code">
-          <img :src="codeUrl" @click="getCode" class="register-code-img"/>
-        </div>
+      </el-form-item>
+      <el-form-item prop="agreeProtocol">
+        <el-checkbox v-model="registerForm.agreeProtocol">
+          我已阅读并同意
+          <el-link type="primary" :underline="false">《用户服务协议》</el-link>
+          和
+          <el-link type="primary" :underline="false">《隐私政策》</el-link>
+        </el-checkbox>
       </el-form-item>
       <el-form-item style="width:100%;">
         <el-button
           :loading="loading"
-          size="large" 
+          size="large"
           type="primary"
           style="width:100%;"
           @click.prevent="handleRegister"
@@ -68,7 +127,6 @@
         </div>
       </el-form-item>
     </el-form>
-    <!--  底部  -->
     <div class="el-register-footer">
       <span>{{ footerContent }}</span>
     </div>
@@ -77,7 +135,8 @@
 
 <script setup>
 import { ElMessageBox } from "element-plus"
-import { getCodeImg, register } from "@/api/login"
+import { register } from "@/api/login"
+import request from "@/utils/request"
 import defaultSettings from '@/settings'
 
 const title = import.meta.env.VITE_APP_TITLE
@@ -86,11 +145,15 @@ const router = useRouter()
 const { proxy } = getCurrentInstance()
 
 const registerForm = ref({
-  username: "",
+  merchantName: "",
+  contactName: "",
+  email: "",
+  emailCaptcha: "",
   password: "",
   confirmPassword: "",
-  code: "",
-  uuid: ""
+  country: undefined,
+  inviteCode: "",
+  agreeProtocol: false
 })
 
 const equalToPassword = (rule, value, callback) => {
@@ -101,60 +164,81 @@ const equalToPassword = (rule, value, callback) => {
   }
 }
 
+const agreeProtocolValidator = (rule, value, callback) => {
+  if (!value) {
+    callback(new Error("请阅读并同意用户协议和隐私政策"))
+  } else {
+    callback()
+  }
+}
+
 const registerRules = {
-  username: [
-    { required: true, trigger: "blur", message: "请输入您的账号" },
-    { min: 2, max: 20, message: "用户账号长度必须介于 2 和 20 之间", trigger: "blur" }
+  merchantName: [{ required: true, trigger: "blur", message: "请输入商户名称" }],
+  contactName: [{ required: true, trigger: "blur", message: "请输入联系人姓名" }],
+  email: [
+    { required: true, trigger: "blur", message: "请输入您的邮箱" },
+    { type: 'email', message: "请输入正确的邮箱格式", trigger: "blur" }
   ],
+  emailCaptcha: [{ required: true, trigger: "change", message: "请输入邮箱验证码" }],
   password: [
     { required: true, trigger: "blur", message: "请输入您的密码" },
-    { min: 5, max: 20, message: "用户密码长度必须介于 5 和 20 之间", trigger: "blur" },
+    { min: 8, max: 20, message: "密码长度必须介于 8 和 20 之间", trigger: "blur" },
     { pattern: /^[^<>"'|\\]+$/, message: "不能包含非法字符：< > \" ' \\\ |", trigger: "blur" }
   ],
   confirmPassword: [
     { required: true, trigger: "blur", message: "请再次输入您的密码" },
     { required: true, validator: equalToPassword, trigger: "blur" }
   ],
-  code: [{ required: true, trigger: "change", message: "请输入验证码" }]
+  agreeProtocol: [{ validator: agreeProtocolValidator, trigger: "change" }]
 }
 
-const codeUrl = ref("")
 const loading = ref(false)
-const captchaEnabled = ref(true)
+const captchaCooldown = ref(0)
+let captchaTimer = null
+
+function sendEmailCaptcha() {
+  if (!registerForm.value.email) {
+    proxy.$modal.msgError("请先输入邮箱")
+    return
+  }
+  if (captchaCooldown.value > 0) return
+  request({
+    url: '/captchaEmail',
+    headers: { isToken: false },
+    method: 'post',
+    data: { email: registerForm.value.email, bizType: 'REGISTER' }
+  }).then(() => {
+    proxy.$modal.msgSuccess("验证码已发送")
+    captchaCooldown.value = 60
+    captchaTimer = setInterval(() => {
+      captchaCooldown.value--
+      if (captchaCooldown.value <= 0) {
+        clearInterval(captchaTimer)
+        captchaTimer = null
+      }
+    }, 1000)
+  }).catch(() => {})
+}
 
 function handleRegister() {
   proxy.$refs.registerRef.validate(valid => {
     if (valid) {
       loading.value = true
       register(registerForm.value).then(res => {
-        const username = registerForm.value.username
-        ElMessageBox.alert("<font color='red'>恭喜你，您的账号 " + username + " 注册成功！</font>", "系统提示", {
-          dangerouslyUseHTMLString: true,
-          type: "success",
-        }).then(() => {
+        const merchantName = registerForm.value.merchantName
+        ElMessageBox.alert(
+          "<font color='red'>恭喜你，商户 \"" + merchantName + "\" 注册成功！</font>",
+          "系统提示",
+          { dangerouslyUseHTMLString: true, type: "success" }
+        ).then(() => {
           router.push("/login")
         }).catch(() => {})
       }).catch(() => {
         loading.value = false
-        if (captchaEnabled) {
-          getCode()
-        }
       })
     }
   })
 }
-
-function getCode() {
-  getCodeImg().then(res => {
-    captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
-    if (captchaEnabled.value) {
-      codeUrl.value = "data:image/gif;base64," + res.img
-      registerForm.value.uuid = res.uuid
-    }
-  })
-}
-
-getCode()
 </script>
 
 <style lang='scss' scoped>
@@ -175,7 +259,7 @@ getCode()
 .register-form {
   border-radius: 6px;
   background: #ffffff;
-  width: 400px;
+  width: 440px;
   padding: 25px 25px 5px 25px;
   .el-input {
     height: 40px;
@@ -189,20 +273,6 @@ getCode()
     margin-left: 0px;
   }
 }
-.register-tip {
-  font-size: 13px;
-  text-align: center;
-  color: #bfbfbf;
-}
-.register-code {
-  width: 33%;
-  height: 40px;
-  float: right;
-  img {
-    cursor: pointer;
-    vertical-align: middle;
-  }
-}
 .el-register-footer {
   height: 40px;
   line-height: 40px;
@@ -214,9 +284,5 @@ getCode()
   font-family: Arial;
   font-size: 12px;
   letter-spacing: 1px;
-}
-.register-code-img {
-  height: 40px;
-  padding-left: 12px;
 }
 </style>

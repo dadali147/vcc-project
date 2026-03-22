@@ -161,12 +161,13 @@ public class RechargeServiceImpl implements IRechargeService
         Recharge recharge = new Recharge();
         recharge.setOrderNo(orderNo);
         recharge.setUserId(userId);
+        recharge.setMerchantId(userId);
         recharge.setCardId(cardId);
         recharge.setAmount(amount);
         recharge.setCurrency(currency);
         recharge.setFee(calculatedFee);
         recharge.setActualAmount(actualAmount);
-        recharge.setStatus(Recharge.STATUS_PENDING);
+        recharge.setStatus(Recharge.STATUS_SUBMITTED);
         recharge.setRechargeType(Recharge.TYPE_PREPAID);
 
         // VCC-008: 使用 upstreamCardId 调用上游充值
@@ -345,6 +346,7 @@ public class RechargeServiceImpl implements IRechargeService
         recharge.setRechargeType(Recharge.TYPE_PREPAID);
         recharge.setTxHash(txHash);
         recharge.setCompletedAt(new Date());
+        recharge.setMerchantId(userId);
 
         rechargeMapper.insertRecharge(recharge);
         // P0 修复：增加审计日志，记录操作人、金额、目标用户、时间

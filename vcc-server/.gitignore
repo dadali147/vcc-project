@@ -16,6 +16,10 @@ logs/
 application-local.yml
 application-dev.yml
 
+# 测试
+test-results/
+
 # 其他
 .DS_Store
 *.swp
+node_modules/

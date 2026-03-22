@@ -1,26 +1,26 @@
 # VCC Web Merchant
 
-虚拟信用卡商户端 - 前端
+Virtual Credit Card merchant portal frontend.
 
-## 技术栈
+## Tech Stack
 - Vue 3 + Vite
 - Element Plus
-- Pinia
+- Pinia (State Management)
 - Vue Router
-- i18n
+- Vue I18n
 
-## 快速开始
+## Quick Start
 ```bash
 npm install
 npm run dev
 ```
 
-## 构建
+## Build
 ```bash
 npm run build
 ```
 
-## 测试
+## Test
 ```bash
 npx playwright test
 ```

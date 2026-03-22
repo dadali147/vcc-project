@@ -31,12 +31,24 @@ public class Transaction extends BaseEntity
     public static final String CATEGORY_FEE = "FEE";
     public static final String CATEGORY_ADJUSTMENT = "ADJUSTMENT";
 
-    /** 状态：处理中 */
+    /** 状态：处理中（0） */
     public static final int STATUS_PROCESSING = 0;
-    /** 状态：成功 */
+    /** 状态：成功（1） */
     public static final int STATUS_SUCCESS = 1;
-    /** 状态：失败 */
+    /** 状态：失败（2） */
     public static final int STATUS_FAILED = 2;
+    /** 状态：已授权（3）- 文档扩展 AUTHORIZED */
+    public static final int STATUS_AUTHORIZED = 3;
+    /** 状态：已拒绝（4）- 文档扩展 DECLINED */
+    public static final int STATUS_DECLINED = 4;
+    /** 状态：已清算（5）- 文档扩展 SETTLED */
+    public static final int STATUS_SETTLED = 5;
+    /** 状态：已撤销（6）- 文档扩展 REVERSED */
+    public static final int STATUS_REVERSED = 6;
+    /** 状态：已退款（7）- 文档扩展 REFUNDED */
+    public static final int STATUS_REFUNDED = 7;
+    /** 状态：争议中（8）- 文档扩展 DISPUTED */
+    public static final int STATUS_DISPUTED = 8;
 
     /** 展示模式 */
     public static final String DISPLAY_NORMAL = "NORMAL";

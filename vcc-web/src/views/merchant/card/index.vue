@@ -4,11 +4,12 @@
       <el-form-item label="卡号" prop="cardNo">
         <el-input v-model="queryParams.cardNo" placeholder="请输入卡号" clearable style="width: 200px" @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="卡片状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 160px">
-          <el-option label="正常" value="0" />
-          <el-option label="冻结" value="1" />
-          <el-option label="已注销" value="2" />
+      <el-form-item label="卡片状态" prop="cardStatus">
+        <el-select v-model="queryParams.cardStatus" placeholder="全部" clearable style="width: 160px">
+          <el-option label="待激活" value="PENDING_ACTIVATION" />
+          <el-option label="可用" value="ACTIVE" />
+          <el-option label="已冻结" value="FROZEN" />
+          <el-option label="已销卡" value="CLOSED" />
         </el-select>
       </el-form-item>
       <el-form-item label="卡BIN" prop="cardBinId">
@@ -39,7 +40,7 @@
       <el-table-column label="持卡人" prop="holderName" width="120" />
       <el-table-column label="卡类型" prop="cardType" width="100">
         <template #default="scope">
-          <el-tag size="small">{{ scope.row.cardType === '1' ? '储值卡' : '预算卡' }}</el-tag>
+          <el-tag size="small" :type="scope.row.cardType === 'BUDGET' ? 'warning' : 'primary'">{{ scope.row.cardType === 'PREPAID' ? '储值卡' : '预算卡' }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="余额" prop="balance" width="120" align="right">
@@ -47,10 +48,10 @@
           <span>{{ scope.row.balance }} {{ scope.row.currency }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" prop="status" width="80" align="center">
+      <el-table-column label="状态" prop="cardStatus" width="100" align="center">
         <template #default="scope">
-          <el-tag :type="scope.row.status === '0' ? 'success' : scope.row.status === '1' ? 'warning' : 'info'" size="small">
-            {{ scope.row.status === '0' ? '正常' : scope.row.status === '1' ? '冻结' : '已注销' }}
+          <el-tag :type="cardStatusTagType(scope.row.cardStatus)" size="small">
+            {{ cardStatusLabel(scope.row.cardStatus) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -62,9 +63,9 @@
       <el-table-column label="操作" width="260" align="center">
         <template #default="scope">
           <el-button link type="primary" @click="handleDetail(scope.row)">详情</el-button>
-          <el-button link type="primary" v-if="scope.row.status === '0'" @click="handleFreeze(scope.row)">冻结</el-button>
-          <el-button link type="success" v-if="scope.row.status === '1'" @click="handleUnfreeze(scope.row)">解冻</el-button>
-          <el-button link type="danger" v-if="scope.row.status !== '2'" @click="handleCancel(scope.row)">注销</el-button>
+          <el-button link type="primary" v-if="scope.row.cardStatus === 'ACTIVE'" @click="handleFreeze(scope.row)">冻结</el-button>
+          <el-button link type="success" v-if="scope.row.cardStatus === 'FROZEN'" @click="handleUnfreeze(scope.row)">解冻</el-button>
+          <el-button link type="danger" v-if="scope.row.cardStatus !== 'CLOSED'" @click="handleCancel(scope.row)">注销</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -85,14 +86,26 @@
             <el-option v-for="item in cardBinList" :key="item.binId" :label="item.binName + ' (' + item.brand + ')'" :value="item.binId" />
           </el-select>
         </el-form-item>
+        <el-form-item label="卡名称" prop="cardName">
+          <el-input v-model="form.cardName" placeholder="请输入卡名称（自定义展示名）" />
+        </el-form-item>
         <el-form-item label="卡类型" prop="cardType">
           <el-radio-group v-model="form.cardType">
-            <el-radio value="1">储值卡</el-radio>
-            <el-radio value="2">预算卡</el-radio>
+            <el-radio value="PREPAID">储值卡</el-radio>
+            <el-radio value="BUDGET">预算卡</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="初始额度" prop="initialAmount">
-          <el-input-number v-model="form.initialAmount" :min="0" :precision="2" style="width: 100%" />
+        <el-form-item label="币种" prop="currency">
+          <el-select v-model="form.currency" placeholder="请选择币种" style="width: 100%">
+            <el-option label="USD" value="USD" />
+            <el-option label="EUR" value="EUR" />
+            <el-option label="GBP" value="GBP" />
+            <el-option label="SGD" value="SGD" />
+            <el-option label="HKD" value="HKD" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="预算金额" prop="budgetAmount" v-if="form.cardType === 'BUDGET'">
+          <el-input-number v-model="form.budgetAmount" :min="0" :precision="2" style="width: 100%" placeholder="预算卡必填" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
@@ -118,11 +131,11 @@
         </el-descriptions-item>
         <el-descriptions-item label="持卡人">{{ detail.holderName }}</el-descriptions-item>
         <el-descriptions-item label="卡BIN">{{ detail.cardBinName }}</el-descriptions-item>
-        <el-descriptions-item label="卡类型">{{ detail.cardType === '1' ? '储值卡' : '预算卡' }}</el-descriptions-item>
+        <el-descriptions-item label="卡类型">{{ detail.cardType === 'PREPAID' ? '储值卡' : '预算卡' }}</el-descriptions-item>
         <el-descriptions-item label="余额">{{ detail.balance }} {{ detail.currency }}</el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag :type="detail.status === '0' ? 'success' : detail.status === '1' ? 'warning' : 'info'" size="small">
-            {{ detail.status === '0' ? '正常' : detail.status === '1' ? '冻结' : '已注销' }}
+          <el-tag :type="cardStatusTagType(detail.cardStatus)" size="small">
+            {{ cardStatusLabel(detail.cardStatus) }}
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="开卡时间" :span="2">{{ parseTime(detail.createTime) }}</el-descriptions-item>
@@ -157,17 +170,29 @@ const data = reactive({
     pageNum: 1,
     pageSize: 10,
     cardNo: undefined,
-    status: undefined,
+    cardStatus: undefined,
     cardBinId: undefined
   },
   rules: {
     holderId: [{ required: true, message: "请选择持卡人", trigger: "change" }],
     cardBinId: [{ required: true, message: "请选择卡BIN", trigger: "change" }],
     cardType: [{ required: true, message: "请选择卡类型", trigger: "change" }],
-    initialAmount: [{ required: true, message: "请输入初始额度", trigger: "blur" }]
+    cardName: [{ required: true, message: "请输入卡名称", trigger: "blur" }],
+    currency: [{ required: true, message: "请选择币种", trigger: "change" }],
+    budgetAmount: [{ required: true, message: "请输入预算金额", trigger: "blur" }]
   }
 })
 const { queryParams, form, rules } = toRefs(data)
+
+/** cardStatus 枚举文案映射 - 对齐状态字典 01.3 */
+const cardStatusMap = {
+  PENDING_ACTIVATION: { label: '待激活', type: 'info' },
+  ACTIVE: { label: '可用', type: 'success' },
+  FROZEN: { label: '已冻结', type: 'warning' },
+  CLOSED: { label: '已销卡', type: 'info' }
+}
+function cardStatusLabel(status) { return cardStatusMap[status]?.label || status }
+function cardStatusTagType(status) { return cardStatusMap[status]?.type || 'info' }
 
 function getList() {
   loading.value = true
@@ -193,8 +218,10 @@ function reset() {
   form.value = {
     holderId: undefined,
     cardBinId: undefined,
-    cardType: '1',
-    initialAmount: undefined,
+    cardType: 'PREPAID',
+    cardName: undefined,
+    currency: 'USD',
+    budgetAmount: undefined,
     remark: undefined
   }
   proxy.resetForm("cardRef")

@@ -1,28 +1,32 @@
 # VCC Server
 
-虚拟信用卡管理后台 - 服务端
+Virtual Credit Card management backend server.
 
-## 技术栈
+## Tech Stack
 - Spring Boot 3.x
 - MySQL 8.0
 - Redis 7.x
-- YeeVCC API 集成
+- MyBatis-Plus
+- Spring Security
 
-## 模块说明
-- `vcc-admin` - Web 管理入口
-- `vcc-card` - 卡片业务
-- `vcc-user` - 用户管理
-- `vcc-finance` - 财务模块
-- `vcc-upstream` - YeeVCC 上游对接
+## Modules
+- `vcc-admin` - Admin API entry
+- `vcc-card` - Card business logic
+- `vcc-user` - User management
+- `vcc-finance` - Finance module
+- `vcc-upstream` - Upstream provider integration
+- `vcc-common` - Common utilities
+- `vcc-framework` - Framework configuration
+- `vcc-system` - System management
 
-## 快速开始
+## Quick Start
 ```bash
-# 编译
+# Build
 mvn clean package
 
-# 启动
+# Run
 java -jar vcc-admin/target/vcc-admin.jar
 ```
 
-## 接口文档
-启动后访问：http://localhost:8080/swagger-ui.html
+## API Documentation
+After startup: http://localhost:8080/swagger-ui.html

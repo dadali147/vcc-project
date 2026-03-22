@@ -32,6 +32,9 @@ public class VccMerchantBin extends BaseEntity
     /** 分配操作人ID */
     private Long assignedBy;
 
+    /** 备注 */
+    private String remark;
+
     /** 逻辑删除：0正常，1删除 */
     private String delFlag;
 
@@ -99,6 +102,16 @@ public class VccMerchantBin extends BaseEntity
     public void setAssignedBy(Long assignedBy)
     {
         this.assignedBy = assignedBy;
+    }
+
+    public String getRemark()
+    {
+        return remark;
+    }
+
+    public void setRemark(String remark)
+    {
+        this.remark = remark;
     }
 
     public String getDelFlag()

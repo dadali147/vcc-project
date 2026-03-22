@@ -63,6 +63,30 @@ public class SysUser extends BaseEntity
     /** 删除标志（0代表存在 2代表删除） */
     private String delFlag;
 
+    /** KYC 状态：SUBMITTED / UNDER_REVIEW / REJECTED / APPROVED（对齐状态字典 01.3） */
+    private String kycStatus;
+
+    /** KYC 拒绝原因 */
+    private String kycRejectReason;
+
+    /** KYC 审核时间 */
+    private Date kycReviewTime;
+
+    /** KYC 审核人 */
+    private String kycReviewer;
+
+    /** KYC 提交时间 */
+    private Date kycSubmitTime;
+
+    /** 2FA 是否启用（0否 1是） */
+    private String twoFaEnabled;
+
+    /** 2FA 绑定时间 */
+    private Date twoFaBindTime;
+
+    /** 2FA 绑定设备标识 */
+    private String twoFaDevice;
+
     /** 最后登录IP */
     @Excel(name = "最后登录IP", type = Type.EXPORT)
     private String loginIp;
@@ -305,6 +329,86 @@ public class SysUser extends BaseEntity
     public void setRoleId(Long roleId)
     {
         this.roleId = roleId;
+    }
+
+    public String getKycStatus()
+    {
+        return kycStatus;
+    }
+
+    public void setKycStatus(String kycStatus)
+    {
+        this.kycStatus = kycStatus;
+    }
+
+    public String getKycRejectReason()
+    {
+        return kycRejectReason;
+    }
+
+    public void setKycRejectReason(String kycRejectReason)
+    {
+        this.kycRejectReason = kycRejectReason;
+    }
+
+    public Date getKycReviewTime()
+    {
+        return kycReviewTime;
+    }
+
+    public void setKycReviewTime(Date kycReviewTime)
+    {
+        this.kycReviewTime = kycReviewTime;
+    }
+
+    public String getKycReviewer()
+    {
+        return kycReviewer;
+    }
+
+    public void setKycReviewer(String kycReviewer)
+    {
+        this.kycReviewer = kycReviewer;
+    }
+
+    public Date getKycSubmitTime()
+    {
+        return kycSubmitTime;
+    }
+
+    public void setKycSubmitTime(Date kycSubmitTime)
+    {
+        this.kycSubmitTime = kycSubmitTime;
+    }
+
+    public String getTwoFaEnabled()
+    {
+        return twoFaEnabled;
+    }
+
+    public void setTwoFaEnabled(String twoFaEnabled)
+    {
+        this.twoFaEnabled = twoFaEnabled;
+    }
+
+    public Date getTwoFaBindTime()
+    {
+        return twoFaBindTime;
+    }
+
+    public void setTwoFaBindTime(Date twoFaBindTime)
+    {
+        this.twoFaBindTime = kycReviewTime;
+    }
+
+    public String getTwoFaDevice()
+    {
+        return twoFaDevice;
+    }
+
+    public void setTwoFaDevice(String twoFaDevice)
+    {
+        this.twoFaDevice = twoFaDevice;
     }
 
     @Override

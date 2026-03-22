@@ -55,25 +55,61 @@ public class AdminUserController extends BaseController
     @GetMapping("/{userId}")
     public AjaxResult getInfo(@PathVariable Long userId)
     {
-        // TODO: Service层补全KYC信息查询
-        return success(userService.selectUserById(userId));
+        SysUser user = userService.selectUserById(userId);
+        if (user == null)
+        {
+            return error("用户不存在");
+        }
+        // 返回包含 KYC 信息的完整用户对象
+        // kycStatus / kycRejectReason / kycReviewTime / kycReviewer / kycSubmitTime 已在 SysUser 实体中
+        return success(user);
     }
 
     /**
      * KYC 审核
+     * 状态流转（对齐状态字典 01.3 kycStatus）：
+     *   SUBMITTED / UNDER_REVIEW → APPROVED（通过）
+     *   SUBMITTED / UNDER_REVIEW → REJECTED（拒绝，必须提供 rejectReason）
      */
     @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "用户管理-KYC审核", businessType = BusinessType.UPDATE)
     @PutMapping("/{userId}/audit")
     public AjaxResult audit(@PathVariable Long userId, @RequestBody Map<String, String> params)
     {
-        String result = params.get("result");
+        String result = params.get("result"); // "approve" or "reject"
         String remark = params.get("remark");
-        // TODO: Service层补全KYC审核方法 auditKyc(userId, result, remark)
+        if (result == null || (!"approve".equalsIgnoreCase(result) && !"reject".equalsIgnoreCase(result)))
+        {
+            return error("审核结果参数错误，必须为 approve 或 reject");
+        }
         SysUser user = userService.selectUserById(userId);
         if (user == null)
         {
             return error("用户不存在");
+        }
+        // 仅允许从 SUBMITTED / UNDER_REVIEW 状态发起审核
+        String currentKycStatus = user.getKycStatus();
+        if (!"SUBMITTED".equals(currentKycStatus) && !"UNDER_REVIEW".equals(currentKycStatus))
+        {
+            return error("当前 KYC 状态不允许审核操作，当前状态：" + (currentKycStatus != null ? currentKycStatus : "未提交"));
+        }
+        if ("approve".equalsIgnoreCase(result))
+        {
+            user.setKycStatus("APPROVED");
+            user.setKycReviewer(getUsername());
+            user.setKycReviewTime(new java.util.Date());
+            user.setKycRejectReason(null);
+        }
+        else
+        {
+            if (remark == null || remark.trim().isEmpty())
+            {
+                return error("拒绝审核必须提供拒绝原因");
+            }
+            user.setKycStatus("REJECTED");
+            user.setKycReviewer(getUsername());
+            user.setKycReviewTime(new java.util.Date());
+            user.setKycRejectReason(remark);
         }
         user.setRemark(remark);
         return toAjax(userService.updateUser(user));

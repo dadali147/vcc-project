@@ -4,11 +4,14 @@
       <el-form-item label="卡号" prop="cardNo">
         <el-input v-model="queryParams.cardNo" placeholder="请输入卡号" clearable style="width: 200px" @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="交易状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 140px">
-          <el-option label="成功" value="1" />
-          <el-option label="失败" value="2" />
-          <el-option label="处理中" value="0" />
+      <el-form-item label="交易状态" prop="transactionStatus">
+        <el-select v-model="queryParams.transactionStatus" placeholder="全部" clearable style="width: 140px">
+          <el-option label="已授权" value="AUTHORIZED" />
+          <el-option label="已拒绝" value="DECLINED" />
+          <el-option label="已清算" value="SETTLED" />
+          <el-option label="已撤销" value="REVERSED" />
+          <el-option label="已退款" value="REFUNDED" />
+          <el-option label="争议中" value="DISPUTED" />
         </el-select>
       </el-form-item>
       <el-form-item label="交易时间" prop="dateRange">
@@ -46,10 +49,10 @@
           <span>{{ scope.row.settleAmount }} USD</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" prop="status" width="80" align="center">
+      <el-table-column label="状态" prop="transactionStatus" width="100" align="center">
         <template #default="scope">
-          <el-tag :type="scope.row.status === '1' ? 'success' : scope.row.status === '2' ? 'danger' : 'info'" size="small">
-            {{ scope.row.status === '1' ? '成功' : scope.row.status === '2' ? '失败' : '处理中' }}
+          <el-tag :type="txnStatusTagType(scope.row.transactionStatus)" size="small">
+            {{ txnStatusLabel(scope.row.transactionStatus) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -70,8 +73,8 @@
         <el-descriptions-item label="交易时间">{{ parseTime(detail.transTime) }}</el-descriptions-item>
         <el-descriptions-item label="卡号">{{ detail.cardNo }}</el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag :type="detail.status === '1' ? 'success' : detail.status === '2' ? 'danger' : 'info'" size="small">
-            {{ detail.status === '1' ? '成功' : detail.status === '2' ? '失败' : '处理中' }}
+          <el-tag :type="txnStatusTagType(detail.transactionStatus)" size="small">
+            {{ txnStatusLabel(detail.transactionStatus) }}
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="商户名称">{{ detail.merchantName }}</el-descriptions-item>
@@ -107,10 +110,22 @@ const data = reactive({
     pageNum: 1,
     pageSize: 10,
     cardNo: undefined,
-    status: undefined
+    transactionStatus: undefined
   }
 })
 const { queryParams } = toRefs(data)
+
+/** transactionStatus 枚举文案映射 - 对齐状态字典 01.3 */
+const txnStatusMap = {
+  AUTHORIZED: { label: '已授权', type: 'warning' },
+  DECLINED: { label: '已拒绝', type: 'danger' },
+  SETTLED: { label: '已清算', type: 'success' },
+  REVERSED: { label: '已撤销', type: 'info' },
+  REFUNDED: { label: '已退款', type: 'info' },
+  DISPUTED: { label: '争议中', type: 'danger' }
+}
+function txnStatusLabel(status) { return txnStatusMap[status]?.label || status }
+function txnStatusTagType(status) { return txnStatusMap[status]?.type || 'info' }
 
 function getList() {
   loading.value = true

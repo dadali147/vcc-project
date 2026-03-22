@@ -1,12 +1,13 @@
 import request from '@/utils/request'
 
 // 登录方法
-export function login(username, password, code, uuid) {
+export function login(email, password, captcha, uuid, loginType = 'merchant') {
   const data = {
-    username,
+    email,
     password,
-    code,
-    uuid
+    captcha,
+    uuid,
+    loginType
   }
   return request({
     url: '/login',

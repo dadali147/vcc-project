@@ -32,7 +32,7 @@ public class RiskRuleController extends BaseController
     /**
      * 查询风控规则列表
      */
-    @PreAuthorize("@ss.hasPermi('risk:rule:list')")
+    @PreAuthorize("@ss.hasRole('admin')")
     @GetMapping("/list")
     public TableDataInfo list(RiskRule riskRule)
     {
@@ -44,7 +44,7 @@ public class RiskRuleController extends BaseController
     /**
      * 获取风控规则详情
      */
-    @PreAuthorize("@ss.hasPermi('risk:rule:query')")
+    @PreAuthorize("@ss.hasRole('admin')")
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable Long id)
     {
@@ -54,7 +54,7 @@ public class RiskRuleController extends BaseController
     /**
      * 新增风控规则
      */
-    @PreAuthorize("@ss.hasPermi('risk:rule:add')")
+    @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "风控规则", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody RiskRule riskRule)
@@ -65,7 +65,7 @@ public class RiskRuleController extends BaseController
     /**
      * 修改风控规则
      */
-    @PreAuthorize("@ss.hasPermi('risk:rule:edit')")
+    @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "风控规则", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody RiskRule riskRule)
@@ -76,7 +76,7 @@ public class RiskRuleController extends BaseController
     /**
      * 启用/禁用风控规则
      */
-    @PreAuthorize("@ss.hasPermi('risk:rule:edit')")
+    @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "风控规则", businessType = BusinessType.UPDATE)
     @PutMapping("/{id}/toggle")
     public AjaxResult toggle(@PathVariable Long id)
@@ -87,7 +87,7 @@ public class RiskRuleController extends BaseController
     /**
      * 删除风控规则
      */
-    @PreAuthorize("@ss.hasPermi('risk:rule:remove')")
+    @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "风控规则", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids)

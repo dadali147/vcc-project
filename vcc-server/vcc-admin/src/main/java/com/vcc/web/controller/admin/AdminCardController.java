@@ -72,11 +72,11 @@ public class AdminCardController extends BaseController
         // 1=正常(激活), 2=冻结, 3=注销(取消)
         switch (status)
         {
-            case 1:
+            case Card.STATUS_ACTIVE:
                 return toAjax(cardService.activateCard(id, getUserId()));
-            case 2:
+            case Card.STATUS_FROZEN:
                 return toAjax(cardService.freezeCard(id, getUserId()));
-            case 3:
+            case Card.STATUS_CANCELLED:
                 return toAjax(cardService.cancelCard(id, getUserId()));
             default:
                 return error("无效的状态值");
@@ -98,21 +98,28 @@ public class AdminCardController extends BaseController
 
     /**
      * 卡产品统计
+     *
+     * TODO [E1-010]: 当前全表加载后内存统计，数据量大时性能堪忧。
+     * 应改为 ICardService 中新增 SQL 聚合查询方法，如：
+     *   Map<String, Object> selectCardStats() → SELECT status, card_type, COUNT(*) GROUP BY
+     *   避免将全量卡片数据加载到 JVM 内存中进行 stream 过滤。
      */
     @PreAuthorize("@ss.hasRole('admin')")
     @GetMapping("/stats")
     public AjaxResult stats()
     {
-        // TODO: Service层补全统计方法（总卡数/活跃/储值/预算/按BIN统计/按月趋势30天）
+        // TODO [E1-010]: 当前全表加载后内存统计，数据量大时性能堪忧。
+        // 应改为 ICardService 中新增 SQL 聚合查询方法，如：
+        //   Map<String, Object> selectCardStats() → SELECT status, card_type, COUNT(*) GROUP BY
         Map<String, Object> stats = new HashMap<>();
         List<Card> allCards = cardService.selectCardList(new Card());
         stats.put("totalCards", allCards.size());
 
-        long activeCount = allCards.stream().filter(c -> c.getStatus() != null && c.getStatus() == 1).count();
-        long frozenCount = allCards.stream().filter(c -> c.getStatus() != null && c.getStatus() == 3).count();
-        long cancelledCount = allCards.stream().filter(c -> c.getStatus() != null && c.getStatus() == 4).count();
-        long prepaidCount = allCards.stream().filter(c -> c.getCardType() != null && c.getCardType() == 1).count();
-        long budgetCount = allCards.stream().filter(c -> c.getCardType() != null && c.getCardType() == 2).count();
+        long activeCount = allCards.stream().filter(c -> c.getStatus() != null && c.getStatus() == Card.STATUS_ACTIVE).count();
+        long frozenCount = allCards.stream().filter(c -> c.getStatus() != null && c.getStatus() == Card.STATUS_FROZEN).count();
+        long cancelledCount = allCards.stream().filter(c -> c.getStatus() != null && c.getStatus() == Card.STATUS_CANCELLED).count();
+        long prepaidCount = allCards.stream().filter(c -> c.getCardType() != null && c.getCardType() == Card.TYPE_PREPAID).count();
+        long budgetCount = allCards.stream().filter(c -> c.getCardType() != null && c.getCardType() == Card.TYPE_BUDGET).count();
 
         stats.put("activeCards", activeCount);
         stats.put("frozenCards", frozenCount);

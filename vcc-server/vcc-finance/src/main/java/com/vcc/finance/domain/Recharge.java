@@ -15,12 +15,18 @@ public class Recharge extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 状态：待处理 */
+    /** 状态：待处理/已提交（0） */
     public static final int STATUS_PENDING = 0;
-    /** 状态：成功 */
+    /** 状态：已提交（同 STATUS_PENDING，文档 SUBMITTED 语义） */
+    public static final int STATUS_SUBMITTED = 0;
+    /** 状态：成功（1） */
     public static final int STATUS_SUCCESS = 1;
-    /** 状态：失败 */
+    /** 状态：失败（2） */
     public static final int STATUS_FAILED = 2;
+    /** 状态：处理中（3）- 文档扩展 */
+    public static final int STATUS_PROCESSING = 3;
+    /** 状态：已取消（4）- 文档扩展 */
+    public static final int STATUS_CANCELED = 4;
 
     /** 充值类型：储值卡充值 */
     public static final int TYPE_PREPAID = 1;

@@ -2,13 +2,13 @@
   <div class="login">
     <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
       <h3 class="title">{{ title }}</h3>
-      <el-form-item prop="username">
+      <el-form-item prop="email">
         <el-input
-          v-model="loginForm.username"
+          v-model="loginForm.email"
           type="text"
           size="large"
           auto-complete="off"
-          placeholder="账号"
+          placeholder="邮箱"
         >
           <template #prefix><svg-icon icon-class="user" class="el-input__icon input-icon" /></template>
         </el-input>
@@ -25,9 +25,9 @@
           <template #prefix><svg-icon icon-class="password" class="el-input__icon input-icon" /></template>
         </el-input>
       </el-form-item>
-      <el-form-item prop="code" v-if="captchaEnabled">
+      <el-form-item prop="captcha" v-if="captchaEnabled">
         <el-input
-          v-model="loginForm.code"
+          v-model="loginForm.captcha"
           size="large"
           auto-complete="off"
           placeholder="验证码"
@@ -79,17 +79,18 @@ const router = useRouter()
 const { proxy } = getCurrentInstance()
 
 const loginForm = ref({
-  username: "admin",
-  password: "admin123",
+  email: "",
+  password: "",
+  loginType: "merchant",
   rememberMe: false,
-  code: "",
+  captcha: "",
   uuid: ""
 })
 
 const loginRules = {
-  username: [{ required: true, trigger: "blur", message: "请输入您的账号" }],
+  email: [{ required: true, trigger: "blur", message: "请输入您的邮箱" }, { type: 'email', message: "请输入正确的邮箱格式", trigger: "blur" }],
   password: [{ required: true, trigger: "blur", message: "请输入您的密码" }],
-  code: [{ required: true, trigger: "change", message: "请输入验证码" }]
+  captcha: [{ required: true, trigger: "change", message: "请输入验证码" }]
 }
 
 const codeUrl = ref("")
@@ -97,7 +98,7 @@ const loading = ref(false)
 // 验证码开关
 const captchaEnabled = ref(true)
 // 注册开关
-const register = ref(false)
+const register = ref(true)
 const redirect = ref(undefined)
 
 watch(route, (newRoute) => {
@@ -110,12 +111,11 @@ function handleLogin() {
       loading.value = true
       // 勾选了需要记住密码设置在 cookie 中设置记住用户名和密码
       if (loginForm.value.rememberMe) {
-        Cookies.set("username", loginForm.value.username, { expires: 30 })
+        Cookies.set("email", loginForm.value.email, { expires: 30 })
         Cookies.set("password", encrypt(loginForm.value.password), { expires: 30 })
         Cookies.set("rememberMe", loginForm.value.rememberMe, { expires: 30 })
       } else {
-        // 否则移除
-        Cookies.remove("username")
+        Cookies.remove("email")
         Cookies.remove("password")
         Cookies.remove("rememberMe")
       }
@@ -151,12 +151,13 @@ function getCode() {
 }
 
 function getCookie() {
-  const username = Cookies.get("username")
+  const email = Cookies.get("email")
   const password = Cookies.get("password")
   const rememberMe = Cookies.get("rememberMe")
   loginForm.value = {
-    username: username === undefined ? loginForm.value.username : username,
+    email: email === undefined ? loginForm.value.email : email,
     password: password === undefined ? loginForm.value.password : decrypt(password),
+    loginType: "merchant",
     rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
   }
 }

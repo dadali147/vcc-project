@@ -55,15 +55,27 @@ public class AdminTransactionController extends BaseController
 
     /**
      * 今日统计（笔数/金额/成功/失败）
+     *
+     * TODO [E1-012]: 当前返回全量统计而非"今日"数据。
+     * 需在 ITransactionService 中新增按日期范围统计方法，如：
+     *   Map<String, Object> selectTransactionStatsByDateRange(Date start, Date end)
+     * 当前临时使用全量数据 + 内存过滤，仅用于开发阶段，上线前必须改为 SQL 聚合。
      */
     @PreAuthorize("@ss.hasRole('admin')")
     @GetMapping("/stats")
     public AjaxResult stats()
     {
-        // TODO: Service层补全今日交易统计方法
         Map<String, Object> stats = new HashMap<>();
         List<Transaction> allTxns = transactionService.selectTransactionList(new Transaction());
-        stats.put("totalCount", allTxns.size());
+
+        // 临时内存过滤"今日"数据（上线前需改为 SQL 聚合）
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDateTime todayStart = today.atStartOfDay();
+        long todayCount = allTxns.stream()
+                .filter(t -> t.getCreateTime() != null && !t.getCreateTime().before(java.sql.Timestamp.valueOf(todayStart)))
+                .count();
+
+        stats.put("totalCount", todayCount);
 
         long successCount = allTxns.stream().filter(t -> t.getStatus() != null && t.getStatus() == 1).count();
         long failedCount = allTxns.stream().filter(t -> t.getStatus() != null && t.getStatus() == 2).count();

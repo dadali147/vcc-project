@@ -16,6 +16,9 @@ public class CardDebt extends BaseEntity
     public static final String STATUS_OUTSTANDING = "OUTSTANDING";
     public static final String STATUS_SETTLED     = "SETTLED";
 
+    /** DDL 基线：未结清 */
+    public static final String STATUS_UNPAID      = "UNPAID";
+
     private Long id;
 
     private Long merchantId;
@@ -23,6 +26,9 @@ public class CardDebt extends BaseEntity
     private Long cardId;
 
     private BigDecimal debtAmount;
+
+    /** DDL 基线：欠费明细JSON */
+    private String feeDetails;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date occurredAt;
@@ -34,6 +40,13 @@ public class CardDebt extends BaseEntity
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date settleTime;
+
+    /** DDL 基线：结清时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date settledAt;
+
+    /** DDL 基线：结清操作人 */
+    private Long settledBy;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -58,4 +71,13 @@ public class CardDebt extends BaseEntity
 
     public Date getSettleTime() { return settleTime; }
     public void setSettleTime(Date settleTime) { this.settleTime = settleTime; }
+
+    public String getFeeDetails() { return feeDetails; }
+    public void setFeeDetails(String feeDetails) { this.feeDetails = feeDetails; }
+
+    public Date getSettledAt() { return settledAt; }
+    public void setSettledAt(Date settledAt) { this.settledAt = settledAt; }
+
+    public Long getSettledBy() { return settledBy; }
+    public void setSettledBy(Long settledBy) { this.settledBy = settledBy; }
 }

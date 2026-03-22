@@ -54,11 +54,11 @@
             <span>KYC 认证</span>
           </template>
           <div class="kyc-status">
-            <el-result v-if="kycStatus === '1'" icon="success" title="已认证" sub-title="您的身份已通过认证" />
-            <el-result v-else-if="kycStatus === '2'" icon="warning" title="审核中" sub-title="您的认证信息正在审核中，请耐心等待" />
-            <el-result v-else-if="kycStatus === '3'" icon="error" title="认证失败" :sub-title="'原因: ' + (kycRemark || '未通过审核')">
+            <el-result v-if="kycStatus === 'APPROVED'" icon="success" title="已认证" sub-title="您的身份已通过认证" />
+            <el-result v-else-if="kycStatus === 'UNDER_REVIEW' || kycStatus === 'SUBMITTED'" icon="warning" title="审核中" sub-title="您的认证信息正在审核中，请耐心等待" />
+            <el-result v-else-if="kycStatus === 'REJECTED'" icon="error" title="认证失败" :sub-title="'原因: ' + (kycRemark || '未通过审核')">
               <template #extra>
-                <el-button type="primary" @click="kycStatus = '0'">重新认证</el-button>
+                <el-button type="primary" @click="kycStatus = ''">重新认证</el-button>
               </template>
             </el-result>
             <div v-else>
@@ -124,7 +124,7 @@ import { getUserProfile, updateUserProfile, updateUserPwd, getKycStatus, submitK
 const { proxy } = getCurrentInstance()
 
 const profileForm = ref({})
-const kycStatus = ref('0')
+const kycStatus = ref('')
 const kycRemark = ref('')
 const twoFaBound = ref(false)
 const tfaSecret = ref('')
