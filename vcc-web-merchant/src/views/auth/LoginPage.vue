@@ -26,7 +26,7 @@
 
           <div class="form-group">
             <label>{{ $t('auth.password', '密码') }}</label>
-            <input 
+            <input
               v-model="credentials.password" 
               type="password" 
               :placeholder="$t('auth.password', '请输入密码')"
