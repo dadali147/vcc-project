@@ -275,5 +275,21 @@ export default {
   "transactions.typeFeeDeduction": "手续费",
   "transactions.typeFilter": "交易类型",
   "transactions.typeRecharge": "充值",
-  "transactions.typeRefund": "退款"
+  "transactions.typeRefund": "退款",
+  "threeDsRecords.amount": "交易金额",
+  "threeDsRecords.cardNumber": "卡号",
+  "threeDsRecords.cardPlaceholder": "按卡号筛选...",
+  "threeDsRecords.dateRange": "日期范围",
+  "threeDsRecords.emptyTitle": "未找到任何记录",
+  "threeDsRecords.list": "验证码列表",
+  "threeDsRecords.merchant": "商户信息",
+  "threeDsRecords.noRecords": "没有记录",
+  "threeDsRecords.otpCode": "验证码",
+  "threeDsRecords.pageDescription": "查看 3DS 验证码记录",
+  "threeDsRecords.status": "状态",
+  "threeDsRecords.statusExpired": "已过期",
+  "threeDsRecords.statusPending": "待验证",
+  "threeDsRecords.statusVerified": "已验证",
+  "threeDsRecords.time": "时间",
+  "threeDsRecords.title": "3DS 验证码"
 }

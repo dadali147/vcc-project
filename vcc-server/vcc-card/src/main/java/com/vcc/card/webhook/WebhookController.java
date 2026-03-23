@@ -1,5 +1,6 @@
 package com.vcc.card.webhook;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.crypto.Mac;
@@ -9,12 +10,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vcc.card.domain.Card;
+import com.vcc.card.domain.CardHolder;
+import com.vcc.card.domain.Vcc3dsOtpLog;
+import com.vcc.card.mapper.CardHolderMapper;
+import com.vcc.card.mapper.CardMapper;
+import com.vcc.card.service.IVcc3dsOtpLogService;
+import com.vcc.framework.service.MailgunEmailService;
+import com.vcc.system.mapper.SysUserMapper;
+import com.vcc.common.core.domain.entity.SysUser;
 import com.vcc.system.service.ISysConfigService;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -38,6 +49,25 @@ public class WebhookController
 
     @Autowired
     private ISysConfigService sysConfigService;
+
+    @Autowired
+    private CardMapper cardMapper;
+
+    @Autowired
+    private CardHolderMapper cardHolderMapper;
+
+    @Autowired
+    private SysUserMapper sysUserMapper;
+
+    @Autowired
+    private IVcc3dsOtpLogService otpLogService;
+
+    @Autowired
+    private MailgunEmailService mailgunEmailService;
+
+    /** 找不到持卡人邮箱时的兜底邮箱 */
+    @Value("${vcc.otp.default-email:otp@kimoox.com}")
+    private String defaultOtpEmail;
 
     /**
      * 接收 YeeVCC 上游回调（同步验签 + 入队后再返回 200）
@@ -73,7 +103,7 @@ public class WebhookController
 
     /**
      * 3DS 验证码回调接口
-     * VCC-002: 收到 OTP 回调后，将验证码保存并支持在商户端页面展示
+     * VCC-002: 收到 OTP 回调后，动态路由到持卡人邮箱，并记录3DS验证码
      * 返回格式：{"method": 2, "destination": "邮箱"} — YeeVcc 接口契约要求
      */
     @PostMapping(value = "/otp", produces = "application/json;charset=UTF-8")
@@ -82,7 +112,8 @@ public class WebhookController
                                    HttpServletRequest request)
     {
         String payload = JSON.toJSONString(data);
-        log.info("收到3DS验证码回调: data={}", payload);
+        // 日志脱敏：不打印完整 payload（含 OTP 明文），只记录 cardId
+        log.info("收到3DS验证码回调: cardId={}", data.get("cardId"));
 
         // 验签
         if (!verifyWebhookSignature(request, payload))
@@ -92,7 +123,6 @@ public class WebhookController
         }
 
         // 入队处理
-        // 事件类型 "OTP" 来源：接口契约文档 §3.1
         boolean queued = webhookService.enqueueWebhook("OTP", payload, signature, data);
         if (!queued)
         {
@@ -100,18 +130,110 @@ public class WebhookController
             throw new WebhookProcessingException("处理失败，请重试");
         }
 
-        // TODO: 后续实现风控引擎，根据交易金额/频率/商户画像判断是否自动批准
-        // 当前: OTP 发送到持卡人注册邮箱（从数据库查询）
-        String destination = "otp@kimoox.com"; // 默认值，需替换为动态查询持卡人邮箱
-        Object cardId = data.get("cardId");
-        if (cardId != null) {
-            try {
-                // TODO: 注入 CardHolderService/VccCardService，通过 cardId 查询关联商户邮箱
-                log.info("3DS OTP: cardId={}, destination待实现动态路由", cardId);
-            } catch (Exception e) {
-                log.warn("3DS OTP 查询持卡人邮箱失败, cardId={}", cardId, e);
+        // 从 payload 提取字段
+        String cardId = data.get("cardId") != null ? data.get("cardId").toString() : null;
+        String otpCode = data.get("otp") != null ? data.get("otp").toString() : null;
+        String merchantName = data.get("merchantName") != null ? data.get("merchantName").toString() : null;
+        BigDecimal transactionAmount = null;
+        String currency = data.get("currency") != null ? data.get("currency").toString() : null;
+        try
+        {
+            Object amt = data.get("amount");
+            if (amt != null) transactionAmount = new BigDecimal(amt.toString());
+        }
+        catch (Exception e)
+        {
+            log.warn("3DS OTP: 解析交易金额失败, value={}", data.get("amount"));
+        }
+
+        // 动态路由：通过 cardId 查询持卡人邮箱
+        String destination = defaultOtpEmail;
+        Long userId = null;
+        Long holderId = null;
+        String cardNoMask = null;
+
+        if (StringUtils.isNotBlank(cardId))
+        {
+            try
+            {
+                Card card = cardMapper.selectCardByUpstreamCardId(cardId);
+                if (card != null)
+                {
+                    userId = card.getUserId();
+                    holderId = card.getHolderId();
+                    cardNoMask = card.getCardNoMask();
+
+                    // 优先使用 CardHolder.email
+                    if (holderId != null)
+                    {
+                        CardHolder holder = cardHolderMapper.selectCardHolderById(holderId);
+                        if (holder != null && StringUtils.isNotBlank(holder.getEmail()))
+                        {
+                            destination = holder.getEmail();
+                            log.info("3DS OTP: 路由到持卡人邮箱, cardId={}, dest={}", cardId, MailgunEmailService.maskEmail(destination));
+                        }
+                    }
+
+                    // 回退到 SysUser.email（userName字段存邮箱）
+                    if (destination.equals(defaultOtpEmail) && userId != null)
+                    {
+                        SysUser sysUser = sysUserMapper.selectUserById(userId);
+                        if (sysUser != null && StringUtils.isNotBlank(sysUser.getUserName()))
+                        {
+                            destination = sysUser.getUserName();
+                            log.info("3DS OTP: 回退到注册邮箱, cardId={}, dest={}", cardId, MailgunEmailService.maskEmail(destination));
+                        }
+                    }
+
+                    if (destination.equals(defaultOtpEmail))
+                    {
+                        log.warn("3DS OTP: 未找到持卡人或注册邮箱，使用默认邮箱, cardId={}, userId={}", cardId, userId);
+                    }
+                }
+                else
+                {
+                    log.warn("3DS OTP: 未找到卡记录, cardId={}", cardId);
+                }
+            }
+            catch (Exception e)
+            {
+                log.error("3DS OTP: 查询持卡人邮箱异常, cardId={}", cardId, e);
             }
         }
+
+        // 写入3DS OTP记录表
+        try
+        {
+            Vcc3dsOtpLog otpLog = new Vcc3dsOtpLog();
+            otpLog.setCardId(cardId != null ? cardId : "");
+            otpLog.setUserId(userId != null ? userId : 0L);
+            otpLog.setHolderId(holderId);
+            otpLog.setCardNoMask(cardNoMask);
+            otpLog.setOtpCode(otpCode);
+            otpLog.setMerchantName(merchantName);
+            otpLog.setTransactionAmount(transactionAmount);
+            otpLog.setCurrency(currency);
+            otpLog.setDestinationEmail(MailgunEmailService.maskEmail(destination));
+            otpLog.setStatus(Vcc3dsOtpLog.STATUS_PENDING);
+            otpLog.setWebhookPayload(payload);
+            otpLogService.insertVcc3dsOtpLog(otpLog);
+        }
+        catch (Exception e)
+        {
+            log.error("3DS OTP: 写入记录失败, cardId={}", cardId, e);
+        }
+
+        // 发送OTP邮件（非阻塞失败：邮件失败不影响响应）
+        try
+        {
+            String amountStr = transactionAmount != null ? transactionAmount.toPlainString() : null;
+            mailgunEmailService.send3dsOtp(destination, otpCode, merchantName, amountStr, currency);
+        }
+        catch (Exception e)
+        {
+            log.error("3DS OTP: 发送邮件失败, dest={}, error={}", MailgunEmailService.maskEmail(destination), e.getMessage());
+        }
+
         return Map.of("method", 2, "destination", destination);
     }
 

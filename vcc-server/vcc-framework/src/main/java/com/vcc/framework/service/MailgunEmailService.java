@@ -109,8 +109,79 @@ public class MailgunEmailService
         }
     }
 
+    /**
+     * 发送3DS OTP验证码邮件
+     *
+     * @param to              收件人邮箱
+     * @param otpCode         验证码
+     * @param merchantName    商户名称
+     * @param amount          交易金额（可为null）
+     * @param currency        币种（可为null）
+     */
+    public void send3dsOtp(String to, String otpCode, String merchantName, String amount, String currency)
+    {
+        String subject = "您的3DS验证码";
+
+        StringBuilder textBuilder = new StringBuilder();
+        textBuilder.append("您的3DS交易验证码是：").append(otpCode).append("\n\n");
+        if (merchantName != null && !merchantName.isBlank())
+        {
+            textBuilder.append("商户：").append(merchantName).append("\n");
+        }
+        if (amount != null && !amount.isBlank() && currency != null && !currency.isBlank())
+        {
+            textBuilder.append("交易金额：").append(amount).append(" ").append(currency).append("\n");
+        }
+        textBuilder.append("\n验证码5分钟内有效，请勿泄露给他人。");
+
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("from", from);
+        params.put("to", to);
+        params.put("subject", subject);
+        params.put("text", textBuilder.toString());
+
+        String formBody = params.entrySet().stream()
+                .map(e -> URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8)
+                        + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
+                .collect(Collectors.joining("&"));
+
+        String credentials = Base64.getEncoder().encodeToString(("api:" + apiKey).getBytes(StandardCharsets.UTF_8));
+        String url = "https://api.mailgun.net/v3/" + domain + "/messages";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", "Basic " + credentials)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .timeout(Duration.ofSeconds(10))
+                .POST(HttpRequest.BodyPublishers.ofString(formBody))
+                .build();
+
+        try
+        {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200 || response.statusCode() == 202)
+            {
+                log.info("3DS OTP邮件发送成功: to={}", maskEmail(to));
+            }
+            else
+            {
+                log.error("3DS OTP邮件发送失败: to={}, status={}", maskEmail(to), response.statusCode());
+                throw new RuntimeException("邮件发送失败，请稍后重试");
+            }
+        }
+        catch (RuntimeException e)
+        {
+            throw e;
+        }
+        catch (Exception e)
+        {
+            log.error("3DS OTP邮件发送异常: to={}, error={}", maskEmail(to), e.getMessage());
+            throw new RuntimeException("邮件发送失败，请稍后重试");
+        }
+    }
+
     // 邮箱脱敏：a**@example.com
-    private static String maskEmail(String email)
+    public static String maskEmail(String email)
     {
         if (email == null) return null;
         int at = email.indexOf('@');

@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS vcc_3ds_otp_log (
+    id              BIGINT          NOT NULL AUTO_INCREMENT COMMENT '主键',
+    user_id         BIGINT          NOT NULL                COMMENT '归属用户ID',
+    card_id         VARCHAR(64)     NOT NULL                COMMENT '上游卡ID',
+    card_no_mask    VARCHAR(20)     DEFAULT NULL            COMMENT '脱敏卡号',
+    holder_id       BIGINT          DEFAULT NULL            COMMENT '持卡人ID',
+    otp_code        VARCHAR(10)     DEFAULT NULL            COMMENT '验证码',
+    merchant_name   VARCHAR(200)    DEFAULT NULL            COMMENT '商户名称',
+    transaction_amount DECIMAL(18,2) DEFAULT NULL           COMMENT '交易金额',
+    currency        VARCHAR(10)     DEFAULT NULL            COMMENT '币种',
+    destination_email VARCHAR(254)  DEFAULT NULL            COMMENT '发送邮箱（脱敏）',
+    status          TINYINT         NOT NULL DEFAULT 0      COMMENT '状态(0待验证 1已验证 2已过期)',
+    webhook_payload TEXT            DEFAULT NULL            COMMENT '原始回调JSON',
+    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    verified_at     TIMESTAMP       NULL     DEFAULT NULL   COMMENT '验证时间',
+    PRIMARY KEY (id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_card_id (card_id),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='3DS OTP验证码记录表';

@@ -183,6 +183,15 @@ export const limitApi = {
   adjust: (cardId, data) => client.post(`/merchant/v3/limit/card/${cardId}/adjust`, data),
 }
 
+/**
+ * 3DS OTP APIs
+ * Controller: ThreeDsOtpController @ /merchant/3ds
+ */
+export const threeDsApi = {
+  list: (params) => client.get('/merchant/3ds/list', { params }),
+  get: (id) => client.get(`/merchant/3ds/${id}`),
+}
+
 export default {
   authApi,
   profileApi,
@@ -198,4 +207,5 @@ export default {
   messageApi,
   debtApi,
   limitApi,
+  threeDsApi,
 }

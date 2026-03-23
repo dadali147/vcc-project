@@ -32,6 +32,11 @@
         </dependency>
         <dependency>
             <groupId>com.vcc</groupId>
+            <artifactId>vcc-framework</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vcc</groupId>
             <artifactId>vcc-common</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>

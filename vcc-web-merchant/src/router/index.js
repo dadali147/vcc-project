@@ -16,6 +16,7 @@ const ProfilePage = () => import('@/views/profile/ProfilePage.vue')
 const KycPage = () => import('@/views/kyc/KycPage.vue')
 const DownloadsPage = () => import('@/views/downloads/DownloadsPage.vue')
 const SharedCardLimitsPage = () => import('@/views/shared-card-limits/SharedCardLimitsPage.vue')
+const ThreeDsRecordsPage = () => import('@/views/3ds-records/ThreeDsRecordsPage.vue')
 const NotFoundPage = () => import('@/views/NotFoundPage.vue')
 
 const routes = [
@@ -111,6 +112,12 @@ const routes = [
         name: 'SharedCardLimits',
         component: SharedCardLimitsPage,
         meta: { title: 'sharedCardLimits.title', icon: 'chart' }
+      },
+      {
+        path: '3ds-records',
+        name: 'ThreeDsRecords',
+        component: ThreeDsRecordsPage,
+        meta: { title: 'threeDsRecords.title', icon: 'shield' }
       }
     ]
   },

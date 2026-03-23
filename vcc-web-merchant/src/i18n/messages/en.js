@@ -272,5 +272,21 @@ export default {
   "cardApplication.monthlyLimitPlaceholder": "e.g. 50000",
   "cardApplication.reviewTitle": "Review Application",
   "cardApplication.loadHolderFailed": "Failed to load cardholders",
-  "auth.portalSubtitle": "Virtual Card Merchant Portal"
+  "auth.portalSubtitle": "Virtual Card Merchant Portal",
+  "threeDsRecords.title": "3DS Verification Codes",
+  "threeDsRecords.pageDescription": "View 3DS verification code records",
+  "threeDsRecords.list": "Verification Code List",
+  "threeDsRecords.time": "Time",
+  "threeDsRecords.cardNumber": "Card Number",
+  "threeDsRecords.cardPlaceholder": "Filter by card number...",
+  "threeDsRecords.otpCode": "OTP Code",
+  "threeDsRecords.merchant": "Merchant",
+  "threeDsRecords.amount": "Transaction Amount",
+  "threeDsRecords.status": "Status",
+  "threeDsRecords.statusPending": "Pending",
+  "threeDsRecords.statusVerified": "Verified",
+  "threeDsRecords.statusExpired": "Expired",
+  "threeDsRecords.dateRange": "Date Range",
+  "threeDsRecords.emptyTitle": "No records found",
+  "threeDsRecords.noRecords": "No records"
 }
