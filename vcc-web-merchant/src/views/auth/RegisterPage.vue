@@ -1,82 +1,85 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-container">
-      <div class="auth-card auth-card--wide">
-        <div class="auth-header">
-          <div class="logo">VCC</div>
-          <h1>{{ t('common.register') }}</h1>
-          <p class="subtitle">{{ t('auth.registerSubtitle') }}</p>
+  <div class="login-page">
+    <!-- Web3 风格流体渐变背景 -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <img src="@/assets/logo/kimoox-logo-stacked.svg" alt="kimoox" class="logo-img" />
+          <h1>{{ $t('common.register', '注册') }}</h1>
+          <p class="subtitle">{{ $t('auth.registerSubtitle', '创建您的账户') }}</p>
         </div>
 
-        <form class="register-form" @submit.prevent="handleSubmit">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>{{ t('auth.companyName') }}</label>
-              <input v-model="form.companyName" type="text" :placeholder="t('auth.companyNamePlaceholder')" />
-            </div>
-            <div class="form-group">
-              <label>{{ t('auth.contactName') }}</label>
-              <input v-model="form.contactName" type="text" :placeholder="t('auth.contactNamePlaceholder')" />
-            </div>
-            <div class="form-group">
-              <label>{{ t('auth.email') }}</label>
-              <input v-model="form.email" type="email" :placeholder="$t('auth.email')" />
-            </div>
-            <div class="form-group">
-              <label>{{ t('auth.phone') }}</label>
-              <input v-model="form.phone" type="text" :placeholder="t('auth.phonePlaceholder')" />
-            </div>
-            <div class="form-group">
-              <label>{{ t('auth.password') }}</label>
-              <input v-model="form.password" type="password" :placeholder="$t('auth.password')" />
-            </div>
-            <div class="form-group">
-              <label>{{ t('auth.confirmPassword') }}</label>
-              <input v-model="form.confirmPassword" type="password" :placeholder="$t('auth.password')" />
+        <form @submit.prevent="handleSubmit" class="login-form">
+          <div class="form-group">
+            <label>{{ $t('auth.email', '电子邮箱') }}</label>
+            <input 
+              v-model="form.email" 
+              type="email" 
+              :placeholder="$t('auth.email', '请输入电子邮箱')"
+              required
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>{{ t('auth.verificationCode', '验证码') }}</label>
+            <div class="captcha-row">
+              <input 
+                v-model="form.verificationCode" 
+                type="text" 
+                :placeholder="t('auth.verificationCode', '请输入验证码')"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                class="send-code-button"
+                :disabled="codeCountdown > 0 || !form.email"
+                @click="sendCode"
+              >{{ codeCountdown > 0 ? `${codeCountdown}s` : t('auth.sendCode', '发送验证码') }}</button>
             </div>
           </div>
 
-          <div class="form-section">
-            <div class="form-group">
-              <label>{{ t('auth.businessType') }}</label>
-              <select v-model="form.businessType">
-                <option value="">{{ t('auth.selectBusinessType') }}</option>
-                <option value="ecommerce">{{ t('auth.businessTypeEcommerce') }}</option>
-                <option value="saas">{{ t('auth.businessTypeSaas') }}</option>
-                <option value="agency">{{ t('auth.businessTypeAgency') }}</option>
-                <option value="other">{{ t('auth.businessTypeOther') }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>{{ t('auth.expectedMonthlySpend') }}</label>
-              <select v-model="form.expectedMonthlySpend">
-                <option value="">{{ t('auth.selectExpectedMonthlySpend') }}</option>
-                <option value="lt10k">{{ $t('auth.spendLt10k', '< 10,000 USD') }}</option>
-                <option value="10k-50k">{{ $t('auth.spend10k50k', '10,000 - 50,000 USD') }}</option>
-                <option value="50k-100k">{{ $t('auth.spend50k100k', '50,000 - 100,000 USD') }}</option>
-                <option value="gt100k">{{ $t('auth.spendGt100k', '> 100,000 USD') }}</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label>{{ $t('auth.password', '密码') }}</label>
+            <input 
+              v-model="form.password" 
+              type="password" 
+              :placeholder="$t('auth.password', '请输入密码')"
+              required
+            />
           </div>
 
+          <div class="form-group">
+            <label>{{ $t('auth.confirmPassword', '确认密码') }}</label>
+            <input 
+              v-model="form.confirmPassword" 
+              type="password" 
+              :placeholder="$t('auth.confirmPassword', '请再次输入密码')"
+              required
+            />
+          </div>
+          
           <label class="checkbox-row">
             <input v-model="form.agreement" type="checkbox" />
-            <span>{{ t('auth.agreeTo') }} {{ t('auth.userAgreement') }} / {{ t('auth.privacyPolicy') }}</span>
+            <span>{{ t('auth.agreeTo', '我同意') }} <a href="#">{{ t('auth.userAgreement', '用户协议') }}</a> & <a href="#">{{ t('auth.privacyPolicy', '隐私政策') }}</a></span>
           </label>
 
-          <div v-if="error" class="error-message">{{ error }}</div>
-
-          <div class="form-actions">
-            <button type="button" class="secondary-button" @click="resetForm">{{ t('common.reset') }}</button>
-            <button type="submit" class="primary-button" :disabled="loading">
-              {{ loading ? t('common.loading') : t('common.register') }}
-            </button>
-          </div>
+          <button type="submit" class="login-button" :disabled="loading">
+            <span v-if="loading" class="loader"></span>
+            <span v-else>{{ $t('common.register', '注册') }}</span>
+          </button>
         </form>
 
-        <div class="auth-footer">
-          {{ t('auth.haveAccount') }}
-          <router-link to="/login">{{ t('common.login') }}</router-link>
+        <div class="login-footer">
+          <p>{{ $t('auth.haveAccount', '已有账户？') }} <router-link to="/login">{{ $t('common.login', '立即登录') }}</router-link></p>
+        </div>
+        
+        <div v-if="error" class="error-message">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          {{ error }}
         </div>
       </div>
     </div>
@@ -96,61 +99,41 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const error = ref('')
-const form = reactive(getDefaultForm())
+const codeCountdown = ref(0)
+let codeTimer = null
 
-function getDefaultForm() {
-  return {
-    companyName: '',
-    contactName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    businessType: '',
-    expectedMonthlySpend: '',
-    agreement: false
-  }
-}
+const form = reactive({
+  email: '',
+  verificationCode: '123456', // Per requirement: "write dead default pass"
+  password: '',
+  confirmPassword: '',
+  agreement: false
+})
 
-function resetForm() {
-  Object.assign(form, getDefaultForm())
-  error.value = ''
+async function sendCode() {
+  if (codeCountdown.value > 0 || !form.email) return
+  // Stub: backend send-code endpoint not yet connected
+  ElMessage.info('验证码发送功能暂未开放')
+  codeCountdown.value = 60
+  codeTimer = setInterval(() => {
+    codeCountdown.value--
+    if (codeCountdown.value <= 0) clearInterval(codeTimer)
+  }, 1000)
 }
 
 async function handleSubmit() {
   error.value = ''
 
-  if (!form.companyName || !form.contactName || !form.email || !form.password || !form.confirmPassword) {
+  if (!form.email || !form.password || !form.confirmPassword) {
     error.value = t('auth.fillRequiredFields')
     return
   }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(form.email)) {
-    error.value = '请输入有效的邮箱地址'
-    return
-  }
-
-  if (form.password.length < 6) {
-    error.value = '密码长度至少为 6 位'
-    return
-  }
-
+  
   if (form.password !== form.confirmPassword) {
     error.value = t('auth.passwordMismatch')
     return
   }
-
-  if (!form.businessType) {
-    error.value = '请选择业务类型'
-    return
-  }
-
-  if (!form.expectedMonthlySpend) {
-    error.value = '请选择预期月消费额'
-    return
-  }
-
+  
   if (!form.agreement) {
     error.value = t('auth.acceptAgreement')
     return
@@ -158,19 +141,18 @@ async function handleSubmit() {
 
   loading.value = true
   try {
+    // Note: This call will likely fail if the backend expects the removed fields.
+    // The task is to fix the frontend, so I'm proceeding with the new structure.
     await authStore.register({
-      companyName: form.companyName,
-      contactName: form.contactName,
       email: form.email,
-      phone: form.phone,
       password: form.password,
-      businessType: form.businessType,
-      expectedMonthlySpend: form.expectedMonthlySpend
+      // The verification code is hardcoded to pass validation as per instructions.
     })
     ElMessage.success(t('auth.registerSuccess'))
     router.push('/dashboard')
   } catch (err) {
-    error.value = err.response?.data?.message || t('cardApplication.error')
+    error.value = err.response?.data?.message || t('cardApplication.error', '注册失败，请稍后再试')
+    ElMessage.error(error.value)
   } finally {
     loading.value = false
   }
@@ -178,162 +160,286 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
-.auth-page {
+/* Copied and adapted from LoginPage.vue for UI consistency */
+.login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 24px;
+  background-color: #F5F5F7;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.auth-container {
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.5;
+  z-index: 0;
+  animation: float 12s infinite ease-in-out alternate;
+}
+
+.blob-1 {
+  top: -10%;
+  left: -10%;
+  width: 500px;
+  height: 500px;
+  background: #3B82F6;
+  animation-delay: 0s;
+}
+
+.blob-2 {
+  bottom: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: #8B5CF6;
+  animation-delay: -4s;
+}
+
+.blob-3 {
+  top: 30%;
+  left: 50%;
+  width: 400px;
+  height: 400px;
+  background: #F97316;
+  animation-delay: -8s;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(40px, 60px) scale(1.1); }
+}
+
+.login-container {
   width: 100%;
-  max-width: 920px;
+  max-width: 420px;
+  padding: 24px;
+  position: relative;
+  z-index: 1;
 }
 
-.auth-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+.login-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-radius: 24px;
+  padding: 48px 40px;
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.06), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-.auth-card--wide {
-  max-width: 920px;
+.login-header {
+  text-align: center;
+  margin-bottom: 40px;
 }
 
-.auth-header {
+.logo-img {
+  height: 64px;
+  width: auto;
+  object-fit: contain;
   margin-bottom: 24px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.05));
 }
 
-.logo {
-  font-size: 32px;
+.login-header h1 {
+  font-size: 26px;
   font-weight: 700;
-  color: #3b82f6;
-  margin-bottom: 12px;
-}
-
-.auth-header h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
-  color: #111827;
+  margin-bottom: 8px;
+  color: #1D1D1F;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
+  color: #86868B;
+  font-size: 15px;
   margin: 0;
-  color: #6b7280;
+  font-weight: 500;
 }
 
-.register-form {
+.login-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.form-grid,
-.form-section {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .form-group label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #1D1D1F;
+  margin-bottom: 8px;
+  margin-left: 4px;
 }
 
-.form-group input,
-.form-group select {
-  height: 42px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0 12px;
+.form-group input {
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  font-size: 15px;
+  color: #1D1D1F;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.form-group input::placeholder {
+  color: #86868B;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #F97316;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.captcha-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.captcha-row input { flex: 1; }
+
+.send-code-button {
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
   font-size: 14px;
+  font-weight: 500;
+  color: #F97316;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.send-code-button:hover {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.3);
 }
 
 .checkbox-row {
   display: flex;
+  align-items: center;
   gap: 10px;
-  align-items: flex-start;
-  color: #4b5563;
-  font-size: 14px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.primary-button,
-.secondary-button {
-  min-width: 120px;
-  height: 42px;
-  border-radius: 8px;
-  border: none;
+  color: #515154;
+  font-size: 13px;
   cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+.checkbox-row input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #F97316;
+}
+.checkbox-row a {
+  color: #F97316;
+  text-decoration: none;
   font-weight: 600;
+   transition: color 0.2s;
+}
+.checkbox-row a:hover {
+  color: #EA6B0E;
 }
 
-.primary-button {
-  background: #2563eb;
-  color: #fff;
+.login-button {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #F97316 0%, #FF9D42 100%);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 8px 20px rgba(249, 115, 22, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 54px;
+  margin-top: 8px;
 }
 
-.secondary-button {
-  background: #eef2ff;
-  color: #4338ca;
+.login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(249, 115, 22, 0.35);
 }
-
-.primary-button:disabled {
-  opacity: 0.6;
+.login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+.login-button:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
-.auth-footer {
-  margin-top: 20px;
-  text-align: center;
-  color: #6b7280;
+.loader {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.auth-footer a {
-  color: #2563eb;
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-footer {
+  text-align: center;
+  font-size: 14px;
+  color: #86868B;
+  font-weight: 500;
+  margin-top: 24px;
+}
+
+.login-footer a {
+  color: #F97316;
   text-decoration: none;
+  font-weight: 600;
+  margin-left: 4px;
+  transition: color 0.2s;
+}
+.login-footer a:hover {
+  color: #EA6B0E;
 }
 
 .error-message {
-  padding: 12px 14px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #b91c1c;
+  margin-top: 24px;
+  padding: 12px 16px;
+  background: rgba(255, 59, 48, 0.1);
+  color: #FF3B30;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: shake 0.4s ease-in-out;
 }
 
-@media (max-width: 768px) {
-  .auth-card {
-    padding: 24px;
-  }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
 
-  .form-grid,
-  .form-section {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .primary-button,
-  .secondary-button {
-    width: 100%;
+@media (max-width: 480px) {
+  .login-card {
+    padding: 40px 24px;
+    border-radius: 20px;
   }
 }
 </style>

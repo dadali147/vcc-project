@@ -34,8 +34,8 @@ const dialogVisible = ref(false)
 const getList = async () => {
   loading.value = true
   try {
-    const res = await client.get('/admin/card-bins')
-    list.value = res.data?.items || []
+    const res = await client.get('/admin/fee/cardbin/list')
+    list.value = res.rows || res.data?.items || []
   } finally {
     loading.value = false
   }

@@ -129,7 +129,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { cardApi } from '@/api'
+import { cardIssueApi } from '@/api'
 
 const { t } = useI18n()
 
@@ -172,14 +172,14 @@ const loadApplications = async () => {
   loading.value = true
   try {
     const params = {
-      page: pagination.page,
+      pageNum: pagination.page,
       pageSize: pagination.pageSize,
       keyword: filters.keyword,
       status: filters.status
     }
-    const res = await cardApi.getApplications(params)
-    applications.value = res.data?.items || res.data || []
-    pagination.total = res.data?.total || res.total || 0
+    const res = await cardIssueApi.list(params)
+    applications.value = res.rows || res.data?.items || res.data || []
+    pagination.total = res.total || res.data?.total || 0
   } catch (err) {
     ElMessage.error(err.response?.data?.message || t('common.loadFailed'))
   } finally {

@@ -87,7 +87,7 @@ const recentData = ref([])
 const fetchStats = async () => {
   loading.value = true
   try {
-    const res = await client.get('/admin/dashboard/stats')
+    const res = await client.get('/admin/dashboard/overview')
     const d = res.data || res
     stats.value = { ...stats.value, ...(d.stats || d) }
     recentData.value = d.recentData || []

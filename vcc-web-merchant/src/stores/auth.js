@@ -2,8 +2,21 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '@/api'
 
-const TOKEN_KEY = 'auth_token'
-const USER_KEY = 'auth_user'
+// Storage keys intentionally generic to avoid revealing purpose in plain storage.
+// TODO(security): Migrate to httpOnly cookie via Set-Cookie on login response
+// when backend supports it. Remove localStorage usage at that point.
+const TOKEN_KEY = '_t'
+const USER_KEY = '_u'
+
+function isTokenExpired(token) {
+  if (!token) return true
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return Date.now() / 1000 >= payload.exp - 30
+  } catch {
+    return false // opaque token — let server decide
+  }
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem(TOKEN_KEY) || null)
@@ -35,38 +48,29 @@ export const useAuthStore = defineStore('auth', () => {
     setSession(null, null)
   }
 
+  /**
+   * RuoYi login flow:
+   * 1. POST /login { username, password, code, uuid } → { code: 200, token: "xxx" }
+   * 2. GET /getInfo → { code: 200, user: {...}, roles: [...], permissions: [...] }
+   */
   async function login(credentials) {
     loading.value = true
     error.value = null
     try {
-      const response = await authApi.login(credentials)
-      // Support both { token, user } and { data: { token, user } } response formats
-      const token = response.data?.token || response.token
-      const userInfo = response.data?.user || response.user
-      setSession(token, userInfo)
-      initialized.value = true
-      return response
-    } catch (err) {
-      error.value = err.response?.data?.message || 'Login failed'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
+      // Step 1: Login to get token
+      const loginRes = await authApi.login(credentials)
+      const loginToken = loginRes.token
+      if (!loginToken) {
+        throw new Error(loginRes.msg || '登录失败')
+      }
+      setSession(loginToken)
 
-  async function register(userData) {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await authApi.register(userData)
-      // Support both { token, user } and { data: { token, user } } response formats
-      const token = response.data?.token || response.token
-      const userInfo = response.data?.user || response.user
-      setSession(token, userInfo)
+      // Step 2: Get user info
+      await getCurrentUser()
       initialized.value = true
-      return response
+      return loginRes
     } catch (err) {
-      error.value = err.response?.data?.message || 'Registration failed'
+      error.value = err.response?.data?.msg || err.message || '登录失败'
       throw err
     } finally {
       loading.value = false
@@ -79,23 +83,27 @@ export const useAuthStore = defineStore('auth', () => {
         await authApi.logout()
       }
     } catch (err) {
-      console.error('Logout error:', err)
+      if (import.meta.env.DEV) console.error('Logout error:', err)
     } finally {
       clearSession()
       initialized.value = true
     }
   }
 
+  /**
+   * RuoYi GET /getInfo returns: { code: 200, user: {...}, roles: [...], permissions: [...] }
+   */
   async function getCurrentUser() {
     if (!token.value) return null
 
     try {
-      const response = await authApi.getCurrentUser()
-      user.value = response
-      localStorage.setItem(USER_KEY, JSON.stringify(response))
-      return response
+      const res = await authApi.getInfo()
+      // RuoYi returns user info at top level, not nested in data
+      user.value = res.user || res
+      localStorage.setItem(USER_KEY, JSON.stringify(user.value))
+      return user.value
     } catch (err) {
-      console.error('Failed to get current user:', err)
+      if (import.meta.env.DEV) console.error('Failed to get current user:', err)
       if (err.response?.status === 401) {
         clearSession()
       }
@@ -112,12 +120,33 @@ export const useAuthStore = defineStore('auth', () => {
       return
     }
 
+    if (isTokenExpired(token.value)) {
+      clearSession()
+      initialized.value = true
+      return
+    }
+
     try {
       await getCurrentUser()
     } catch (err) {
       // 401 handled in interceptor/store, keep graceful init
     } finally {
       initialized.value = true
+    }
+  }
+
+  /** Proactively validate token — used by router guard on navigation */
+  async function validateToken() {
+    if (!token.value || isTokenExpired(token.value)) {
+      clearSession()
+      return false
+    }
+    try {
+      await getCurrentUser()
+      return true
+    } catch {
+      clearSession()
+      return false
     }
   }
 
@@ -131,10 +160,10 @@ export const useAuthStore = defineStore('auth', () => {
     setSession,
     clearSession,
     login,
-    register,
     logout,
     getCurrentUser,
-    initAuth
+    initAuth,
+    validateToken
   }
 })
 
@@ -144,7 +173,7 @@ function safeParse(value) {
   try {
     return JSON.parse(value)
   } catch (error) {
-    console.error('Failed to parse stored auth user:', error)
+    if (import.meta.env.DEV) console.error('Failed to parse stored auth user:', error)
     return null
   }
 }

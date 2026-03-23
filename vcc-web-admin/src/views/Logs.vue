@@ -83,15 +83,15 @@ const listQuery = ref({ page: 1, limit: 20, keyword: '', action: '', status: '' 
 const getList = async () => {
   loading.value = true
   try {
-    const url = activeTab.value === 'operation' ? '/admin/logs/operation' : '/admin/logs/login'
+    const url = activeTab.value === 'operation' ? '/monitor/operlog/list' : '/monitor/logininfor/list'
     const params = { ...listQuery.value }
     if (dateRange.value && dateRange.value.length === 2) {
       params.startDate = dateRange.value[0].toISOString()
       params.endDate = dateRange.value[1].toISOString()
     }
     const res = await client.get(url, { params })
-    list.value = res.data?.items || res.data?.rows || []
-    total.value = res.data?.total || 0
+    list.value = res.rows || res.data?.items || res.data?.rows || []
+    total.value = res.total || res.data?.total || 0
   } catch (e) {
     ElMessage.error('获取日志失败')
   } finally {

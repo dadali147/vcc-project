@@ -7,11 +7,23 @@
         <p class="login-subtitle">Virtual Card Control Platform</p>
       </div>
       <el-form :model="form" :rules="rules" ref="formRef" label-position="top">
-        <el-form-item label="Email" prop="email">
-          <el-input v-model="form.email" placeholder="admin@example.com" size="large" />
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="form.username" placeholder="请输入用户名" size="large" />
         </el-form-item>
-        <el-form-item label="Password" prop="password">
-          <el-input v-model="form.password" type="password" placeholder="Enter password" size="large" @keyup.enter="handleLogin" show-password />
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="form.password" type="password" placeholder="请输入密码" size="large" @keyup.enter="handleLogin" show-password />
+        </el-form-item>
+        <el-form-item v-if="captchaEnabled" label="验证码" prop="code">
+          <div style="display: flex; gap: 8px; width: 100%;">
+            <el-input v-model="form.code" placeholder="请输入验证码" size="large" style="flex: 1;" @keyup.enter="handleLogin" />
+            <img
+              :src="captchaImg"
+              class="captcha-img"
+              @click="getCaptcha"
+              alt="验证码"
+              title="点击刷新验证码"
+            />
+          </div>
         </el-form-item>
         <el-form-item style="margin-top: 24px">
           <el-button class="login-btn" :loading="loading" @click="handleLogin" size="large" style="width: 100%">Sign In</el-button>
@@ -25,30 +37,52 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import client from '@/api/client'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const formRef = ref(null)
 const loading = ref(false)
+const captchaEnabled = ref(true)
+const captchaImg = ref('')
 
 const form = reactive({
-  email: '',
-  password: ''
+  username: '',
+  password: '',
+  code: '',
+  uuid: ''
 })
 
 const rules = {
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: ['blur', 'change'] }
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码长度不能少于 6 位', trigger: 'blur' }
+  ],
+  code: [
+    { required: true, message: '请输入验证码', trigger: 'blur' }
   ]
+}
+
+const getCaptcha = async () => {
+  try {
+    const res = await client.get('/captchaImage')
+    captchaEnabled.value = res.captchaEnabled !== false
+    if (captchaEnabled.value) {
+      captchaImg.value = 'data:image/gif;base64,' + res.img
+      form.uuid = res.uuid
+    }
+    form.code = ''
+  } catch (e) {
+    // captcha endpoint error, allow login without captcha
+    captchaEnabled.value = false
+  }
 }
 
 const handleLogin = async () => {
@@ -57,17 +91,22 @@ const handleLogin = async () => {
     if (valid) {
       loading.value = true
       try {
-        await authStore.login(form.email, form.password)
+        await authStore.login(form.username, form.password, form.code, form.uuid)
         ElMessage.success('登录成功')
         router.push('/dashboard')
       } catch (error) {
-        // error handled in interceptor
+        // 刷新验证码
+        if (captchaEnabled.value) {
+          getCaptcha()
+        }
       } finally {
         loading.value = false
       }
     }
   })
 }
+
+onMounted(getCaptcha)
 </script>
 
 <style scoped>
@@ -185,6 +224,13 @@ const handleLogin = async () => {
 
 .login-footer p {
   margin: 0;
+}
+
+.captcha-img {
+  height: 40px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid #dcdfe6;
 }
 
 :deep(.el-input__wrapper) {

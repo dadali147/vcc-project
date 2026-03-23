@@ -57,8 +57,8 @@
             <div class="type-selector">
               <div
                 class="type-card"
-                :class="{ selected: form.cardType === 'code' }"
-                @click="form.cardType = 'code'"
+                :class="{ selected: form.cardType === 'PREPAID' }"
+                @click="form.cardType = 'PREPAID'"
               >
                 <div class="type-icon">💳</div>
                 <div class="type-label">{{ t('cards.cardTypeCode') }}</div>
@@ -66,8 +66,8 @@
               </div>
               <div
                 class="type-card"
-                :class="{ selected: form.cardType === 'budget' }"
-                @click="form.cardType = 'budget'"
+                :class="{ selected: form.cardType === 'BUDGET' }"
+                @click="form.cardType = 'BUDGET'"
               >
                 <div class="type-icon">📊</div>
                 <div class="type-label">{{ t('cards.cardTypeBudget') }}</div>
@@ -81,6 +81,17 @@
               <el-option label="VCC-US-001 (美国)" value="VCC-US-001" />
               <el-option label="VCC-HK-002 (香港)" value="VCC-HK-002" />
               <el-option label="VCC-SG-003 (新加坡)" value="VCC-SG-003" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Card Name" prop="cardName">
+            <el-input v-model="form.cardName" placeholder="Card display name" />
+          </el-form-item>
+          <el-form-item label="Currency" prop="currency">
+            <el-select v-model="form.currency" placeholder="Select currency" style="width:100%">
+              <el-option label="USD" value="USD" />
+              <el-option label="EUR" value="EUR" />
+              <el-option label="GBP" value="GBP" />
+              <el-option label="SGD" value="SGD" />
             </el-select>
           </el-form-item>
         </div>
@@ -142,7 +153,7 @@
         </div>
         <div class="review-item">
           <span class="review-label">{{ t('cardApplication.cardType') }}</span>
-          <span class="review-value">{{ form.cardType === 'code' ? t('cards.cardTypeCode') : t('cards.cardTypeBudget') }}</span>
+          <span class="review-value">{{ form.cardType === 'PREPAID' ? t('cards.cardTypeCode') : t('cards.cardTypeBudget') }}</span>
         </div>
         <div class="review-item">
           <span class="review-label">{{ t('cardApplication.cardBin') }}</span>
@@ -214,7 +225,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { cardApi, cardholderApi } from '@/api'
+import { cardIssueApi, cardholderApi } from '@/api'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -231,6 +242,8 @@ const form = reactive({
   cardholderName: '',
   cardType: '',
   cardBin: '',
+  cardName: '',
+  currency: '',
   dailyLimit: '',
   monthlyLimit: '',
   purpose: '',
@@ -256,7 +269,7 @@ const step3Rules = {
 
 const canProceed = computed(() => {
   if (currentStep.value === 0) return !!form.cardholderId
-  if (currentStep.value === 1) return !!(form.cardType && form.cardBin)
+  if (currentStep.value === 1) return !!(form.cardType && form.cardBin && form.cardName)
   if (currentStep.value === 2) return !!(form.dailyLimit && form.monthlyLimit && form.purpose)
   return true
 })
@@ -280,10 +293,12 @@ const prevStep = () => {
 const handleSubmit = async () => {
   submitting.value = true
   try {
-    await cardApi.apply({
+    await cardIssueApi.submit({
       cardholderId: form.cardholderId,
       cardType: form.cardType,
       cardBin: form.cardBin,
+      cardName: form.cardName,
+      currency: form.currency || 'USD',
       dailyLimit: Number(form.dailyLimit),
       monthlyLimit: Number(form.monthlyLimit),
       purpose: form.purpose,
@@ -301,7 +316,7 @@ const handleSubmit = async () => {
 const loadCardholders = async () => {
   loadingHolders.value = true
   try {
-    const res = await cardholderApi.list({ page: 1, pageSize: 100 })
+    const res = await cardholderApi.list({ pageNum: 1, pageSize: 100 })
     cardholders.value = res.data?.items || res.data || []
   } catch (err) {
     ElMessage.error(t('cardApplication.loadHolderFailed'))

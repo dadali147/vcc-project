@@ -5,12 +5,15 @@
       <el-select v-model="listQuery.type" placeholder="交易类型" clearable style="width: 150px; margin-left: 10px;">
         <el-option label="消费" value="SALE" />
         <el-option label="退款" value="REFUND" />
-        <el-option label="充值" value="DEPOSIT" />
+        <el-option label="充值" value="RECHARGE" />
       </el-select>
       <el-select v-model="listQuery.status" placeholder="交易状态" clearable style="width: 150px; margin-left: 10px;">
-        <el-option label="成功" value="SUCCESS" />
-        <el-option label="失败" value="FAILED" />
-        <el-option label="处理中" value="PENDING" />
+        <el-option label="授权成功" value="AUTHORIZED" />
+        <el-option label="已结算" value="SETTLED" />
+        <el-option label="已拒绝" value="DECLINED" />
+        <el-option label="已退款" value="REFUNDED" />
+        <el-option label="已撤销" value="REVERSED" />
+        <el-option label="争议中" value="DISPUTED" />
       </el-select>
       <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px; margin-left: 10px;" />
       <el-button type="primary" @click="handleFilter" style="margin-left: 10px;">筛选</el-button>
@@ -31,15 +34,16 @@
         <template #default="scope">
           <el-tag v-if="scope.row.type === 'SALE'" type="danger" size="small">消费</el-tag>
           <el-tag v-else-if="scope.row.type === 'REFUND'" type="success" size="small">退款</el-tag>
-          <el-tag v-else-if="scope.row.type === 'DEPOSIT'" type="primary" size="small">充值</el-tag>
+          <el-tag v-else-if="scope.row.type === 'RECHARGE'" type="primary" size="small">充值</el-tag>
           <el-tag v-else type="info" size="small">{{ scope.row.type }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="80">
         <template #default="scope">
-          <el-tag v-if="scope.row.status === 'SUCCESS'" type="success" size="small">成功</el-tag>
-          <el-tag v-else-if="scope.row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
-          <el-tag v-else type="warning" size="small">处理中</el-tag>
+          <el-tag v-if="scope.row.status === 'AUTHORIZED' || scope.row.status === 'SETTLED'" type="success" size="small">成功</el-tag>
+          <el-tag v-else-if="scope.row.status === 'DECLINED'" type="danger" size="small">失败</el-tag>
+          <el-tag v-else-if="scope.row.status === 'DISPUTED'" type="warning" size="small">争议</el-tag>
+          <el-tag v-else type="info" size="small">{{ scope.row.status }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="description" label="描述" min-width="130" show-overflow-tooltip />
@@ -81,8 +85,8 @@ const getList = async () => {
       params.endDate = dateRange.value[1].toISOString()
     }
     const res = await client.get('/admin/transaction/list', { params })
-    list.value = res.data?.items || res.data?.rows || []
-    total.value = res.data?.total || 0
+    list.value = res.rows || res.data?.items || res.data?.rows || []
+    total.value = res.total || res.data?.total || 0
   } catch (e) {
     ElMessage.error('获取交易记录失败')
   } finally {
@@ -108,15 +112,10 @@ const handleExport = async () => {
       params.startDate = dateRange.value[0].toISOString()
       params.endDate = dateRange.value[1].toISOString()
     }
-    // Use axios directly to bypass the response.data interceptor for blob downloads
-    const { default: axios } = await import('axios')
-    const authStore = (await import('@/stores/auth')).useAuthStore()
-    const response = await axios.get('/admin/transaction/export', {
+    const blob = await client.get('/admin/transaction/export', {
       params,
-      responseType: 'blob',
-      headers: { Authorization: `Bearer ${authStore.token}` }
+      responseType: 'blob'
     })
-    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url

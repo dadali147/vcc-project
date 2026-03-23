@@ -12,6 +12,9 @@ vcc:
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
   captchaType: math
+  config:
+    # 字段级加密密钥（必须通过环境变量 VCC_ENCRYPT_KEY 配置）
+    encrypt-key: ${VCC_ENCRYPT_KEY}
 
 # 开发环境配置
 server:
@@ -78,8 +81,8 @@ spring:
       port: 6379
       # 数据库索引
       database: 0
-      # 密码
-      password:
+      # 密码（生产环境必须设置，通过环境变量 REDIS_PASSWORD 配置）
+      password: ${REDIS_PASSWORD:}
       # 连接超时时间
       timeout: 10s
       lettuce:
@@ -100,8 +103,8 @@ spring:
 token:
   # 令牌自定义标识
   header: Authorization
-  # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz
+  # 令牌密钥（必须通过环境变量 JWT_SECRET 配置）
+  secret: ${JWT_SECRET}
   # 令牌有效期（默认30分钟）
   expireTime: 30
 
@@ -120,12 +123,13 @@ pagehelper:
   supportMethodsArguments: true
   params: count=countSql
 
-# Springdoc配置
+# Springdoc配置（生产环境必须禁用）
 springdoc:
   api-docs:
     path: /v3/api-docs
+    enabled: ${SWAGGER_ENABLED:true}
   swagger-ui:
-    enabled: true
+    enabled: ${SWAGGER_ENABLED:true}
     path: /swagger-ui.html
     tags-sorter: alpha
   group-configs:
@@ -147,8 +151,19 @@ xss:
   enabled: true
   # 排除链接（多个用逗号分隔）
   excludes: /system/notice
-  # 匹配链接
-  urlPatterns: /system/*,/monitor/*,/tool/*
+  # 匹配链接（覆盖所有路径）
+  urlPatterns: /*
+
+# Mailgun邮件服务配置
+mailgun:
+  api-key: ${MAILGUN_API_KEY}
+  domain: ${MAILGUN_DOMAIN:email.dinancard.com}
+  from: ${MAILGUN_FROM:系统通知 <postmaster@email.dinancard.com>}
+
+# 邮件验证码配置
+email-code:
+  expire-minutes: 10
+  resend-interval-seconds: 60
 
 yeevcc:
   enabled: ${YEEVCC_ENABLED:true}
@@ -157,9 +172,9 @@ yeevcc:
   baseUrl: ${YEEVCC_BASE_URL:http://43.153.105.113:9991/demo}
   appKey: ${YEEVCC_APP_KEY:app_12087683}
   customerId: ${YEEVCC_CUSTOMER_ID:12087683}
-  privateKey: ${YEEVCC_PRIVATE_KEY:}
-  platformPublicKey: ${YEEVCC_PLATFORM_PUBLIC_KEY:}
-  aesKey: ${YEEVCC_AES_KEY:K8fT3pW9xQ2mZrL6}
+  privateKey: ${YEEVCC_PRIVATE_KEY}
+  platformPublicKey: ${YEEVCC_PLATFORM_PUBLIC_KEY}
+  aesKey: ${YEEVCC_AES_KEY}
   connectTimeoutMillis: ${YEEVCC_CONNECT_TIMEOUT_MS:5000}
   readTimeoutMillis: ${YEEVCC_READ_TIMEOUT_MS:15000}
   maxRetries: ${YEEVCC_MAX_RETRIES:2}

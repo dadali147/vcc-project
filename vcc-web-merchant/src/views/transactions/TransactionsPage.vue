@@ -22,18 +22,21 @@
           <label>{{ t('transactions.typeFilter') }}</label>
           <select v-model="filters.type" @change="loadTransactions">
             <option value="">{{ t('common.all') }}</option>
-            <option value="recharge">{{ t('transactions.typeRecharge') }}</option>
-            <option value="consumption">{{ t('transactions.typeConsumption') }}</option>
-            <option value="refund">{{ t('transactions.typeRefund') }}</option>
+            <option value="SALE">{{ t('transactions.typeConsumption') }}</option>
+            <option value="REFUND">{{ t('transactions.typeRefund') }}</option>
+            <option value="RECHARGE">{{ t('transactions.typeRecharge') }}</option>
           </select>
         </div>
         <div class="form-group">
           <label>{{ t('transactions.status') }}</label>
           <select v-model="filters.status" @change="loadTransactions">
             <option value="">{{ t('common.all') }}</option>
-            <option value="success">{{ t('transactions.statusSuccess') }}</option>
-            <option value="pending">{{ t('transactions.statusPending') }}</option>
-            <option value="failed">{{ t('transactions.statusFailed') }}</option>
+            <option value="AUTHORIZED">授权成功</option>
+            <option value="SETTLED">已结算</option>
+            <option value="DECLINED">已拒绝</option>
+            <option value="REFUNDED">已退款</option>
+            <option value="REVERSED">已撤销</option>
+            <option value="DISPUTED">争议中</option>
           </select>
         </div>
         <div class="form-group">
@@ -137,15 +140,15 @@ const loadTransactions = async () => {
   loading.value = true
   try {
     const params = {
-      page: pagination.page,
+      pageNum: pagination.page,
       pageSize: pagination.pageSize,
       cardNumber: filters.cardNumber,
       type: filters.type,
       status: filters.status
     }
     const res = await transactionApi.list(params)
-    transactions.value = res.data?.items || res.data || []
-    pagination.total = res.data?.total || res.total || 0
+    transactions.value = res.rows || res.data?.items || res.data || []
+    pagination.total = res.total || res.data?.total || 0
   } catch (err) {
     ElMessage.error(err.response?.data?.message || t('common.loadFailed'))
   } finally {
@@ -180,18 +183,21 @@ const handleExport = async () => {
 
 const getTypeLabel = (type) => {
   const labels = {
-    recharge: t('transactions.typeRecharge'),
-    consumption: t('transactions.typeConsumption'),
-    refund: t('transactions.typeRefund')
+    SALE: t('transactions.typeConsumption'),
+    REFUND: t('transactions.typeRefund'),
+    RECHARGE: t('transactions.typeRecharge')
   }
   return labels[type] || type
 }
 
 const getStatusLabel = (status) => {
   const labels = {
-    success: t('transactions.statusSuccess'),
-    pending: t('transactions.statusPending'),
-    failed: t('transactions.statusFailed')
+    AUTHORIZED: '授权成功',
+    SETTLED: '已结算',
+    DECLINED: '已拒绝',
+    REFUNDED: '已退款',
+    REVERSED: '已撤销',
+    DISPUTED: '争议中'
   }
   return labels[status] || status
 }
@@ -225,9 +231,10 @@ th { color: #6b7280; font-weight: 600; }
 .amount-positive { color: #059669; font-weight: 600; }
 .amount-negative { color: #dc2626; font-weight: 600; }
 .status-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-.status-pill.success { background: #d1fae5; color: #065f46; }
-.status-pill.pending { background: #fef3c7; color: #92400e; }
-.status-pill.failed { background: #fee2e2; color: #991b1b; }
+.status-pill.AUTHORIZED, .status-pill.SETTLED { background: #d1fae5; color: #065f46; }
+.status-pill.DECLINED { background: #fee2e2; color: #991b1b; }
+.status-pill.REFUNDED, .status-pill.REVERSED { background: #dbeafe; color: #1e40af; }
+.status-pill.DISPUTED { background: #fef3c7; color: #92400e; }
 .empty-state, .loading-state { margin-top: 20px; border: 1px dashed #d1d5db; border-radius: 12px; padding: 24px; text-align: center; color: #6b7280; }
 .primary-button, .link-button { border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
 .primary-button { background: #2563eb; color: white; padding: 0 16px; height: 40px; }

@@ -4,12 +4,13 @@
       <el-input v-model="listQuery.keyword" placeholder="卡号/持卡人" style="width: 200px;" class="filter-item" @keyup.enter="handleFilter" />
       <el-select v-model="listQuery.status" placeholder="卡状态" clearable style="width: 150px; margin-left: 10px;">
         <el-option label="正常" value="ACTIVE" />
+        <el-option label="待激活" value="PENDING_ACTIVATION" />
         <el-option label="冻结" value="FROZEN" />
-        <el-option label="已销卡" value="CANCELLED" />
+        <el-option label="已销卡" value="CLOSED" />
       </el-select>
       <el-select v-model="listQuery.cardType" placeholder="卡类型" clearable style="width: 150px; margin-left: 10px;">
-        <el-option label="虚拟卡" value="VIRTUAL" />
-        <el-option label="实体卡" value="PHYSICAL" />
+        <el-option label="储值卡" value="PREPAID" />
+        <el-option label="预算卡" value="BUDGET" />
       </el-select>
       <el-button class="filter-item" type="primary" @click="handleFilter" style="margin-left: 10px;">搜索</el-button>
     </div>
@@ -21,15 +22,16 @@
       <el-table-column prop="merchantName" label="所属商户" min-width="130" show-overflow-tooltip />
       <el-table-column prop="cardType" label="卡类型" width="80">
         <template #default="scope">
-          <el-tag type="primary" size="small">{{ scope.row.cardType === 'VIRTUAL' ? '虚拟卡' : '实体卡' }}</el-tag>
+          <el-tag type="primary" size="small">{{ scope.row.cardType === 'PREPAID' ? '储值卡' : '预算卡' }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="80">
         <template #default="scope">
-          <el-tag v-if="scope.row.status === 'ACTIVE' || scope.row.status === 1" type="success" size="small">正常</el-tag>
-          <el-tag v-else-if="scope.row.status === 'FROZEN' || scope.row.status === 2" type="warning" size="small">冻结</el-tag>
-          <el-tag v-else-if="scope.row.status === 'CANCELLED' || scope.row.status === 3" type="info" size="small">已销卡</el-tag>
-          <el-tag v-else type="info" size="small">未激活</el-tag>
+          <el-tag v-if="scope.row.status === 'ACTIVE'" type="success" size="small">正常</el-tag>
+          <el-tag v-else-if="scope.row.status === 'PENDING_ACTIVATION'" type="info" size="small">待激活</el-tag>
+          <el-tag v-else-if="scope.row.status === 'FROZEN'" type="warning" size="small">冻结</el-tag>
+          <el-tag v-else-if="scope.row.status === 'CLOSED'" type="info" size="small">已销卡</el-tag>
+          <el-tag v-else type="info" size="small">{{ scope.row.status }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="balance" label="余额" width="100">
@@ -42,15 +44,15 @@
         <template #default="scope">
           <el-button size="small" @click="handleView(scope.row)">详情</el-button>
           <el-button
-            v-if="scope.row.status === 'ACTIVE' || scope.row.status === 1"
+            v-if="scope.row.status === 'ACTIVE'"
             size="small" type="warning" @click="handleFreeze(scope.row)"
           >强制冻结</el-button>
           <el-button
-            v-if="scope.row.status === 'FROZEN' || scope.row.status === 2"
+            v-if="scope.row.status === 'FROZEN'"
             size="small" type="success" @click="handleUnfreeze(scope.row)"
           >解冻</el-button>
           <el-button
-            v-if="scope.row.status !== 'CANCELLED' && scope.row.status !== 3"
+            v-if="scope.row.status !== 'CLOSED'"
             size="small" type="danger" @click="handleCancel(scope.row)"
           >强制销卡</el-button>
         </template>
@@ -76,10 +78,11 @@
         <el-descriptions-item label="卡号">{{ currentCard.cardNoMask }}</el-descriptions-item>
         <el-descriptions-item label="持卡人">{{ currentCard.cardholderName }}</el-descriptions-item>
         <el-descriptions-item label="所属商户">{{ currentCard.merchantName || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="卡类型">{{ currentCard.cardType === 'VIRTUAL' ? '虚拟卡' : '实体卡' }}</el-descriptions-item>
+        <el-descriptions-item label="卡类型">{{ currentCard.cardType === 'PREPAID' ? '储值卡' : '预算卡' }}</el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag v-if="currentCard.status === 'ACTIVE' || currentCard.status === 1" type="success" size="small">正常</el-tag>
-          <el-tag v-else-if="currentCard.status === 'FROZEN' || currentCard.status === 2" type="warning" size="small">冻结</el-tag>
+          <el-tag v-if="currentCard.status === 'ACTIVE'" type="success" size="small">正常</el-tag>
+          <el-tag v-else-if="currentCard.status === 'PENDING_ACTIVATION'" type="info" size="small">待激活</el-tag>
+          <el-tag v-else-if="currentCard.status === 'FROZEN'" type="warning" size="small">冻结</el-tag>
           <el-tag v-else type="info" size="small">已销卡</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="余额">${{ (currentCard.balance || 0).toFixed(2) }}</el-descriptions-item>
@@ -109,8 +112,8 @@ const getList = async () => {
   loading.value = true
   try {
     const res = await client.get('/admin/card/list', { params: listQuery.value })
-    list.value = res.data?.items || res.data?.rows || []
-    total.value = res.data?.total || 0
+    list.value = res.rows || res.data?.items || res.data?.rows || []
+    total.value = res.total || res.data?.total || 0
   } catch (e) {
     ElMessage.error('获取卡片列表失败')
   } finally {

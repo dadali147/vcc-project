@@ -163,7 +163,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { cardApi } from '@/api'
+import { cardApi, rechargeApi } from '@/api'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -224,7 +224,7 @@ const handleRecharge = async () => {
 
   recharging.value = true
   try {
-    await cardApi.recharge(route.params.id, { amount: rechargeForm.value.amount })
+    await rechargeApi.submit({ cardId: route.params.id, amount: rechargeForm.value.amount })
     ElMessage.success(t('cards.rechargeSuccess'))
     showRechargeDialog.value = false
     rechargeForm.value.amount = ''

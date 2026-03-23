@@ -32,9 +32,19 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  if (to.name !== 'Login' && !authStore.token) {
+  if (to.name === 'Login') {
+    next()
+    return
+  }
+  if (!authStore.token) {
+    next({ name: 'Login' })
+    return
+  }
+  // Proactively validate token on first navigation (or if token may have expired)
+  const valid = await authStore.validateToken()
+  if (!valid) {
     next({ name: 'Login' })
   } else {
     next()

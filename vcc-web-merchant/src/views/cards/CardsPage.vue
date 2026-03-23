@@ -25,17 +25,18 @@
           <label>{{ t('cards.cardType') }}</label>
           <select v-model="filters.cardType" @change="loadCards">
             <option value="">{{ t('common.all') }}</option>
-            <option value="code">{{ t('cards.cardTypeCode') }}</option>
-            <option value="budget">{{ t('cards.cardTypeBudget') }}</option>
+            <option value="PREPAID">{{ t('cards.cardTypeCode') }}</option>
+            <option value="BUDGET">{{ t('cards.cardTypeBudget') }}</option>
           </select>
         </div>
         <div class="form-group">
           <label>{{ t('cards.status') }}</label>
           <select v-model="filters.status" @change="loadCards">
             <option value="">{{ t('common.all') }}</option>
-            <option value="active">{{ t('cards.statusActive') }}</option>
-            <option value="frozen">{{ t('cards.statusFrozen') }}</option>
-            <option value="cancelled">{{ t('cards.statusCancelled') }}</option>
+            <option value="ACTIVE">{{ t('cards.statusActive') }}</option>
+            <option value="FROZEN">{{ t('cards.statusFrozen') }}</option>
+            <option value="PENDING_ACTIVATION">待激活</option>
+            <option value="CLOSED">{{ t('cards.statusCancelled') }}</option>
           </select>
         </div>
       </div>
@@ -71,8 +72,8 @@
               <td>
                 <div class="action-row">
                   <button class="table-button" @click="$router.push(`/cards/${item.id}`)">{{ t('cards.cardDetails') }}</button>
-                  <button v-if="item.status === 'active'" class="table-button" @click="handleFreeze(item.id)">{{ t('cards.freeze') }}</button>
-                  <button v-if="item.status === 'frozen'" class="table-button" @click="handleUnfreeze(item.id)">{{ t('cards.unfreeze') }}</button>
+                  <button v-if="item.status === 'ACTIVE'" class="table-button" @click="handleFreeze(item.id)">{{ t('cards.freeze') }}</button>
+                  <button v-if="item.status === 'FROZEN'" class="table-button" @click="handleUnfreeze(item.id)">{{ t('cards.unfreeze') }}</button>
                   <button class="table-button danger" @click="handleCancel(item.id)">{{ t('cards.cancel') }}</button>
                 </div>
               </td>
@@ -141,15 +142,15 @@ const loadCards = async () => {
   loading.value = true
   try {
     const params = {
-      page: pagination.page,
+      pageNum: pagination.page,
       pageSize: pagination.pageSize,
       keyword: filters.keyword,
       cardType: filters.cardType,
       status: filters.status
     }
     const res = await cardApi.list(params)
-    cards.value = res.data?.items || res.data || []
-    pagination.total = res.data?.total || res.total || 0
+    cards.value = res.rows || res.data?.items || res.data || []
+    pagination.total = res.total || res.data?.total || 0
   } catch (err) {
     ElMessage.error(err.response?.data?.message || t('common.loadFailed'))
   } finally {
@@ -234,17 +235,18 @@ const handleExport = async () => {
 
 const getCardTypeLabel = (type) => {
   const labels = {
-    code: t('cards.cardTypeCode'),
-    budget: t('cards.cardTypeBudget')
+    PREPAID: t('cards.cardTypeCode'),
+    BUDGET: t('cards.cardTypeBudget')
   }
   return labels[type] || type
 }
 
 const getStatusLabel = (status) => {
   const labels = {
-    active: t('cards.statusActive'),
-    frozen: t('cards.statusFrozen'),
-    cancelled: t('cards.statusCancelled')
+    PENDING_ACTIVATION: '待激活',
+    ACTIVE: t('cards.statusActive'),
+    FROZEN: t('cards.statusFrozen'),
+    CLOSED: t('cards.statusCancelled')
   }
   return labels[status] || status
 }
@@ -275,9 +277,10 @@ table { width: 100%; border-collapse: collapse; }
 th, td { padding: 14px 12px; border-bottom: 1px solid #f3f4f6; text-align: left; }
 th { color: #6b7280; font-weight: 600; }
 .status-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-.status-pill.active { background: #d1fae5; color: #065f46; }
-.status-pill.frozen { background: #dbeafe; color: #1e40af; }
-.status-pill.cancelled { background: #fee2e2; color: #991b1b; }
+.status-pill.ACTIVE { background: #d1fae5; color: #065f46; }
+.status-pill.FROZEN { background: #dbeafe; color: #1e40af; }
+.status-pill.CLOSED { background: #fee2e2; color: #991b1b; }
+.status-pill.PENDING_ACTIVATION { background: #fef3c7; color: #92400e; }
 .empty-state, .loading-state { margin-top: 20px; border: 1px dashed #d1d5db; border-radius: 12px; padding: 24px; text-align: center; color: #6b7280; }
 .header-actions, .action-row { display: flex; gap: 12px; }
 .primary-button, .secondary-button, .table-button, .link-button { border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }

@@ -3,7 +3,7 @@
     <div class="filter-container">
       <el-input v-model="listQuery.keyword" placeholder="用户邮箱/姓名" style="width: 200px;" @keyup.enter="handleFilter" />
       <el-select v-model="listQuery.status" placeholder="审核状态" clearable style="width: 150px; margin-left: 10px;">
-        <el-option label="待审核" value="PENDING" />
+        <el-option label="待审核" value="UNDER_REVIEW" />
         <el-option label="已通过" value="APPROVED" />
         <el-option label="已拒绝" value="REJECTED" />
       </el-select>
@@ -29,15 +29,16 @@
         <template #default="scope">
           <el-tag v-if="scope.row.status === 'APPROVED'" type="success" size="small">已通过</el-tag>
           <el-tag v-else-if="scope.row.status === 'REJECTED'" type="danger" size="small">已拒绝</el-tag>
-          <el-tag v-else type="warning" size="small">待审核</el-tag>
+          <el-tag v-else-if="scope.row.status === 'UNDER_REVIEW'" type="warning" size="small">待审核</el-tag>
+          <el-tag v-else type="info" size="small">{{ scope.row.status }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="remark" label="备注/拒绝原因" min-width="140" show-overflow-tooltip />
       <el-table-column label="操作" width="210" fixed="right">
         <template #default="scope">
           <el-button size="small" @click="handleView(scope.row)">查看</el-button>
-          <el-button v-if="scope.row.status === 'PENDING'" size="small" type="success" :loading="scope.row._approving" @click="handleApprove(scope.row)">通过</el-button>
-          <el-button v-if="scope.row.status === 'PENDING'" size="small" type="danger" @click="handleReject(scope.row)">拒绝</el-button>
+          <el-button v-if="scope.row.status === 'UNDER_REVIEW'" size="small" type="success" :loading="scope.row._approving" @click="handleApprove(scope.row)">通过</el-button>
+          <el-button v-if="scope.row.status === 'UNDER_REVIEW'" size="small" type="danger" @click="handleReject(scope.row)">拒绝</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -108,9 +109,9 @@ const rejectRules = {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await client.get('/admin/kyc/list', { params: listQuery.value })
-    list.value = res.data?.items || res.data?.rows || []
-    total.value = res.data?.total || 0
+    const res = await client.get('/admin/merchant/list', { params: listQuery.value })
+    list.value = res.rows || res.data?.items || res.data?.rows || []
+    total.value = res.total || res.data?.total || 0
   } catch (e) {
     ElMessage.error('获取KYC列表失败')
   } finally {

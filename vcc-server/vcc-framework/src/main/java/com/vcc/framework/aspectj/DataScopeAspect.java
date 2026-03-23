@@ -89,13 +89,22 @@ public class DataScopeAspect
      */
     public static void dataScopeFilter(JoinPoint joinPoint, SysUser user, String deptAlias, String userAlias, String permission)
     {
+        // VCC-SEC-001: 验证别名防止SQL注入
+        validateSqlAlias(deptAlias);
+        validateSqlAlias(userAlias);
+
         StringBuilder sqlString = new StringBuilder();
         List<String> conditions = new ArrayList<String>();
         List<String> scopeCustomIds = new ArrayList<String>();
         user.getRoles().forEach(role -> {
             if (DATA_SCOPE_CUSTOM.equals(role.getDataScope()) && StringUtils.equals(role.getStatus(), UserConstants.ROLE_NORMAL) && (StringUtils.isEmpty(permission) || StringUtils.containsAny(role.getPermissions(), Convert.toStrArray(permission))))
             {
-                scopeCustomIds.add(Convert.toStr(role.getRoleId()));
+                // VCC-SEC-001: 仅允许纯数字 roleId 进入 SQL IN 子句，防止注入
+                String roleIdStr = Convert.toStr(role.getRoleId());
+                if (roleIdStr != null && roleIdStr.matches("^[0-9]+$"))
+                {
+                    scopeCustomIds.add(roleIdStr);
+                }
             }
         });
 
@@ -178,6 +187,17 @@ public class DataScopeAspect
         {
             BaseEntity baseEntity = (BaseEntity) params;
             baseEntity.getParams().put(DATA_SCOPE, "");
+        }
+    }
+
+    /**
+     * VCC-SEC-001: 验证SQL别名，仅允许字母、数字、下划线
+     */
+    private static void validateSqlAlias(String alias)
+    {
+        if (StringUtils.isNotEmpty(alias) && !alias.matches("^[a-zA-Z0-9_]+$"))
+        {
+            throw new IllegalArgumentException("Invalid SQL alias: " + alias);
         }
     }
 }

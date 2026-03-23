@@ -49,8 +49,8 @@
             <tr>
               <th>{{ t('cardholders.name') }}</th>
               <th>{{ t('cardholders.email') }}</th>
-              <th>{{ t('cardholders.phone') }}</th>
-              <th>{{ t('cardholders.idNumber') }}</th>
+              <th>Mobile</th>
+              <th>Country</th>
               <th>{{ t('cardholders.status') }}</th>
               <th>{{ t('cardholders.createdAt') }}</th>
               <th>{{ t('common.actions') }}</th>
@@ -58,10 +58,10 @@
           </thead>
           <tbody>
             <tr v-for="item in cardholders" :key="item.id">
-              <td>{{ item.name }}</td>
+              <td>{{ item.firstName }} {{ item.lastName }}</td>
               <td>{{ item.email }}</td>
-              <td>{{ item.phone }}</td>
-              <td>{{ item.idNumber }}</td>
+              <td>{{ item.mobile }}</td>
+              <td>{{ item.country }}</td>
               <td><span class="status-pill" :class="item.status">{{ getStatusLabel(item.status) }}</span></td>
               <td>{{ item.createdAt }}</td>
               <td>
@@ -88,17 +88,23 @@
 
     <el-dialog v-model="showAddDialog" :title="editingId ? t('cardholders.edit') : t('cardholders.add')" width="600px">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-        <el-form-item :label="t('cardholders.name')" prop="name">
-          <el-input v-model="form.name" :placeholder="t('cardholders.name')" />
+        <el-form-item :label="'First Name'" prop="firstName">
+          <el-input v-model="form.firstName" placeholder="First Name" />
+        </el-form-item>
+        <el-form-item :label="'Last Name'" prop="lastName">
+          <el-input v-model="form.lastName" placeholder="Last Name" />
         </el-form-item>
         <el-form-item :label="t('cardholders.email')" prop="email">
           <el-input v-model="form.email" :placeholder="t('auth.email')" />
         </el-form-item>
-        <el-form-item :label="t('cardholders.phone')" prop="phone">
-          <el-input v-model="form.phone" :placeholder="t('auth.phone')" />
+        <el-form-item :label="'Mobile'" prop="mobile">
+          <el-input v-model="form.mobile" placeholder="Mobile number" />
         </el-form-item>
-        <el-form-item :label="t('cardholders.idNumber')" prop="idNumber">
-          <el-input v-model="form.idNumber" :placeholder="t('cardholders.idNumber')" />
+        <el-form-item :label="'Country'" prop="country">
+          <el-input v-model="form.country" placeholder="Country" />
+        </el-form-item>
+        <el-form-item :label="'City'" prop="city">
+          <el-input v-model="form.city" placeholder="City" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -137,28 +143,27 @@ const pagination = reactive({
 })
 
 const form = reactive({
-  name: '',
+  firstName: '',
+  lastName: '',
   email: '',
-  phone: '',
-  idNumber: ''
+  mobile: '',
+  country: '',
+  city: ''
 })
 
 const rules = {
-  name: [
-    { required: true, message: '请输入持卡人姓名', trigger: 'blur' },
-    { min: 2, max: 50, message: '姓名长度在 2 到 50 个字符', trigger: 'blur' }
+  firstName: [
+    { required: true, message: '请输入名', trigger: 'blur' }
+  ],
+  lastName: [
+    { required: true, message: '请输入姓', trigger: 'blur' }
   ],
   email: [
     { required: true, message: '请输入邮箱地址', trigger: 'blur' },
     { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
   ],
-  phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur' }
-  ],
-  idNumber: [
-    { required: true, message: '请输入身份证号', trigger: 'blur' },
-    { pattern: /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/, message: '请输入有效的18位身份证号', trigger: 'blur' }
+  mobile: [
+    { required: true, message: '请输入手机号', trigger: 'blur' }
   ]
 }
 
@@ -184,14 +189,14 @@ const loadCardholders = async () => {
   loading.value = true
   try {
     const params = {
-      page: pagination.page,
+      pageNum: pagination.page,
       pageSize: pagination.pageSize,
       keyword: filters.keyword,
       status: filters.status
     }
     const res = await cardholderApi.list(params)
-    cardholders.value = res.data?.items || res.data || []
-    pagination.total = res.data?.total || res.total || 0
+    cardholders.value = res.rows || res.data?.items || res.data || []
+    pagination.total = res.total || res.data?.total || 0
   } catch (err) {
     ElMessage.error(err.response?.data?.message || t('common.loadFailed'))
   } finally {
@@ -207,10 +212,12 @@ const changePage = (page) => {
 const handleEdit = (item) => {
   editingId.value = item.id
   Object.assign(form, {
-    name: item.name,
+    firstName: item.firstName,
+    lastName: item.lastName,
     email: item.email,
-    phone: item.phone,
-    idNumber: item.idNumber
+    mobile: item.mobile,
+    country: item.country,
+    city: item.city
   })
   showAddDialog.value = true
 }
@@ -285,10 +292,12 @@ const handleExport = async () => {
 const resetForm = () => {
   editingId.value = null
   Object.assign(form, {
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
-    phone: '',
-    idNumber: ''
+    mobile: '',
+    country: '',
+    city: ''
   })
   formRef.value?.resetFields()
 }

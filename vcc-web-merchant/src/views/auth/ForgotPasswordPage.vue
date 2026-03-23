@@ -87,7 +87,13 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { authApi } from '@/api'
+
+// NOTE: Password reset endpoints not available in RuoYi merchant backend
+// Stub implementation - will connect when available
+const authApi = {
+  sendResetCode: async () => { throw new Error('密码重置功能暂未开放，请联系管理员') },
+  resetPassword: async () => { throw new Error('密码重置功能暂未开放，请联系管理员') },
+}
 
 const router = useRouter()
 

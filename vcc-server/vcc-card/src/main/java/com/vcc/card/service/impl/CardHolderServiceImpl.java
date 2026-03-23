@@ -26,7 +26,7 @@ public class CardHolderServiceImpl implements ICardHolderService
     private static final Logger log = LoggerFactory.getLogger(CardHolderServiceImpl.class);
 
     /** BUG-009 fix: 字段级加密密钥，用于身份证号 AES 加密存储 */
-    @Value("${vcc.config.encrypt-key:vcc2024SecretKey!}")
+    @Value("${vcc.config.encrypt-key}")
     private String encryptKey;
 
     @Autowired

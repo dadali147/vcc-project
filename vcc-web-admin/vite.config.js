@@ -25,13 +25,43 @@ export default defineConfig({
   server: {
     port: 5175,
     proxy: {
-      '/api': {
+      // RuoYi 后端所有请求代理
+      '/login': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/logout': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/captchaImage': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/getInfo': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/getRouters': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/admin': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/system': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/monitor': {
         target: 'http://localhost:8080',
         changeOrigin: true
       }
     }
   },
   build: {
+    sourcemap: false,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {

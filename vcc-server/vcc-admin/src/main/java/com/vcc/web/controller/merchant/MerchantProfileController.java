@@ -8,6 +8,7 @@ import com.vcc.common.core.controller.BaseController;
 import com.vcc.common.core.domain.AjaxResult;
 import com.vcc.common.core.domain.entity.SysUser;
 import com.vcc.system.service.ISysUserService;
+import com.vcc.web.controller.merchant.dto.UpdateProfileRequest;
 
 @RestController
 @RequestMapping("/profile")
@@ -25,9 +26,14 @@ public class MerchantProfileController extends BaseController
     }
 
     @PutMapping
-    public AjaxResult update(@RequestBody SysUser user)
+    public AjaxResult update(@RequestBody UpdateProfileRequest req)
     {
+        SysUser user = new SysUser();
         user.setUserId(getUserId());
+        user.setNickName(req.getNickName());
+        user.setEmail(req.getEmail());
+        user.setPhonenumber(req.getPhonenumber());
+        user.setSex(req.getSex());
         return toAjax(userService.updateUser(user));
     }
 

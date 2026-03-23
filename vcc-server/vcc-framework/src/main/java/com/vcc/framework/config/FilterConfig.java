@@ -73,6 +73,9 @@ public class FilterConfig
         registration.addUrlPatterns("/*");
         registration.setName("repeatableFilter");
         registration.setOrder(FilterRegistrationBean.LOWEST_PRECEDENCE);
+        Map<String, String> initParameters = new HashMap<String, String>();
+        initParameters.put("excludes", "/swagger-ui.html,/v3/api-docs/**,/swagger-ui/**,/swagger-resources/**,/webjars/**");
+        registration.setInitParameters(initParameters);
         return registration;
     }
 

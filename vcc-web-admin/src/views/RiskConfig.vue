@@ -143,9 +143,9 @@ const getRuleTypeLabel = (type) => {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await client.get('/admin/risk-rules', { params: listQuery.value })
-    list.value = res.data?.items || res.data?.rows || (Array.isArray(res.data) ? res.data : [])
-    total.value = res.data?.total || list.value.length
+    const res = await client.get('/admin/business/risk/list')
+    list.value = res.rows || res.data?.items || res.data?.rows || (Array.isArray(res.data) ? res.data : [])
+    total.value = res.total || res.data?.total || list.value.length
   } catch (e) {
     ElMessage.error('获取风控规则失败')
   } finally {
@@ -174,9 +174,10 @@ const handleSave = async () => {
   try {
     await formRef.value.validate()
     if (isEdit.value) {
-      await client.put(`/admin/risk-rules/${temp.value.id}`, temp.value)
+      await client.put(`/admin/business/risk/${temp.value.id}/handle`, temp.value)
     } else {
-      await client.post('/admin/risk-rules', temp.value)
+      ElMessage.warning('当前不支持新增风控规则，请联系后端开发')
+      return
     }
     ElMessage.success('保存成功')
     dialogVisible.value = false
@@ -190,7 +191,7 @@ const handleToggleStatus = async (row) => {
   const action = row.status === 'ACTIVE' ? '禁用' : '启用'
   try {
     await ElMessageBox.confirm(`确认${action}该规则？`, '提示', { type: 'warning' })
-    await client.put(`/admin/risk-rules/${row.id}/status`, {
+    await client.put(`/admin/business/risk/${row.id}/handle`, {
       status: row.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
     })
     ElMessage.success(`${action}成功`)

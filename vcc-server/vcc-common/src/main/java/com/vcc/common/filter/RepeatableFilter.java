@@ -27,6 +27,15 @@ public class RepeatableFilter implements Filter
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException
     {
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        String requestURI = httpRequest.getRequestURI();
+        if (requestURI.startsWith("/v3/api-docs") 
+            || requestURI.startsWith("/swagger-ui") 
+            || requestURI.startsWith("/swagger-resources")
+            || requestURI.startsWith("/webjars")) {
+            chain.doFilter(request, response);
+            return;
+        }
         ServletRequest requestWrapper = null;
         if (request instanceof HttpServletRequest
                 && StringUtils.startsWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE))

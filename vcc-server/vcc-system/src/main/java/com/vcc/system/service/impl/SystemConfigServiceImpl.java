@@ -1,8 +1,12 @@
 package com.vcc.system.service.impl;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
 import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +27,7 @@ public class SystemConfigServiceImpl implements ISystemConfigService
     private static final Logger log = LoggerFactory.getLogger(SystemConfigServiceImpl.class);
 
     /** 内部加密密钥（用于加密存储敏感配置值） */
-    @Value("${vcc.config.encrypt-key:vcc2024SecretKey!}")
+    @Value("${vcc.config.encrypt-key}")
     private String encryptKey;
 
     @Autowired
@@ -166,10 +170,23 @@ public class SystemConfigServiceImpl implements ISystemConfigService
         {
             byte[] keyBytes = padKey(encryptKey);
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-            byte[] encrypted = cipher.doFinal(plainText.getBytes("UTF-8"));
-            return Base64.getEncoder().encodeToString(encrypted);
+
+            // VCC-SEC-001: 使用 AES/GCM/NoPadding，每次生成随机 IV
+            byte[] iv = new byte[12];
+            new SecureRandom().nextBytes(iv);
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
+
+            byte[] encrypted = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
+
+            // 格式: IV(12字节) + 密文(含GCM tag)
+            ByteBuffer buffer = ByteBuffer.allocate(iv.length + encrypted.length);
+            buffer.put(iv);
+            buffer.put(encrypted);
+
+            return Base64.getEncoder().encodeToString(buffer.array());
         }
         catch (Exception e)
         {
@@ -184,11 +201,37 @@ public class SystemConfigServiceImpl implements ISystemConfigService
         {
             byte[] keyBytes = padKey(encryptKey);
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+            byte[] decoded = Base64.getDecoder().decode(cipherText);
+
+            // VCC-SEC-001: 尝试新格式 GCM (IV 12字节 + 密文)
+            if (decoded.length > 12)
+            {
+                try
+                {
+                    ByteBuffer buffer = ByteBuffer.wrap(decoded);
+                    byte[] iv = new byte[12];
+                    buffer.get(iv);
+                    byte[] cipherBytes = new byte[buffer.remaining()];
+                    buffer.get(cipherBytes);
+
+                    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                    GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
+                    cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
+                    byte[] decrypted = cipher.doFinal(cipherBytes);
+                    return new String(decrypted, StandardCharsets.UTF_8);
+                }
+                catch (Exception e)
+                {
+                    // GCM 解密失败，尝试旧格式 ECB
+                    log.debug("GCM解密失败，尝试旧格式ECB");
+                }
+            }
+
+            // 兼容旧格式 ECB
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, keySpec);
-            byte[] decoded = Base64.getDecoder().decode(cipherText);
             byte[] decrypted = cipher.doFinal(decoded);
-            return new String(decrypted, "UTF-8");
+            return new String(decrypted, StandardCharsets.UTF_8);
         }
         catch (Exception e)
         {

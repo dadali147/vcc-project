@@ -1,13 +1,16 @@
 package com.vcc.common.utils;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Base64;
 
 /**
  * 字段级 AES 加密工具类（用于 PII 数据加密存储）
- * 算法：AES/ECB/PKCS5Padding，密钥长度 128 位
+ * VCC-SEC-001: 算法升级为 AES/GCM/NoPadding，向后兼容 ECB 格式
  */
 public class FieldEncryptUtil
 {
@@ -15,10 +18,11 @@ public class FieldEncryptUtil
 
     /**
      * 加密明文字段值
+     * VCC-SEC-001: 使用 AES/GCM/NoPadding，每次生成随机 IV
      *
      * @param plainText 明文
      * @param key       加密密钥（超过16字节取前16字节，不足补0）
-     * @return Base64 编码的密文，plainText 为 null 时返回 null
+     * @return Base64 编码的密文（格式: IV(12字节) + 密文 + GCM tag），plainText 为 null 时返回 null
      */
     public static String encrypt(String plainText, String key)
     {
@@ -30,10 +34,21 @@ public class FieldEncryptUtil
         {
             byte[] keyBytes = padKey(key);
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+
+            byte[] iv = new byte[12];
+            new SecureRandom().nextBytes(iv);
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
+
             byte[] encrypted = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(encrypted);
+
+            ByteBuffer buffer = ByteBuffer.allocate(iv.length + encrypted.length);
+            buffer.put(iv);
+            buffer.put(encrypted);
+
+            return Base64.getEncoder().encodeToString(buffer.array());
         }
         catch (Exception e)
         {
@@ -43,6 +58,7 @@ public class FieldEncryptUtil
 
     /**
      * 解密密文字段值
+     * VCC-SEC-001: 优先尝试 GCM 格式，失败后兼容旧 ECB 格式
      *
      * @param cipherText Base64 编码的密文
      * @param key        加密密钥
@@ -59,9 +75,34 @@ public class FieldEncryptUtil
         {
             byte[] keyBytes = padKey(key);
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+            byte[] decoded = Base64.getDecoder().decode(cipherText);
+
+            // 尝试新格式 GCM (IV 12字节 + 密文)
+            if (decoded.length > 12)
+            {
+                try
+                {
+                    ByteBuffer buffer = ByteBuffer.wrap(decoded);
+                    byte[] iv = new byte[12];
+                    buffer.get(iv);
+                    byte[] cipherBytes = new byte[buffer.remaining()];
+                    buffer.get(cipherBytes);
+
+                    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                    GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
+                    cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
+                    byte[] decrypted = cipher.doFinal(cipherBytes);
+                    return new String(decrypted, StandardCharsets.UTF_8);
+                }
+                catch (Exception e)
+                {
+                    // GCM 失败，尝试旧格式
+                }
+            }
+
+            // 兼容旧格式 ECB
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, keySpec);
-            byte[] decoded = Base64.getDecoder().decode(cipherText);
             byte[] decrypted = cipher.doFinal(decoded);
             return new String(decrypted, StandardCharsets.UTF_8);
         }

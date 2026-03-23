@@ -80,7 +80,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { cardApi, transactionApi } from '@/api'
+import { cardApi, transactionApi, cardIssueApi } from '@/api'
 
 const { t } = useI18n()
 
@@ -135,13 +135,13 @@ const loadStats = async () => {
   loading.value = true
   try {
     const [cardsRes, appsRes] = await Promise.all([
-      cardApi.list({ page: 1, pageSize: 1 }),
-      cardApi.getApplications({ page: 1, pageSize: 1, status: 'pending' })
+      cardApi.list({ pageNum: 1, pageSize: 1 }),
+      cardIssueApi.list({ pageNum: 1, pageSize: 1, status: 'pending' })
     ])
-    stats.value.totalCards = cardsRes.data?.total || cardsRes.total || 0
-    stats.value.totalBalance = cardsRes.data?.totalBalance || cardsRes.totalBalance || 0
-    stats.value.monthlyTransactions = cardsRes.data?.monthlyTransactions || cardsRes.monthlyTransactions || 0
-    stats.value.pendingApplications = appsRes.data?.total || appsRes.total || 0
+    stats.value.totalCards = cardsRes.total || 0
+    stats.value.totalBalance = cardsRes.totalBalance || 0
+    stats.value.monthlyTransactions = cardsRes.monthlyTransactions || 0
+    stats.value.pendingApplications = appsRes.total || 0
   } catch (err) {
     console.error('Failed to load stats:', err)
   } finally {
@@ -152,7 +152,7 @@ const loadStats = async () => {
 const loadRecentTransactions = async () => {
   loadingTx.value = true
   try {
-    const res = await transactionApi.list({ page: 1, pageSize: 5 })
+    const res = await transactionApi.list({ pageNum: 1, pageSize: 5 })
     recentTransactions.value = res.data?.items || res.data || []
   } catch (err) {
     console.error('Failed to load recent transactions:', err)

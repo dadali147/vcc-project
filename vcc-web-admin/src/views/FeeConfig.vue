@@ -86,8 +86,8 @@ const rules = {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await client.get('/admin/fee-config')
-    list.value = res.data?.items || res.data?.rows || (Array.isArray(res.data) ? res.data : [])
+    const res = await client.get('/admin/fee/user/list')
+    list.value = res.rows || res.data?.items || res.data?.rows || (Array.isArray(res.data) ? res.data : [])
   } catch (e) {
     ElMessage.error('获取费率配置失败')
   } finally {
@@ -104,7 +104,7 @@ const handleSave = async () => {
   try {
     await formRef.value.validate()
     saving.value = true
-    await client.put(`/admin/fee-config/${temp.value.id}`, { value: temp.value.value })
+    await client.put(`/admin/fee/user/${temp.value.userId}`, { value: temp.value.value })
     ElMessage.success('费率配置保存成功')
     dialogVisible.value = false
     getList()

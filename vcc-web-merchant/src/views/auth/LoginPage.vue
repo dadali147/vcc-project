@@ -15,11 +15,11 @@
 
         <form @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
-            <label>{{ $t('auth.email', '邮箱地址') }}</label>
+            <label>{{ $t('auth.username', '用户名') }}</label>
             <input 
-              v-model="credentials.email" 
-              type="email" 
-              :placeholder="$t('auth.email', '请输入邮箱地址')"
+              v-model="credentials.username" 
+              type="text" 
+              :placeholder="$t('auth.username', '请输入用户名')"
               required
             />
           </div>
@@ -34,12 +34,31 @@
             />
           </div>
 
+          <!-- RuoYi captcha -->
+          <div class="form-group" v-if="captchaEnabled">
+            <label>{{ $t('auth.captcha', '验证码') }}</label>
+            <div class="captcha-row">
+              <input 
+                v-model="credentials.code" 
+                type="text" 
+                :placeholder="$t('auth.captcha', '请输入验证码')"
+                autocomplete="off"
+              />
+              <img 
+                :src="captchaImg" 
+                class="captcha-img" 
+                @click="refreshCaptcha"
+                :title="$t('auth.refreshCaptcha', '点击刷新')"
+              />
+            </div>
+          </div>
+
           <div class="form-options">
             <label class="checkbox">
               <input type="checkbox" v-model="credentials.rememberMe" />
               {{ $t('auth.rememberMe', '记住我') }}
             </label>
-            <a href="#" class="forgot-password">{{ $t('auth.forgotPassword', '忘记密码？') }}</a>
+            <router-link to="/forgot-password" class="forgot-password">{{ $t('auth.forgotPassword', '忘记密码？') }}</router-link>
           </div>
 
           <button type="submit" class="login-button" :disabled="loading">
@@ -62,39 +81,51 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { authApi } from '@/api'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const credentials = ref({
-  email: 'demo@example.com',
-  password: 'password123',
+  username: '',
+  password: '',
+  code: '',
+  uuid: '',
   rememberMe: false
 })
 
 const loading = ref(false)
 const error = ref('')
+const captchaEnabled = ref(false)
+const captchaImg = ref('')
+
+async function refreshCaptcha() {
+  try {
+    const res = await authApi.getCaptcha()
+    captchaEnabled.value = res.captchaEnabled !== false
+    if (captchaEnabled.value) {
+      captchaImg.value = 'data:image/gif;base64,' + res.img
+      credentials.value.uuid = res.uuid
+    }
+  } catch (err) {
+    console.error('Failed to load captcha:', err)
+  }
+}
 
 async function handleLogin() {
   error.value = ''
 
-  if (!credentials.value.email || !credentials.value.password) {
+  if (!credentials.value.username || !credentials.value.password) {
     error.value = '请填写所有必填项'
     return
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(credentials.value.email)) {
-    error.value = '请输入有效的邮箱地址'
-    return
-  }
-
-  if (credentials.value.password.length < 6) {
-    error.value = '密码长度至少为 6 位'
+  if (captchaEnabled.value && !credentials.value.code) {
+    error.value = '请输入验证码'
     return
   }
 
@@ -102,18 +133,26 @@ async function handleLogin() {
 
   try {
     await authStore.login({
-      email: credentials.value.email,
-      password: credentials.value.password
+      username: credentials.value.username,
+      password: credentials.value.password,
+      code: credentials.value.code || undefined,
+      uuid: credentials.value.uuid || undefined
     })
     ElMessage.success('登录成功')
     router.push('/dashboard')
   } catch (err) {
-    error.value = err.response?.data?.message || '登录失败，请检查您的邮箱和密码。'
+    error.value = err.response?.data?.msg || err.message || '登录失败，请检查用户名和密码。'
     ElMessage.error(error.value)
+    // Refresh captcha on error
+    refreshCaptcha()
   } finally {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  refreshCaptcha()
+})
 </script>
 
 <style scoped>
@@ -122,13 +161,12 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #F5F5F7; /* Apple Light Gray */
+  background-color: #F5F5F7;
   position: relative;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* Web3 风格流体背景光晕 */
 .blob {
   position: absolute;
   border-radius: 50%;
@@ -143,7 +181,7 @@ async function handleLogin() {
   left: -10%;
   width: 500px;
   height: 500px;
-  background: #F97316; /* Kimoox Orange */
+  background: #F97316;
   animation-delay: 0s;
 }
 
@@ -152,7 +190,7 @@ async function handleLogin() {
   right: -10%;
   width: 600px;
   height: 600px;
-  background: #8B5CF6; /* Web3 Purple */
+  background: #8B5CF6;
   animation-delay: -4s;
 }
 
@@ -161,7 +199,7 @@ async function handleLogin() {
   left: 50%;
   width: 400px;
   height: 400px;
-  background: #3B82F6; /* Tech Blue */
+  background: #3B82F6;
   animation-delay: -8s;
 }
 
@@ -178,7 +216,6 @@ async function handleLogin() {
   z-index: 1;
 }
 
-/* Apple 风格极致毛玻璃卡片 */
 .login-card {
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(40px);
@@ -261,6 +298,39 @@ async function handleLogin() {
   box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
+.captcha-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.captcha-row input {
+  flex: 1;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  font-size: 15px;
+  color: #1D1D1F;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.captcha-row input:focus {
+  outline: none;
+  border-color: #F97316;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15);
+}
+
+.captcha-img {
+  width: 120px;
+  height: 48px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
 .form-options {
   display: flex;
   justify-content: space-between;
@@ -298,7 +368,6 @@ async function handleLogin() {
   color: #EA6B0E;
 }
 
-/* Web3 风格渐变按钮 */
 .login-button {
   padding: 16px 20px;
   background: linear-gradient(135deg, #F97316 0%, #FF9D42 100%);

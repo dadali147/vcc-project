@@ -100,7 +100,19 @@ public class WebhookController
             throw new WebhookProcessingException("处理失败，请重试");
         }
 
-        return Map.of("method", 2, "destination", "otp@kimoox.com");
+        // TODO: 后续实现风控引擎，根据交易金额/频率/商户画像判断是否自动批准
+        // 当前: OTP 发送到持卡人注册邮箱（从数据库查询）
+        String destination = "otp@kimoox.com"; // 默认值，需替换为动态查询持卡人邮箱
+        Object cardId = data.get("cardId");
+        if (cardId != null) {
+            try {
+                // TODO: 注入 CardHolderService/VccCardService，通过 cardId 查询关联商户邮箱
+                log.info("3DS OTP: cardId={}, destination待实现动态路由", cardId);
+            } catch (Exception e) {
+                log.warn("3DS OTP 查询持卡人邮箱失败, cardId={}", cardId, e);
+            }
+        }
+        return Map.of("method", 2, "destination", destination);
     }
 
     /**

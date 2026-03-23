@@ -72,8 +72,9 @@ const isSensitive = (key) => {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await client.get('/admin/system-config/list')
-    list.value = res.data?.items || res.data?.rows || (Array.isArray(res.data) ? res.data : [])
+    const res = await client.get('/admin/config/list')
+    // RuoYi TableDataInfo: { rows: [...], total: N }
+    list.value = res.rows || res.data?.items || res.data?.rows || (Array.isArray(res.data) ? res.data : [])
   } catch (e) {
     ElMessage.error('获取系统配置失败')
   } finally {
@@ -93,8 +94,7 @@ const handleSave = async () => {
       await ElMessageBox.confirm('您正在修改敏感配置项，确认继续？', '安全确认', { type: 'warning' })
     }
     saving.value = true
-    await client.post('/admin/system-config/set', {
-      configKey: temp.value.configKey,
+    await client.put(`/admin/config/${temp.value.configKey}`, {
       configValue: temp.value.configValue
     })
     ElMessage.success('保存成功')

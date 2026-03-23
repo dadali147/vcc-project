@@ -3,14 +3,13 @@
     <div class="filter-container">
       <el-input v-model="listQuery.keyword" placeholder="用户ID/邮箱/公司名" style="width: 220px;" class="filter-item" @keyup.enter="handleFilter" />
       <el-select v-model="listQuery.kycStatus" placeholder="KYC状态" clearable style="width: 150px; margin-left: 10px;">
-        <el-option label="未认证" value="NOT_SUBMITTED" />
-        <el-option label="待审核" value="PENDING" />
+        <el-option label="待审核" value="UNDER_REVIEW" />
         <el-option label="已通过" value="APPROVED" />
         <el-option label="已拒绝" value="REJECTED" />
       </el-select>
       <el-select v-model="listQuery.status" placeholder="账号状态" clearable style="width: 130px; margin-left: 10px;">
-        <el-option label="正常" value="1" />
-        <el-option label="已禁用" value="0" />
+        <el-option label="正常" value="ACTIVE" />
+        <el-option label="已禁用" value="DISABLED" />
       </el-select>
       <el-button class="filter-item" type="primary" @click="handleFilter" style="margin-left: 10px;">搜索</el-button>
     </div>
@@ -25,7 +24,7 @@
         <template #default="scope">
           <el-tag v-if="scope.row.kycStatus === 'APPROVED'" type="success" size="small">已通过</el-tag>
           <el-tag v-else-if="scope.row.kycStatus === 'REJECTED'" type="danger" size="small">已拒绝</el-tag>
-          <el-tag v-else-if="scope.row.kycStatus === 'PENDING'" type="warning" size="small">待审核</el-tag>
+          <el-tag v-else-if="scope.row.kycStatus === 'UNDER_REVIEW'" type="warning" size="small">待审核</el-tag>
           <el-tag v-else type="info" size="small">未提交</el-tag>
         </template>
       </el-table-column>
@@ -36,7 +35,7 @@
       </el-table-column>
       <el-table-column prop="status" label="状态" width="80">
         <template #default="scope">
-          <el-tag v-if="scope.row.status === '1' || scope.row.status === 1 || scope.row.status === 'ACTIVE'" type="success" size="small">正常</el-tag>
+          <el-tag v-if="scope.row.status === 'ACTIVE'" type="success" size="small">正常</el-tag>
           <el-tag v-else type="danger" size="small">禁用</el-tag>
         </template>
       </el-table-column>
@@ -45,10 +44,10 @@
           <el-button size="small" @click="handleView(scope.row)">详情</el-button>
           <el-button
             size="small"
-            :type="(scope.row.status === '1' || scope.row.status === 1 || scope.row.status === 'ACTIVE') ? 'danger' : 'success'"
+            :type="scope.row.status === 'ACTIVE' ? 'danger' : 'success'"
             @click="handleToggleStatus(scope.row)"
           >
-            {{ (scope.row.status === '1' || scope.row.status === 1 || scope.row.status === 'ACTIVE') ? '禁用' : '启用' }}
+            {{ scope.row.status === 'ACTIVE' ? '禁用' : '启用' }}
           </el-button>
         </template>
       </el-table-column>
@@ -78,7 +77,7 @@
         <el-descriptions-item label="注册时间">{{ currentUser.createdAt }}</el-descriptions-item>
         <el-descriptions-item label="最后登录">{{ currentUser.lastLoginAt || '-' }}</el-descriptions-item>
         <el-descriptions-item label="KYC状态">{{ kycStatusLabel(currentUser.kycStatus) }}</el-descriptions-item>
-        <el-descriptions-item label="账号状态">{{ (currentUser.status === '1' || currentUser.status === 1 || currentUser.status === 'ACTIVE') ? '正常' : '已禁用' }}</el-descriptions-item>
+        <el-descriptions-item label="账号状态">{{ currentUser.status === 'ACTIVE' ? '正常' : '已禁用' }}</el-descriptions-item>
         <el-descriptions-item label="账户余额" :span="2">${{ (currentUser.balance || 0).toFixed(2) }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
@@ -114,8 +113,8 @@ const getList = async () => {
   loading.value = true
   try {
     const res = await client.get('/admin/merchant/list', { params: listQuery.value })
-    list.value = res.data?.items || res.data?.rows || []
-    total.value = res.data?.total || 0
+    list.value = res.rows || res.data?.items || res.data?.rows || []
+    total.value = res.total || res.data?.total || 0
   } catch (e) {
     ElMessage.error('获取用户列表失败')
   } finally {

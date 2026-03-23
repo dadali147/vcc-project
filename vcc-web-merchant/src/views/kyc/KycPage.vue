@@ -188,7 +188,15 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { kycApi } from '@/api'
+
+// NOTE: KYC endpoints not yet implemented in RuoYi backend
+// These are stubs - will connect when backend endpoints are ready
+const kycApi = {
+  uploadDocument: async () => { console.warn('KYC upload not implemented in backend') },
+  submit: async () => { console.warn('KYC submit not implemented in backend') },
+  getStatus: async () => ({ data: { status: 'NOT_SUBMITTED' } }),
+  getDocuments: async () => ({ data: { items: [] } }),
+}
 
 const { t } = useI18n()
 

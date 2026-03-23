@@ -156,6 +156,11 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { downloadApi } from '@/api'
 
+// NOTE: RuoYi export uses submit (POST) + download (GET) pattern
+// downloadApi.list() - get export task list
+// downloadApi.submit(data) - submit export request
+// downloadApi.download(id) - download completed export
+
 const { t } = useI18n()
 
 const activeTab = ref('transactions')
@@ -202,8 +207,18 @@ const exportTransactions = async () => {
       endDate: transactionFilters.endDate,
       format: transactionFilters.format
     }
-    const blob = await downloadApi.exportTransactions(params)
-    downloadBlob(blob, `transactions_${Date.now()}.${transactionFilters.format === 'excel' ? 'xlsx' : 'csv'}`)
+    // RuoYi: submit export task, then download when ready
+    const taskRes = await downloadApi.submit({
+      exportType: 'transactions',
+      startDate: transactionFilters.startDate,
+      endDate: transactionFilters.endDate,
+      format: transactionFilters.format
+    })
+    const taskId = taskRes.data?.id || taskRes.id
+    if (taskId) {
+      const blob = await downloadApi.download(taskId)
+      downloadBlob(blob, `transactions_${Date.now()}.${transactionFilters.format === 'excel' ? 'xlsx' : 'csv'}`)
+    }
     ElMessage.success(t('downloads.exportSuccess'))
     loadDownloadHistory()
   } catch (err) {
@@ -226,8 +241,18 @@ const exportRecharge = async () => {
       endDate: rechargeFilters.endDate,
       format: rechargeFilters.format
     }
-    const blob = await downloadApi.exportRecharge(params)
-    downloadBlob(blob, `recharge_${Date.now()}.${rechargeFilters.format === 'excel' ? 'xlsx' : 'csv'}`)
+    // RuoYi: submit export task, then download when ready
+    const taskRes = await downloadApi.submit({
+      exportType: 'recharge',
+      startDate: rechargeFilters.startDate,
+      endDate: rechargeFilters.endDate,
+      format: rechargeFilters.format
+    })
+    const taskId = taskRes.data?.id || taskRes.id
+    if (taskId) {
+      const blob = await downloadApi.download(taskId)
+      downloadBlob(blob, `recharge_${Date.now()}.${rechargeFilters.format === 'excel' ? 'xlsx' : 'csv'}`)
+    }
     ElMessage.success(t('downloads.exportSuccess'))
     loadDownloadHistory()
   } catch (err) {
@@ -249,8 +274,17 @@ const exportStatement = async () => {
       month: statementFilters.month,
       format: statementFilters.format
     }
-    const blob = await downloadApi.exportStatement(params)
-    downloadBlob(blob, `statement_${Date.now()}.${statementFilters.format}`)
+    // RuoYi: submit export task, then download when ready
+    const taskRes = await downloadApi.submit({
+      exportType: 'statement',
+      month: statementFilters.month,
+      format: statementFilters.format
+    })
+    const taskId = taskRes.data?.id || taskRes.id
+    if (taskId) {
+      const blob = await downloadApi.download(taskId)
+      downloadBlob(blob, `statement_${Date.now()}.${statementFilters.format}`)
+    }
     ElMessage.success(t('downloads.exportSuccess'))
     loadDownloadHistory()
   } catch (err) {
@@ -279,8 +313,8 @@ const downloadFile = (row) => {
 
 const loadDownloadHistory = async () => {
   try {
-    const res = await downloadApi.getHistory({ page: 1, pageSize: 10 })
-    downloadHistory.value = res.data?.items || res.list || res.data || []
+    const res = await downloadApi.list({ page: 1, pageSize: 10 })
+    downloadHistory.value = res.rows || res.data?.items || res.list || res.data || []
   } catch (err) {
     console.error('Failed to load download history:', err)
   }

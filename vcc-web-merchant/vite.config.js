@@ -25,13 +25,46 @@ export default defineConfig({
   server: {
     port: 5174,
     proxy: {
-      '/api': {
+      // RuoYi auth & common endpoints
+      '/login': {
         target: process.env.VITE_API_URL || process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
-        changeOrigin: true
-      }
+        changeOrigin: true,
+      },
+      '/captchaImage': {
+        target: process.env.VITE_API_URL || process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/getInfo': {
+        target: process.env.VITE_API_URL || process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/getRouters': {
+        target: process.env.VITE_API_URL || process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/logout': {
+        target: process.env.VITE_API_URL || process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      // Merchant business APIs
+      '/merchant': {
+        target: process.env.VITE_API_URL || process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      // RuoYi system / profile APIs
+      '/system': {
+        target: process.env.VITE_API_URL || process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      // RuoYi common APIs (file upload, etc.)
+      '/common': {
+        target: process.env.VITE_API_URL || process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+      },
     }
   },
   build: {
+    sourcemap: false,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
